@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "start-emulator",
+      "type": "shell",
+      "command": "${env:LOCALAPPDATA}\\Android\\Sdk\\emulator\\emulator.exe",
+      "args": [
+        "-avd",
+        "Medium_Phone_API_36",
+        "-netdelay",
+        "none",
+        "-netspeed",
+        "full"
+      ],
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    }
+  ]
+}
