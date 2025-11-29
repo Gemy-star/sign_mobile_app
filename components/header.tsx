@@ -1,3 +1,5 @@
+import { FontFamily } from '@/constants/Typography';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -10,8 +12,11 @@ import { ThemedView } from './ThemedView';
 const Header = () => {
   const { language, t } = useLanguage();
   const { colorScheme } = useTheme();
+  const { user } = useAuth();
   const isRTL = language === 'ar';
   const { toggleSidebar } = useSidebar();
+
+  const userName = user?.first_name || user?.username || 'User';
 
   const logoSource = colorScheme === 'dark'
     ? require('@/assets/images/logo-dark.png')
@@ -43,11 +48,11 @@ const Header = () => {
             resizeMode="contain"
           />
         </View>
-        <ThemedText style={[styles.welcomeText, { textAlign: isRTL ? 'right' : 'left' }]}>
-          👋 {t('header.welcome', { name: 'عبد الرحمن' }) || 'Welcome'}
+        <ThemedText style={[styles.welcomeText, { textAlign: isRTL ? 'right' : 'left', fontFamily: FontFamily.arabicBold }]}>
+          👋 {t('header.welcome', { name: userName })}
         </ThemedText>
-        <ThemedText style={[styles.subText, { textAlign: isRTL ? 'right' : 'left' }]}>
-          {t('header.subtitle') || 'Global Ranking Conference 2025'}
+        <ThemedText style={[styles.subText, { textAlign: isRTL ? 'right' : 'left', fontFamily: FontFamily.arabic }]}>
+          {t('header.subtitle')}
         </ThemedText>
       </ThemedView>
 
@@ -95,13 +100,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: 'IBM Plex Sans Arabic',
   },
   subText: {
     color: '#ccc',
     fontSize: 14,
     marginTop: 4,
-    fontFamily: 'IBM Plex Sans Arabic',
   },
 });
 

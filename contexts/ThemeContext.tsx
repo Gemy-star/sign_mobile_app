@@ -11,7 +11,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('dark'); // Default to dark theme
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('light'); // Default to light theme
 
   const colors = Colors[colorScheme];
 
@@ -38,8 +38,8 @@ export const useTheme = () => {
   if (!context) {
     console.warn('useTheme must be used within a ThemeProvider');
     return {
-      colors: Colors.dark, // Default fallback to dark theme
-      colorScheme: 'dark' as ColorScheme,
+      colors: Colors.light, // Default fallback to light theme
+      colorScheme: 'light' as ColorScheme,
       setColorScheme: () => {},
       toggleColorScheme: () => {},
     };

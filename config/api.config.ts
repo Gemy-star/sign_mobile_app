@@ -29,7 +29,7 @@ export const API_CONFIG = {
 
   // Request Timeouts (milliseconds)
   // Set via EXPO_PUBLIC_API_TIMEOUT in .env file
-  TIMEOUT: parseInt(getEnvVar('EXPO_PUBLIC_API_TIMEOUT', '30000'), 10),
+  TIMEOUT: parseInt(getEnvVar('EXPO_PUBLIC_API_TIMEOUT', '15000'), 10),
   UPLOAD_TIMEOUT: 120000,
 
   // Debug Mode

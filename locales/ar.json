@@ -1,67 +1,207 @@
 {
-    "common":  {
-                   "refresh":  "?????",
-                   "save":  "???",
-                   "edit":  "?????",
-                   "back":  "????",
-                   "share":  "??????",
-                   "like":  "?????",
-                   "close":  "?????",
-                   "done":  "??",
-                   "comment":  "?????",
-                   "delete":  "???",
-                   "error":  "??? ??? ??",
-                   "loading":  "???? ???????...",
-                   "retry":  "???? ??? ????",
-                   "cancel":  "?????",
-                   "next":  "??????"
-               },
-    "navigation":  {
-                       "motivation":  "???????",
-                       "profile":  "????? ??????",
-                       "notification":  "??????",
-                       "messages":  "???????",
-                       "news":  "???????",
-                       "index":  "????????"
-                   },
-    "profile":  {
-                    "notifications":  "?????????",
-                    "goals":  "???????",
-                    "logoutConfirm":  "?? ??? ????? ?? ????? ??????",
-                    "on":  "????",
-                    "rateApp":  "??? ???????",
-                    "version":  "???????",
-                    "arabic":  "???????",
-                    "darkMode":  "????? ??????",
-                    "logout":  "????? ??????",
-                    "more":  "??????",
-                    "messagesCount":  "???????",
-                    "changePassword":  "????? ???? ??????",
-                    "streak":  "???????",
-                    "language":  "?????",
-                    "english":  "English",
-                    "preferences":  "?????????",
-                    "helpSupport":  "???????? ??????",
-                    "account":  "??????",
-                    "privacySecurity":  "???????? ???????",
-                    "off":  "????"
-                },
-    "motivation":  {
-                       "welcome":  "?????",
-                       "appName":  "?????",
-                       "justNow":  "????",
-                       "tagline":  "??? ?????? ???? ??????",
-                       "getStarted":  "???? ????"
-                   },
-    "auth":  {
-                 "signUp":  "????? ????",
-                 "username":  "??? ????????",
-                 "forgotPassword":  "???? ???? ??????",
-                 "password":  "???? ??????",
-                 "tryDemo":  "????? ?????? ????????",
-                 "noAccount":  "??? ???? ????",
-                 "loginError":  "??? ????? ??????. ???? ??? ????.",
-                 "loginSuccess":  "?? ????? ?????? ?????!",
-                 "login":  "????? ??????"
-             }
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ ما",
+    "retry": "حاول مرة أخرى",
+    "refresh": "تحديث",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "share": "مشاركة",
+    "like": "إعجاب",
+    "comment": "تعليق",
+    "back": "رجوع",
+    "next": "التالي",
+    "done": "تم",
+    "close": "إغلاق",
+    "success": "نجح",
+    "call": "اتصل"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "usernamePlaceholder": "أدخل اسم المستخدم",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "signUp": "إنشاء حساب",
+    "tryDemo": "تجربة الحساب التجريبي",
+    "loginSuccess": "تم تسجيل الدخول بنجاح!",
+    "loginError": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى."
+  },
+  "motivation": {
+    "appName": "تحفيز",
+    "welcome": "مرحبا",
+    "tagline": "ابق متحفزاً وحقق أهدافك",
+    "getStarted": "ابدأ الآن",
+    "justNow": "الآن",
+    "aiMessages": "رسائل مدعومة بالذكاء الاصطناعي",
+    "aiMessagesDesc": "رسائل تحفيزية مخصصة تم إنشاؤها خصيصًا لك",
+    "lifeAreas": "8 مجالات حياتية",
+    "lifeAreasDesc": "ركز على النمو العقلي والجسدي والمهني والمالي والمزيد",
+    "trackProgress": "تتبع التقدم",
+    "trackProgressDesc": "راقب نموك وحافظ على سلسلة التحفيز الخاصة بك"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "notificationTitle": "عنوان الإشعار",
+    "notificationMessage": "هذا النص هو مثال لنص يمكن أن يستبدل في نفس المساحة.",
+    "newAchievement": "إنجاز جديد!",
+    "completedStreak": "لقد أكملت سلسلة 7 أيام!",
+    "dailyMessage": "رسالة يومية",
+    "messageReady": "رسالتك الشخصية جاهزة",
+    "goalReminder": "تذكير الأهداف",
+    "setGoalsToday": "لا تنسَ تحديد أهدافك لهذا اليوم"
+  },
+  "messages": {
+    "title": "الرسائل",
+    "searchPlaceholder": "ابحث هنا...",
+    "noMessages": "لا توجد رسائل",
+    "loadingMessages": "جاري تحميل الرسائل..."
+  },
+  "header": {
+    "welcome": "مرحباً",
+    "subtitle": "ابق متحفزاً وحقق أهدافك"
+  },
+  "news": {
+    "title": "أهدافي",
+    "subtitle": "تتبع تقدمك وحقق أحلامك",
+    "noNews": "لا توجد أهداف متاحة",
+    "loadingNews": "جاري تحميل الأهداف..."
+  },
+  "goals": {
+    "all": "الكل",
+    "active": "نشطة",
+    "completed": "مكتملة",
+    "total": "إجمالي الأهداف",
+    "progress": "التقدم",
+    "targetDate": "الهدف",
+    "noGoals": "لا توجد أهداف",
+    "priority": "الأولوية",
+    "high": "عالية",
+    "medium": "متوسطة",
+    "low": "منخفضة"
+  },
+  "navigation": {
+    "index": "الرئيسية",
+    "news": "الأهداف",
+    "motivation": "الإلهام",
+    "messages": "الرسائل",
+    "notification": "التتبع",
+    "profile": "الملف الشخصي"
+  },
+  "home": {
+    "title": "لوحة التحكم",
+    "subtitle": "ابق متحفزاً وحقق أهدافك",
+    "messagesTitle": "رسائل اليوم",
+    "totalMessages": "إجمالي الرسائل",
+    "favorites": "المفضلة",
+    "streak": "السلسلة",
+    "categories": "الفئات",
+    "recentMessages": "الرسائل الأخيرة",
+    "noRecentMessages": "لا توجد رسائل حديثة",
+    "viewAll": "عرض الكل"
+  },
+  "profile": {
+    "account": "الحساب",
+    "preferences": "التفضيلات",
+    "notifications": "الإشعارات",
+    "privacySecurity": "الخصوصية والأمان",
+    "helpSupport": "المساعدة والدعم",
+    "more": "المزيد",
+    "language": "اللغة",
+    "arabic": "العربية",
+    "english": "English",
+    "darkMode": "الوضع الداكن",
+    "on": "مفعل",
+    "off": "معطل",
+    "messagesCount": "الرسائل",
+    "goals": "الأهداف",
+    "streak": "السلسلة",
+    "changePassword": "تغيير كلمة المرور",
+    "rateApp": "تقييم التطبيق",
+    "logout": "تسجيل الخروج",
+    "logoutConfirm": "هل أنت متأكد من تسجيل الخروج؟",
+    "version": "الإصدار"
+  },
+  "changePassword": {
+    "description": "الرجاء إدخال كلمة المرور الحالية واختيار كلمة مرور آمنة جديدة",
+    "currentPassword": "كلمة المرور الحالية",
+    "currentPasswordPlaceholder": "أدخل كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "newPasswordPlaceholder": "أدخل كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "confirmPasswordPlaceholder": "أعد إدخال كلمة المرور الجديدة",
+    "passwordHint": "على الأقل 8 أحرف، حرف كبير واحد، حرف صغير واحد، رقم واحد",
+    "fillAllFields": "يرجى ملء جميع الحقول",
+    "passwordRequirements": "يجب أن تكون كلمة المرور 8 أحرف على الأقل مع حرف كبير وصغير ورقم",
+    "passwordMismatch": "كلمات المرور غير متطابقة",
+    "success": "تم تغيير كلمة المرور بنجاح!",
+    "error": "فشل تغيير كلمة المرور. يرجى المحاولة مرة أخرى."
+  },
+  "privacy": {
+    "security": "الأمان",
+    "privacy": "الخصوصية",
+    "yourData": "بياناتك",
+    "twoFactorAuth": "المصادقة الثنائية",
+    "twoFactorAuthDesc": "أضف أمانًا إضافيًا لحسابك",
+    "biometricAuth": "المصادقة البيومترية",
+    "biometricAuthDesc": "استخدم بصمة الإصبع أو التعرف على الوجه",
+    "shareAnalytics": "مشاركة التحليلات",
+    "shareAnalyticsDesc": "ساعد في تحسين التطبيق",
+    "personalizedAds": "إعلانات مخصصة",
+    "personalizedAdsDesc": "شاهد الإعلانات ذات الصلة",
+    "downloadData": "تنزيل بياناتك",
+    "downloadDataDesc": "احصل على نسخة من معلوماتك",
+    "deleteAccount": "حذف الحساب",
+    "deleteAccountDesc": "حذف حسابك نهائيًا"
+  },
+  "help": {
+    "faq": "الأسئلة الشائعة",
+    "searchFAQ": "ابحث في الأسئلة الشائعة...",
+    "contactUs": "اتصل بنا",
+    "emailSupport": "الدعم عبر البريد الإلكتروني",
+    "whatsappSupport": "الدعم عبر واتساب",
+    "phoneSupport": "الدعم الهاتفي",
+    "callUs": "اتصل بنا في أي وقت",
+    "phoneNumber": "الهاتف: +966 50 000 0000"
+  },
+  "categories": {
+    "mental": {
+      "name": "النمو العقلي والعاطفي",
+      "description": "تطوير الذكاء العاطفي والعقلية والمرونة النفسية"
+    },
+    "physical": {
+      "name": "الصحة البدنية والعافية",
+      "description": "بناء القوة وتحسين التغذية والحفاظ على عادات صحية"
+    },
+    "career": {
+      "name": "التطوير المهني والوظيفي",
+      "description": "تقدم في حياتك المهنية من خلال المهارات والإنتاجية والتواصل"
+    },
+    "financial": {
+      "name": "النمو المالي",
+      "description": "بناء الثروة وإدارة المال وتحقيق الحرية المالية"
+    },
+    "relationships": {
+      "name": "العلاقات والحياة الاجتماعية",
+      "description": "رعاية العلاقات الهادفة وتحسين التواصل"
+    },
+    "spiritual": {
+      "name": "الروحانية والإنجاز الداخلي",
+      "description": "إيجاد الهدف وممارسة اليقظة والتواصل العميق"
+    },
+    "creativity": {
+      "name": "الإبداع والتعلم",
+      "description": "تعزيز الفضول والتعبير الإبداعي والنمو المستمر"
+    },
+    "lifestyle": {
+      "name": "نمط الحياة والبيئة",
+      "description": "خلق التوازن وتنظيم حياتك واستكشاف العالم"
+    }
+  }
 }

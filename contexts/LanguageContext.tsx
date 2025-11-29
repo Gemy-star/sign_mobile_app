@@ -1,7 +1,7 @@
-import ar from '@/locales/ar.json';
-import en from '@/locales/en.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import ar from '../locales/ar.json';
+import en from '../locales/en.json';
 
 export type Language = 'en' | 'ar';
 type SupportedLanguage = Language;

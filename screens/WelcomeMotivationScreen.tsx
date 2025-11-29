@@ -2,8 +2,7 @@
 // Onboarding screen for the motivation app
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAppStyles } from '@/hooks/useAppStyles';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Button, Card, Layout, Text } from '@ui-kitten/components';
 import {
     ArrowRight,
     Target,
@@ -11,7 +10,7 @@ import {
     Zap
 } from 'lucide-react-native';
 import React from 'react';
-import { Dimensions, Image, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, ScrollView, StyleSheet, View } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -20,151 +19,196 @@ interface WelcomeMotivationScreenProps {
 }
 
 export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivationScreenProps) {
-  const { styles, colors, palette, spacing } = useAppStyles();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const features = [
     {
       icon: Zap,
-      title: 'AI-Powered Messages',
-      description: 'Personalized motivational messages generated just for you',
-      color: palette.warning,
+      title: t('motivation.aiMessages'),
+      description: t('motivation.aiMessagesDesc'),
+      color: '#ED8936',
     },
     {
       icon: Target,
-      title: '8 Life Areas',
-      description: 'Focus on mental, physical, career, financial growth & more',
-      color: palette.info,
+      title: t('motivation.lifeAreas'),
+      description: t('motivation.lifeAreasDesc'),
+      color: '#4299E1',
     },
     {
       icon: TrendingUp,
-      title: 'Track Progress',
-      description: 'Monitor your growth and maintain your motivation streak',
-      color: palette.success,
+      title: t('motivation.trackProgress'),
+      description: t('motivation.trackProgressDesc'),
+      color: '#48BB78',
     },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={[palette.primary, palette.accent]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: height * 0.5,
-        }}
-      />
+    <Layout style={styles.container} level="1">
+      <View style={styles.headerBackground} />
 
-      <View style={[styles.contentContainer, { flex: 1, justifyContent: 'space-between' }]}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Top Section with Logo */}
-        <View style={{ alignItems: 'center', marginTop: spacing.xxxl }}>
-          <View
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: spacing.xl,
-            }}
-          >
+        <View style={styles.logoSection}>
+          <View style={styles.logoContainer}>
             <Image
               source={require('@/assets/images/loader.png')}
-              style={{ width: 80, height: 80 }}
+              style={styles.logoImage}
               resizeMode="contain"
             />
           </View>
 
-          <Text
-            style={[
-              styles.heading1,
-              {
-                color: '#fff',
-                fontSize: 32,
-                marginBottom: spacing.sm,
-                textAlign: 'center',
-              }
-            ]}
-          >
+          <Text category="h1" style={styles.appName}>
             {t('motivation.appName')}
           </Text>
 
-          <Text
-            style={[
-              styles.bodyText,
-              {
-                color: 'rgba(255,255,255,0.9)',
-                textAlign: 'center',
-                marginBottom: spacing.xl,
-              }
-            ]}
-          >
+          <Text category="s1" appearance="hint" style={styles.tagline}>
             {t('motivation.tagline')}
           </Text>
         </View>
 
         {/* Features Cards */}
-        <View>
+        <View style={styles.featuresSection}>
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <View
+              <Card
                 key={index}
-                style={[
-                  styles.card,
-                  styles.rowCenter,
-                  {
-                    marginBottom: spacing.md,
-                    paddingVertical: spacing.lg,
-                  },
-                ]}
+                style={styles.featureCard}
               >
-                <View
-                  style={[
-                    styles.statIcon,
-                    {
-                      backgroundColor: `${feature.color}15`,
-                      marginRight: spacing.md,
-                    },
-                  ]}
-                >
-                  <Icon size={24} color={feature.color} />
+                <View style={[styles.featureContent, isRTL && styles.featureContentRTL]}>
+                  <View style={[styles.iconContainer, { backgroundColor: `${feature.color}15` }]}>
+                    <Icon size={24} color={feature.color} />
+                  </View>
+                  <View style={styles.featureText}>
+                    <Text category="s1" style={[styles.featureTitle, isRTL && styles.textRTL]}>
+                      {feature.title}
+                    </Text>
+                    <Text category="p2" appearance="hint" style={isRTL && styles.textRTL}>
+                      {feature.description}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.bodyText, { fontWeight: '600', marginBottom: spacing.xs }]}>
-                    {feature.title}
-                  </Text>
-                  <Text style={styles.smallText}>{feature.description}</Text>
-                </View>
-              </View>
+              </Card>
             );
           })}
         </View>
 
         {/* Bottom CTA */}
-        <View style={{ marginBottom: spacing.xl }}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              {
-                backgroundColor: palette.primary,
-                paddingVertical: spacing.lg,
-              },
-            ]}
+        <View style={styles.ctaSection}>
+          <Button
+            size="large"
             onPress={onGetStarted}
+            accessoryRight={(props) => (
+              <ArrowRight
+                size={20}
+                color="#fff"
+                style={isRTL ? { transform: [{ scaleX: -1 }] } : {}}
+              />
+            )}
+            style={styles.startButton}
           >
-            <Text style={[styles.buttonText, { fontSize: 18 }]}>
-              {t('motivation.getStarted')}
-            </Text>
-            <ArrowRight size={20} color="#fff" />
-          </TouchableOpacity>
+            {t('motivation.getStarted')}
+          </Button>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </Layout>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: height * 0.5,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    padding: 24,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
+  },
+  appName: {
+    color: '#000000',
+    fontSize: 32,
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+  },
+  tagline: {
+    color: '#718096',
+    textAlign: 'center',
+    marginBottom: 32,
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  featuresSection: {
+    flex: 1,
+    marginTop: 16,
+  },
+  featureCard: {
+    marginBottom: 12,
+    borderRadius: 16,
+  },
+  featureContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featureContentRTL: {
+    flexDirection: 'row-reverse',
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  featureText: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    marginBottom: 4,
+  },
+  textRTL: {
+    textAlign: 'right',
+  },
+  ctaSection: {
+    marginTop: 24,
+    marginBottom: 24,
+  },
+  startButton: {
+    borderRadius: 12,
+    paddingVertical: 4,
+  },
+});

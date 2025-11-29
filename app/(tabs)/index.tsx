@@ -1,294 +1,313 @@
 // app/(tabs)/index.tsx
-// Main Dashboard - Motivational App
+// Main Dashboard with UI Kitten
 
-import { ThemedView } from '@/components/ThemedView';
+import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAppStyles } from '@/hooks/useAppStyles';
-import { dataService } from '@/services/data.service';
-import { DashboardStats } from '@/types/api';
+import { MOCK_MESSAGES } from '@/services/message.mock';
+import { Card, Icon, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Brain,
-  Briefcase,
-  Calendar,
-  DollarSign,
-  Dumbbell,
-  Flame,
-  Heart,
-  Palette,
-  Sparkles,
-  Star,
-  Sun,
-  TrendingUp,
-  Zap
-} from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
-  const { styles: appStyles, spacing, palette } = useAppStyles();
+  const [loading] = useState(false);
 
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const isRTL = language === 'ar';
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  const loadDashboard = async () => {
-    try {
-      setLoading(true);
-      const response = await dataService.getDashboardStats();
-      if (response.success && response.data) {
-        setDashboardData(response.data);
-      }
-    } catch (error) {
-      console.error('Dashboard error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const stats = dashboardData?.stats || {
-    messages_today: 0,
-    total_messages: 0,
-    favorite_messages: 0,
-    current_streak: 0,
+  const stats = {
+    messages_today: 5,
+    total_messages: MOCK_MESSAGES.length,
+    favorite_messages: MOCK_MESSAGES.filter(m => m.isFavorite).length,
+    current_streak: 7,
   };
 
   const categories = [
-    { id: 'mental', color: '#6366f1', emoji: '🧠', name: 'Mental' },
-    { id: 'physical', color: '#10b981', emoji: '💪', name: 'Physical' },
-    { id: 'career', color: '#8b5cf6', emoji: '💼', name: 'Career' },
-    { id: 'financial', color: '#f59e0b', emoji: '💰', name: 'Financial' },
-    { id: 'relationships', color: '#ef4444', emoji: '❤️', name: 'Relations' },
-    { id: 'spiritual', color: '#3b82f6', emoji: '🕊️', name: 'Spiritual' },
-    { id: 'creativity', color: '#9a7cb6', emoji: '🎨', name: 'Creative' },
-    { id: 'lifestyle', color: '#38b2ac', emoji: '🌍', name: 'Lifestyle' },
+    { id: 'mental', icon: 'flash-outline', color: '#6366f1', emoji: '🧠', nameKey: 'mental' },
+    { id: 'physical', icon: 'activity-outline', color: '#10b981', emoji: '💪', nameKey: 'physical' },
+    { id: 'career', icon: 'briefcase-outline', color: '#8b5cf6', emoji: '💼', nameKey: 'career' },
+    { id: 'financial', icon: 'trending-up-outline', color: '#f59e0b', emoji: '💰', nameKey: 'financial' },
+    { id: 'relationships', icon: 'heart-outline', color: '#ef4444', emoji: '❤️', nameKey: 'relationships' },
+    { id: 'spiritual', icon: 'sun-outline', color: '#3b82f6', emoji: '🕊️', nameKey: 'spiritual' },
+    { id: 'creativity', icon: 'color-palette-outline', color: '#9a7cb6', emoji: '🎨', nameKey: 'creativity' },
+    { id: 'lifestyle', icon: 'globe-outline', color: '#14b8a6', emoji: '🌍', nameKey: 'lifestyle' },
   ];
+
+  const recentMessages = MOCK_MESSAGES.slice(0, 3);
 
   if (loading) {
     return (
-      <ThemedView style={[appStyles.container, appStyles.center]}>
-        <ActivityIndicator size="large" color={palette.primary} />
-      </ThemedView>
+      <Layout style={styles.container} level="1">
+        <AppHeader />
+        <View style={styles.center}>
+          <Spinner size="giant" />
+        </View>
+      </Layout>
     );
   }
 
   return (
-    <ThemedView style={appStyles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Header */}
-        <View style={[appStyles.mb3, { marginTop: spacing.lg }]}>
-          <Text style={[appStyles.heading2, { color: colors.text }]}>
-            {t('motivation.welcome')}, {user?.username || 'User'}! 👋
-          </Text>
-          <Text style={[appStyles.bodyTextSecondary, { color: colors.textSecondary, marginTop: spacing.xs }]}>
-            {t('motivation.tagline') || 'Stay motivated and achieve your goals'}
-          </Text>
-        </View>
-
+    <Layout style={styles.container} level="1">
+      <AppHeader />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+          <Card style={styles.statCard}>
             <LinearGradient
               colors={['#6366f1', '#8b5cf6']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.statIconGradient}
+              style={styles.statGradient}
             >
-              <Zap size={20} color="#fff" />
+              <Icon name="flash-outline" style={styles.statIcon} fill="#ffffff" />
+              <Text style={styles.statValue}>{stats.messages_today}</Text>
+              <Text style={styles.statLabel}>{t('home.messagesTitle')}</Text>
             </LinearGradient>
-            <Text style={[appStyles.heading1, { color: colors.text, marginTop: spacing.sm, fontSize: 28 }]}>
-              {stats.messages_today}
-            </Text>
-            <Text style={[appStyles.smallText, { color: colors.textSecondary }]}>
-              Today's Messages
-            </Text>
-          </View>
+          </Card>
 
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+          <Card style={styles.statCard}>
             <LinearGradient
-              colors={['#f59e0b', '#ef4444']}
+              colors={['#10b981', '#059669']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.statIconGradient}
+              style={styles.statGradient}
             >
-              <Flame size={20} color="#fff" />
+              <Text style={styles.statValue}>{stats.total_messages}</Text>
+              <Text style={styles.statLabel}>{t('home.totalMessages')}</Text>
             </LinearGradient>
-            <Text style={[appStyles.heading1, { color: colors.text, marginTop: spacing.sm, fontSize: 28 }]}>
-              {stats.current_streak}
-            </Text>
-            <Text style={[appStyles.smallText, { color: colors.textSecondary }]}>
-              Day Streak
-            </Text>
-          </View>
+          </Card>
 
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+          <Card style={styles.statCard}>
             <LinearGradient
-              colors={['#10b981', '#3b82f6']}
+              colors={['#f59e0b', '#d97706']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.statIconGradient}
+              style={styles.statGradient}
             >
-              <Star size={20} color="#fff" />
+              <Icon name="star" style={styles.statIcon} fill="#ffffff" />
+              <Text style={styles.statValue}>{stats.favorite_messages}</Text>
+              <Text style={styles.statLabel}>{t('home.favorites')}</Text>
             </LinearGradient>
-            <Text style={[appStyles.heading1, { color: colors.text, marginTop: spacing.sm, fontSize: 28 }]}>
-              {stats.favorite_messages}
-            </Text>
-            <Text style={[appStyles.smallText, { color: colors.textSecondary }]}>
-              Favorites
-            </Text>
-          </View>
+          </Card>
 
-          <View style={[styles.statCard, { backgroundColor: colors.surface }]}>
+          <Card style={styles.statCard}>
             <LinearGradient
-              colors={['#3b82f6', '#6366f1']}
+              colors={['#ef4444', '#dc2626']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.statIconGradient}
+              style={styles.statGradient}
             >
-              <TrendingUp size={20} color="#fff" />
+              <Text style={styles.statValue}>{stats.current_streak} 🔥</Text>
+              <Text style={styles.statLabel}>{t('home.streak')}</Text>
             </LinearGradient>
-            <Text style={[appStyles.heading1, { color: colors.text, marginTop: spacing.sm, fontSize: 28 }]}>
-              {stats.total_messages}
-            </Text>
-            <Text style={[appStyles.smallText, { color: colors.textSecondary }]}>
-              Total Messages
-            </Text>
-          </View>
+          </Card>
         </View>
 
-        {/* Life Categories */}
-        <View style={appStyles.mb4}>
-          <Text style={[appStyles.heading2, { color: colors.text, marginBottom: spacing.md }]}>
-            Focus Areas
+        {/* Categories */}
+        <Card style={styles.sectionCard}>
+          <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+            {t('home.categories')}
           </Text>
           <View style={styles.categoriesGrid}>
             {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[styles.categoryCard, appStyles.card, { backgroundColor: colors.surface }]}
-              >
-                <View style={[styles.categoryIcon, { backgroundColor: `${category.color}15` }]}>
-                  <Text style={{ fontSize: 32 }}>{category.emoji}</Text>
-                </View>
-                <Text style={[appStyles.smallText, { color: colors.text, textAlign: 'center', marginTop: spacing.sm }]}>
-                  {category.name}
+              <TouchableOpacity key={category.id} style={styles.categoryItem}>
+                <LinearGradient
+                  colors={[category.color, `${category.color}dd`]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.categoryGradient}
+                >
+                  <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+                </LinearGradient>
+                <Text style={[styles.categoryName, isRTL && styles.textRTL]}>
+                  {t(`categories.${category.nameKey}.name`) || category.nameKey}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Card>
 
-        {/* Quick Actions */}
-        <View style={appStyles.mb4}>
-          <Text style={[appStyles.heading2, { color: colors.text, marginBottom: spacing.md }]}>
-            Quick Actions
-          </Text>
-          
-          <TouchableOpacity style={[styles.actionCard, appStyles.card, { backgroundColor: colors.surface }]}>
-            <View style={[styles.actionIcon, { backgroundColor: '#6366f115' }]}>
-              <Calendar size={24} color="#6366f1" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[appStyles.bodyText, { color: colors.text, fontWeight: '600' }]}>
-                Set Today's Goals
+        {/* Recent Messages */}
+        <Card style={styles.sectionCard}>
+          <View style={[styles.sectionHeader, isRTL && styles.sectionHeaderRTL]}>
+            <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+              {t('home.recentMessages')}
+            </Text>
+            <TouchableOpacity>
+              <Text style={[styles.viewAllText, { color: colors.primary }]}>
+                {t('home.viewAll')}
               </Text>
-              <Text style={[appStyles.smallText, { color: colors.textSecondary, marginTop: 4 }]}>
-                Define what you want to achieve today
-              </Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity style={[styles.actionCard, appStyles.card, { backgroundColor: colors.surface, marginTop: spacing.md }]}>
-            <View style={[styles.actionIcon, { backgroundColor: '#10b98115' }]}>
-              <Zap size={24} color="#10b981" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[appStyles.bodyText, { color: colors.text, fontWeight: '600' }]}>
-                Get Motivated
-              </Text>
-              <Text style={[appStyles.smallText, { color: colors.textSecondary, marginTop: 4 }]}>
-                Receive your personalized AI message
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+          {recentMessages.length === 0 ? (
+            <Text style={styles.emptyText}>{t('home.noRecentMessages')}</Text>
+          ) : (
+            recentMessages.map((message) => (
+              <Card key={message.id} style={styles.messageCard}>
+                <View style={[styles.messageHeader, isRTL && styles.messageHeaderRTL]}>
+                  <Text style={styles.categoryBadge}>
+                    {message.category}
+                  </Text>
+                  {message.isFavorite && <Icon name="star" style={styles.favoriteIcon} fill="#f59e0b" />}
+                </View>
+                <Text style={[styles.messageContent, isRTL && styles.textRTL]}>
+                  {language === 'ar' ? message.content.ar : message.content.en}
+                </Text>
+                {message.author && (
+                  <Text style={styles.messageAuthor}>- {message.author}</Text>
+                )}
+              </Card>
+            ))
+          )}
+        </Card>
       </ScrollView>
-    </ThemedView>
+    </Layout>
   );
-}
-
-const styles = StyleSheet.create({
+}const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 24,
     gap: 12,
+    marginBottom: 16,
   },
   statCard: {
-    width: (width - 48 - 12) / 2,
-    padding: 16,
+    flex: 1,
+    minWidth: (width - 48) / 2,
     borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: 0,
+    overflow: 'hidden',
   },
-  statIconGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
+  statGradient: {
+    padding: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginTop: 8,
+    fontFamily: 'IBMPlexSansArabic-Bold',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#ffffff',
+    opacity: 0.9,
+    marginTop: 4,
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  sectionCard: {
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionHeaderRTL: {
+    flexDirection: 'row-reverse',
+  },
+  sectionTitle: {
+    fontFamily: 'IBMPlexSansArabic-Bold',
+  },
+  textRTL: {
+    textAlign: 'right',
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontFamily: 'IBMPlexSansArabic-Medium',
   },
   categoriesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    marginTop: 8,
   },
-  categoryCard: {
-    width: (width - 48 - 24) / 3,
-    aspectRatio: 1,
-    padding: 12,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
+  categoryItem: {
+    width: (width - 80) / 4,
     alignItems: 'center',
   },
-  actionCard: {
+  categoryGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryEmoji: {
+    fontSize: 28,
+  },
+  categoryName: {
+    fontSize: 11,
+    textAlign: 'center',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  messageCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  messageHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 8,
   },
-  actionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+  messageHeaderRTL: {
+    flexDirection: 'row-reverse',
+  },
+  categoryBadge: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    opacity: 0.6,
+    fontFamily: 'IBMPlexSansArabic-Medium',
+  },
+  messageContent: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  messageAuthor: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    opacity: 0.7,
+    marginTop: 8,
+    fontFamily: 'IBMPlexSansArabic-Light',
+  },
+  emptyText: {
+    textAlign: 'center',
+    opacity: 0.5,
+    marginTop: 20,
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  statIcon: {
+    width: 24,
+    height: 24,
+  },
+  favoriteIcon: {
+    width: 16,
+    height: 16,
   },
 });

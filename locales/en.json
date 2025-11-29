@@ -14,12 +14,16 @@
     "back": "Back",
     "next": "Next",
     "done": "Done",
-    "close": "Close"
+    "close": "Close",
+    "success": "Success",
+    "call": "Call"
   },
   "auth": {
     "login": "Login",
     "username": "Username",
     "password": "Password",
+    "usernamePlaceholder": "Enter your username",
+    "passwordPlaceholder": "Enter your password",
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
     "signUp": "Sign Up",
@@ -32,32 +36,36 @@
     "welcome": "Welcome",
     "tagline": "Stay motivated and achieve your goals",
     "getStarted": "Get Started",
-    "justNow": "Just now"
+    "justNow": "Just now",
+    "aiMessages": "AI-Powered Messages",
+    "aiMessagesDesc": "Personalized motivational messages generated just for you",
+    "lifeAreas": "8 Life Areas",
+    "lifeAreasDesc": "Focus on mental, physical, career, financial growth & more",
+    "trackProgress": "Track Progress",
+    "trackProgressDesc": "Monitor your growth and maintain your motivation streak"
   },
   "notifications": {
-    "title": "Notifications"
+    "title": "Notifications",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "notificationTitle": "Notification Title",
+    "notificationMessage": "This is an example text that can be replaced in the same space.",
+    "newAchievement": "New Achievement!",
+    "completedStreak": "You completed your 7-day streak!",
+    "dailyMessage": "Daily Message",
+    "messageReady": "Your personalized message is ready",
+    "goalReminder": "Goal Reminder",
+    "setGoalsToday": "Don't forget to set your goals for today"
   },
   "messages": {
     "title": "Messages",
-    "searchPlaceholder": "Search here..."
+    "searchPlaceholder": "Search here...",
+    "noMessages": "No messages",
+    "loadingMessages": "Loading messages..."
   },
   "header": {
-    "welcome": " Welcome {{name}}",
-    "subtitle": "Global Ranking Conference 2025"
-  },
-  "welcomeCard": {
-    "title": "Welcome to the Global Classification Forum in Saudi Arabia",
-    "subtitle": "We are pleased to have you participate in the Global Classification Forum. Browse your event schedule, venue locations, and featured speakers."
-  },
-  "sidebar": {
     "welcome": "Welcome",
-    "subtitle": "Global Ranking Conference",
-    "eventSchedule": "Event Schedule",
-    "speakers": "Speakers",
-    "attendees": "Attendees",
-    "exhibitions": "Exhibitions",
-    "floorPlan": "Floor Plan",
-    "location": "Location"
+    "subtitle": "Stay motivated and achieve your goals"
   },
   "navigation": {
     "index": "Home",
@@ -66,6 +74,18 @@
     "messages": "Messages",
     "notification": "Track",
     "profile": "Profile"
+  },
+  "home": {
+    "title": "Dashboard",
+    "subtitle": "Stay motivated and achieve your goals",
+    "messagesTitle": "Today's Messages",
+    "totalMessages": "Total Messages",
+    "favorites": "Favorites",
+    "streak": "Streak",
+    "categories": "Categories",
+    "recentMessages": "Recent Messages",
+    "noRecentMessages": "No recent messages",
+    "viewAll": "View All"
   },
   "profile": {
     "preferences": "Preferences",
@@ -89,6 +109,48 @@
     "english": "English",
     "arabic": "العربية"
   },
+  "changePassword": {
+    "description": "Please enter your current password and choose a new secure password",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter current password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter new password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Re-enter new password",
+    "passwordHint": "At least 8 characters, 1 uppercase, 1 lowercase, 1 number",
+    "fillAllFields": "Please fill all fields",
+    "passwordRequirements": "Password must be at least 8 characters with uppercase, lowercase, and number",
+    "passwordMismatch": "Passwords do not match",
+    "success": "Password changed successfully!",
+    "error": "Failed to change password. Please try again."
+  },
+  "privacy": {
+    "security": "Security",
+    "privacy": "Privacy",
+    "yourData": "Your Data",
+    "twoFactorAuth": "Two-Factor Authentication",
+    "twoFactorAuthDesc": "Add extra security to your account",
+    "biometricAuth": "Biometric Authentication",
+    "biometricAuthDesc": "Use fingerprint or face ID",
+    "shareAnalytics": "Share Analytics",
+    "shareAnalyticsDesc": "Help improve the app",
+    "personalizedAds": "Personalized Ads",
+    "personalizedAdsDesc": "See relevant advertisements",
+    "downloadData": "Download Your Data",
+    "downloadDataDesc": "Get a copy of your information",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDesc": "Permanently delete your account"
+  },
+  "help": {
+    "faq": "Frequently Asked Questions",
+    "searchFAQ": "Search frequently asked questions...",
+    "contactUs": "Contact Us",
+    "emailSupport": "Email Support",
+    "whatsappSupport": "WhatsApp Support",
+    "phoneSupport": "Phone Support",
+    "callUs": "Call us anytime",
+    "phoneNumber": "Phone: +966 50 000 0000"
+  },
   "home": {
     "title": "Global Resource Finder",
     "subtitle": "Stay connected with the latest updates",
@@ -105,10 +167,23 @@
     "quotient": "Quotient"
   },
   "news": {
-    "title": "Latest News",
-    "subtitle": "Stay informed with recent updates",
-    "noNews": "No news available",
-    "loadingNews": "Loading news..."
+    "title": "My Goals",
+    "subtitle": "Track your progress and achieve your dreams",
+    "noNews": "No goals available",
+    "loadingNews": "Loading goals..."
+  },
+  "goals": {
+    "all": "All",
+    "active": "Active",
+    "completed": "Completed",
+    "total": "Total Goals",
+    "progress": "Progress",
+    "targetDate": "Target",
+    "noGoals": "No goals found",
+    "priority": "Priority",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
   },
   "weather": {
     "title": "Weather",

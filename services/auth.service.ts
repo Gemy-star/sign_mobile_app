@@ -3,13 +3,13 @@
 
 import { API_CONFIG, getApiUrl, getStorageKey } from '@/config/api.config';
 import {
-  ApiResponse,
-  LoginRequest,
-  RegisterRequest,
-  TokenRefreshRequest,
-  TokenResponse,
-  TokenVerifyRequest,
-  User,
+    ApiResponse,
+    LoginRequest,
+    RegisterRequest,
+    TokenRefreshRequest,
+    TokenResponse,
+    TokenVerifyRequest,
+    User,
 } from '@/types/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -157,7 +157,7 @@ class AuthService {
    */
   private async mockLogin(credentials: LoginRequest): Promise<ApiResponse<TokenResponse>> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // Mock admin user
     if (credentials.username === 'admin' && credentials.password === 'admin123456') {

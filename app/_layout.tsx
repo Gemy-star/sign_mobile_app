@@ -1,35 +1,39 @@
-import Header from '@/components/header';
-import Sidebar from '@/components/sidebar';
+import { customTheme } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { LoadingProvider } from '@/contexts/LoadingContext';
-import { SidebarProvider, useSidebar } from '@/contexts/SidebarContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import LoginScreen from '@/screens/LoginScreen';
 import WelcomeMotivationScreen from '@/screens/WelcomeMotivationScreen';
+import * as eva from '@eva-design/eva';
+import { ApplicationProvider, IconRegistry, Layout, Spinner, Text } from '@ui-kitten/components';
+import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-const AuthenticatedLayout = () => {
-  const { isVisible } = useSidebar();
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
+const AuthenticatedLayout = () => {
   return (
     <View style={styles.contentArea}>
-      <Header />
-      {isVisible ? <Sidebar /> : <Stack screenOptions={{ headerShown: false }} />}
+      <Stack screenOptions={{ headerShown: false }} />
     </View>
   );
 };
 
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [showWelcome, setShowWelcome] = useState(false);
-  const router = useRouter();
+  const { colorScheme } = useTheme();
+  const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
+
+  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !showWelcome) {
+    if (!isLoading && isAuthenticated && showWelcome === null) {
       setShowWelcome(true);
     }
   }, [isLoading, isAuthenticated]);
@@ -37,13 +41,19 @@ const AppContent = () => {
   // Show loader while checking auth
   if (isLoading) {
     return (
-      <View style={styles.loaderContainer}>
-        <Image
-          source={require('../assets/images/loader.png')}
-          style={styles.loaderImage}
-          resizeMode="contain"
-        />
-      </View>
+      <Layout style={styles.loaderContainer} level="1">
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../assets/images/loader.png')}
+            style={styles.loaderImage}
+            resizeMode="contain"
+          />
+        </View>
+        <Spinner size="giant" />
+        <Text category="h6" style={styles.loaderText}>
+          {isDark ? 'Loading...' : 'جاري التحميل...'}
+        </Text>
+      </Layout>
     );
   }
 
@@ -59,12 +69,11 @@ const AppContent = () => {
   }
 
   // Show welcome screen after login
-  if (showWelcome) {
+  if (showWelcome === true) {
     return (
       <WelcomeMotivationScreen
         onGetStarted={() => {
           setShowWelcome(false);
-          router.replace('/(tabs)');
         }}
       />
     );
@@ -74,51 +83,85 @@ const AppContent = () => {
   return <AuthenticatedLayout />;
 };
 
+// Theme wrapper component - must be used inside ThemeProvider
+const ThemedApp = () => {
+  const { colorScheme } = useTheme();
+
+  // Merge Eva theme with custom theme based on current theme mode
+  const theme = colorScheme === 'dark'
+    ? { ...eva.dark, ...customTheme.dark }
+    : { ...eva.light, ...customTheme.light };
+
+  return (
+    <>
+      <IconRegistry icons={EvaIconsPack} />
+      <ApplicationProvider {...eva} theme={theme}>
+        <View style={styles.appContainer}>
+          <AppContent />
+        </View>
+      </ApplicationProvider>
+    </>
+  );
+};
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    'IBM Plex Sans Arabic': require('../assets/fonts/IBMPlexSansArabic-Regular.ttf'),
-    'IBM Plex Sans Arabic Bold': require('../assets/fonts/IBMPlexSansArabic-Bold.ttf'),
+    'IBMPlexSansArabic-Regular': require('../assets/fonts/IBMPlexSansArabic-Regular.ttf'),
+    'IBMPlexSansArabic-Bold': require('../assets/fonts/IBMPlexSansArabic-Bold.ttf'),
+    'IBMPlexSansArabic-Medium': require('../assets/fonts/IBMPlexSansArabic-Medium.ttf'),
+    'IBMPlexSansArabic-SemiBold': require('../assets/fonts/IBMPlexSansArabic-SemiBold.ttf'),
+    'IBMPlexSansArabic-Light': require('../assets/fonts/IBMPlexSansArabic-Light.ttf'),
   });
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  // Don't render anything until fonts are loaded
   if (!fontsLoaded) {
-    return (
-      <View style={styles.loaderContainer}>
-        <Image
-          source={require('../assets/images/loader.png')}
-          style={styles.loaderImage}
-          resizeMode="contain"
-        />
-      </View>
-    );
+    return null;
   }
 
   return (
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <SidebarProvider>
-            <LoadingProvider>
-              <View style={styles.appContainer}>
-                <AppContent />
-              </View>
-            </LoadingProvider>
-          </SidebarProvider>
+          <LoadingProvider>
+            <ThemedApp />
+          </LoadingProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
-}
-
-const styles = StyleSheet.create({
+}const styles = StyleSheet.create({
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    gap: 20,
+  },
+  logoContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   loaderImage: {
-    width: 150,
-    height: 150,
+    width: 80,
+    height: 80,
+  },
+  loaderText: {
+    fontFamily: 'IBMPlexSansArabic-Medium',
+    marginTop: 8,
   },
   appContainer: {
     flex: 1,

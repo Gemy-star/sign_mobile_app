@@ -3,6 +3,7 @@
 // Based on motivational messages dashboard styles
 
 import { StyleSheet } from 'react-native';
+import { FontFamily } from './Typography';
 
 // ============================================================================
 // COLOR PALETTE - SHARED ACROSS THEMES
@@ -254,37 +255,44 @@ export const createStyles = (theme: 'light' | 'dark') => {
     heading1: {
       fontSize: Typography.fontSize.xxxl,
       fontWeight: Typography.fontWeight.bold,
+      fontFamily: FontFamily.arabicBold,
       color: themeColors.text,
       lineHeight: Typography.fontSize.xxxl * Typography.lineHeight.tight,
     },
     heading2: {
       fontSize: Typography.fontSize.xxl,
       fontWeight: Typography.fontWeight.bold,
+      fontFamily: FontFamily.arabicBold,
       color: themeColors.text,
       lineHeight: Typography.fontSize.xxl * Typography.lineHeight.tight,
     },
     heading3: {
       fontSize: Typography.fontSize.xl,
       fontWeight: Typography.fontWeight.semibold,
+      fontFamily: FontFamily.arabicSemiBold,
       color: themeColors.text,
       lineHeight: Typography.fontSize.xl * Typography.lineHeight.normal,
     },
     bodyText: {
       fontSize: Typography.fontSize.base,
+      fontFamily: FontFamily.arabic,
       color: themeColors.text,
       lineHeight: Typography.fontSize.base * Typography.lineHeight.normal,
     },
     bodyTextSecondary: {
       fontSize: Typography.fontSize.base,
+      fontFamily: FontFamily.arabic,
       color: themeColors.textSecondary,
       lineHeight: Typography.fontSize.base * Typography.lineHeight.normal,
     },
     smallText: {
       fontSize: Typography.fontSize.sm,
+      fontFamily: FontFamily.arabic,
       color: themeColors.textSecondary,
     },
     caption: {
       fontSize: Typography.fontSize.xs,
+      fontFamily: FontFamily.arabic,
       color: themeColors.textMuted,
     },
 

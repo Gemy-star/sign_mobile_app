@@ -1,3 +1,5 @@
+import { FontFamily } from '@/constants/Typography';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,12 +13,15 @@ import { ThemedText } from './ThemedText';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HEADER_HEIGHT = Platform.OS === 'ios' ? 110 : 90;
 
-const Sidebar = ({ userName = 'عبدالرحمن' }) => {
-  const { isVisible, toggleSidebar } = useSidebar(); // add hideSidebar for overlay click
+const Sidebar = () => {
+  const { isVisible, toggleSidebar } = useSidebar();
   const { language, t } = useLanguage();
   const { colorScheme } = useTheme();
+  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const isRTL = language === 'ar';
+
+  const userName = user?.first_name || user?.username || 'User';
 
   const logoSource = colorScheme === 'dark'
     ? require('@/assets/images/logo-dark.png')
@@ -75,6 +80,20 @@ const Sidebar = ({ userName = 'عبدالرحمن' }) => {
             resizeMode="contain"
           />
         </View>
+
+        {/* User Welcome */}
+        <View style={[styles.userSection, isRTL && { alignItems: 'flex-end' }]}>
+          <ThemedText style={[styles.userWelcome, { fontFamily: FontFamily.arabic, textAlign: isRTL ? 'right' : 'left' }]}>
+            {t('sidebar.welcome')}
+          </ThemedText>
+          <ThemedText style={[styles.userName, { fontFamily: FontFamily.arabicBold, textAlign: isRTL ? 'right' : 'left' }]}>
+            {userName}
+          </ThemedText>
+          <ThemedText style={[styles.userSubtitle, { fontFamily: FontFamily.arabic, textAlign: isRTL ? 'right' : 'left' }]}>
+            {t('sidebar.subtitle')}
+          </ThemedText>
+        </View>
+
         <ScrollView contentContainerStyle={[styles.menu, { paddingBottom: insets.bottom + 20 }]}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
@@ -82,7 +101,7 @@ const Sidebar = ({ userName = 'عبدالرحمن' }) => {
               style={[styles.menuItem, isRTL && { flexDirection: 'row-reverse' }]}
             >
               <View style={styles.icon}>{item.icon}</View>
-              <ThemedText style={styles.menuText}>{item.label}</ThemedText>
+              <ThemedText style={[styles.menuText, { fontFamily: FontFamily.arabic, textAlign: isRTL ? 'right' : 'left' }]}>{item.label}</ThemedText>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -119,6 +138,26 @@ const styles = StyleSheet.create({
     width: 120,
     height: 60,
   },
+  userSection: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 16,
+  },
+  userWelcome: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 18,
+    marginBottom: 4,
+  },
+  userSubtitle: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+  },
   menu: {
     gap: 24,
   },
@@ -135,7 +174,6 @@ const styles = StyleSheet.create({
   menuText: {
     color: '#fff',
     fontSize: 14,
-    fontFamily: 'IBM Plex Sans Arabic',
   },
 });
 

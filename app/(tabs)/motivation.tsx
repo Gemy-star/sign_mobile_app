@@ -1,317 +1,206 @@
 // app/(tabs)/motivation.tsx
-// Main Motivation App Dashboard Screen
+// Motivation Screen with UI Kitten
 
+import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAppStyles } from '@/hooks/useAppStyles';
-import { dataService } from '@/services/data.service';
-import { DashboardStats, Message } from '@/types/api';
+import { useTheme } from '@/contexts/ThemeContext';
+import { MOCK_MESSAGES } from '@/services/message.mock';
+import { Card, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-    Bell,
     Brain,
     Briefcase,
-    Clock,
     DollarSign,
     Dumbbell,
     Heart,
     Palette,
-    Send,
     Sparkles,
     Star,
-    Sun,
-    TrendingUp
+    Sun
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function MotivationScreen() {
-  const { styles, colors, palette, spacing } = useAppStyles();
+  const { colors } = useTheme();
   const { t, language } = useLanguage();
+  const [loading] = useState(false);
 
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await dataService.getDashboardStats();
-
-      if (response.success && response.data) {
-        setDashboardData(response.data);
-      } else {
-        setError(response.error || 'Failed to load dashboard data');
-      }
-    } catch (err) {
-      setError('An unexpected error occurred');
-      console.error('Dashboard error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const stats = dashboardData?.stats || {
-    messages_today: 0,
-    total_messages: 0,
-    favorite_messages: 0,
-    current_streak: 0,
-  };
+  const isRTL = language === 'ar';
 
   const categories = [
-    { id: 'mental', icon: Brain, color: palette.primary, emoji: '🧠' },
-    { id: 'physical', icon: Dumbbell, color: palette.success, emoji: '💪' },
-    { id: 'career', icon: Briefcase, color: palette.secondary, emoji: '💼' },
-    { id: 'financial', icon: DollarSign, color: palette.warning, emoji: '💰' },
-    { id: 'relationships', icon: Heart, color: palette.danger, emoji: '❤️' },
-    { id: 'spiritual', icon: Sparkles, color: palette.info, emoji: '🕊️' },
+    { id: 'mental', icon: Brain, color: '#6366f1', emoji: '🧠' },
+    { id: 'physical', icon: Dumbbell, color: '#10b981', emoji: '💪' },
+    { id: 'career', icon: Briefcase, color: '#8b5cf6', emoji: '💼' },
+    { id: 'financial', icon: DollarSign, color: '#f59e0b', emoji: '💰' },
+    { id: 'relationships', icon: Heart, color: '#ef4444', emoji: '❤️' },
+    { id: 'spiritual', icon: Sparkles, color: '#3b82f6', emoji: '🕊️' },
     { id: 'creativity', icon: Palette, color: '#9a7cb6', emoji: '🎨' },
     { id: 'lifestyle', icon: Sun, color: '#38b2ac', emoji: '🌍' },
   ];
 
-  const recentMessages = dashboardData?.recent_messages || [];
-
-  const getMessageContent = (message: Message) => {
-    return message.content || '';
-  };
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-    if (diffHours < 1) return t('motivation.justNow');
-    if (diffHours === 1) return '1h ago';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
-  };
-
-  const handleToggleFavorite = async (messageId: number) => {
-    try {
-      await dataService.toggleMessageFavorite(messageId);
-      // Reload dashboard to reflect changes
-      loadDashboardData();
-    } catch (err) {
-      console.error('Failed to toggle favorite:', err);
-    }
-  };
+  const motivationalMessages = MOCK_MESSAGES.slice(0, 5);
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={palette.primary} />
-        <Text style={[styles.bodyTextSecondary, styles.mt2]}>
-          {t('motivation.loading')}
-        </Text>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={[styles.container, styles.center, { padding: spacing.xl }]}>
-        <Text style={[styles.heading3, { color: palette.danger, marginBottom: spacing.md }]}>
-          {t('motivation.error')}
-        </Text>
-        <Text style={[styles.bodyTextSecondary, { textAlign: 'center', marginBottom: spacing.lg }]}>
-          {error}
-        </Text>
-        <TouchableOpacity
-          style={[styles.button, styles.buttonPrimary]}
-          onPress={loadDashboardData}
-        >
-          <Text style={styles.buttonText}>{t('motivation.retry')}</Text>
-        </TouchableOpacity>
-      </View>
+      <Layout style={styles.container} level="1">
+        <AppHeader title={t('motivation.appName')} showUserInfo={false} />
+        <View style={styles.center}>
+          <Spinner size="giant" />
+        </View>
+      </Layout>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={[styles.rowBetween, styles.mb3]}>
-          <View>
-            <Text style={styles.heading1}>{t('motivation.dashboard')}</Text>
-            <Text style={styles.bodyTextSecondary}>{t('motivation.tagline')}</Text>
-          </View>
-          <TouchableOpacity style={styles.avatar}>
-            <Text style={styles.avatarText}>ME</Text>
-          </TouchableOpacity>
-        </View>
+    <Layout style={styles.container} level="1">
+      <AppHeader title={t('motivation.appName')} showUserInfo={false} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Categories */}
+        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+          {t('motivation.lifeAreas')}
+        </Text>
+        <Text category="p2" appearance="hint" style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
+          {t('motivation.lifeAreasDesc')}
+        </Text>
 
-        {/* Stats Grid */}
-        <Text style={[styles.heading3, styles.mb2]}>{t('motivation.myStats')}</Text>
-        <View style={[styles.row, styles.mb3]}>
-          <View style={{ flex: 1, marginRight: spacing.sm }}>
-            <View style={styles.statCard}>
-              <View style={styles.statHeader}>
-                <View style={[styles.statIcon, { backgroundColor: palette.primary }]}>
-                  <Bell size={20} color="#fff" />
-                </View>
-              </View>
-              <Text style={styles.statValue}>{stats.messages_today}</Text>
-              <Text style={styles.statLabel}>{t('motivation.messagesToday')}</Text>
-            </View>
-          </View>
-
-          <View style={{ flex: 1, marginLeft: spacing.sm }}>
-            <View style={styles.statCard}>
-              <View style={styles.statHeader}>
-                <View style={[styles.statIcon, { backgroundColor: palette.info }]}>
-                  <TrendingUp size={20} color="#fff" />
-                </View>
-              </View>
-              <Text style={styles.statValue}>{stats.total_messages}</Text>
-              <Text style={styles.statLabel}>{t('motivation.totalReceived')}</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={[styles.row, styles.mb4]}>
-          <View style={{ flex: 1, marginRight: spacing.sm }}>
-            <View style={styles.statCard}>
-              <View style={styles.statHeader}>
-                <View style={[styles.statIcon, { backgroundColor: palette.warning }]}>
-                  <Star size={20} color="#fff" />
-                </View>
-              </View>
-              <Text style={styles.statValue}>{stats.favorite_messages}</Text>
-              <Text style={styles.statLabel}>{t('motivation.favorites')}</Text>
-            </View>
-          </View>
-
-          <View style={{ flex: 1, marginLeft: spacing.sm }}>
-            <View style={styles.statCard}>
-              <View style={styles.statHeader}>
-                <View style={[styles.statIcon, { backgroundColor: palette.success }]}>
-                  <Clock size={20} color="#fff" />
-                </View>
-              </View>
-              <Text style={styles.statValue}>{stats.current_streak}</Text>
-              <Text style={styles.statLabel}>{t('motivation.currentStreak')}</Text>
-              <View style={[styles.statTrend, { backgroundColor: `${palette.success}15` }]}>
-                <Text style={[styles.smallText, { color: palette.success }]}>
-                  {stats.current_streak} {t('motivation.days')}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Quick Actions */}
-        <Text style={[styles.heading3, styles.mb2]}>{t('motivation.quickActions')}</Text>
-        <View style={styles.mb4}>
-          <TouchableOpacity style={[styles.button, styles.buttonPrimary, styles.mb2]}>
-            <Send size={18} color="#fff" />
-            <Text style={styles.buttonText}>{t('motivation.sendNow')}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.button, styles.buttonOutline]}>
-            <Clock size={18} color={palette.primary} />
-            <Text style={[styles.buttonText, styles.buttonTextOutline]}>
-              {t('motivation.viewHistory')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Active Categories */}
-        <Text style={[styles.heading3, styles.mb2]}>{t('motivation.selectCategories')}</Text>
-        <View style={[styles.row, { flexWrap: 'wrap', marginBottom: spacing.lg }]}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.badge,
-                {
-                  backgroundColor: `${category.color}15`,
-                  marginRight: spacing.sm,
-                  marginBottom: spacing.sm,
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: spacing.sm,
-                },
-              ]}
-            >
-              <Text style={{ fontSize: 16 }}>{category.emoji}</Text>
-              <Text style={[styles.badgeText, { color: category.color }]}>
-                {t(`categories.${category.id}.name`)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Recent Messages */}
-        <Text style={[styles.heading3, styles.mb2]}>{t('motivation.recentMessages')}</Text>
-        {recentMessages.length > 0 ? (
-          recentMessages.slice(0, 3).map((message) => (
-            <View key={message.id} style={[styles.card, styles.mb2]}>
-              <View style={styles.rowBetween}>
-                <View style={[styles.badge, styles.badgePrimary, { marginBottom: spacing.sm }]}>
-                  <Text style={[styles.badgeText, styles.badgeTextPrimary]}>
-                    {message.scope_name || 'General'}
+        <View style={styles.categoriesGrid}>
+          {categories.map((category) => {
+            const IconComponent = category.icon;
+            return (
+              <TouchableOpacity key={category.id} style={styles.categoryItem}>
+                <Card style={styles.categoryCard}>
+                  <LinearGradient
+                    colors={[category.color, `${category.color}dd`]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.categoryGradient}
+                  >
+                    <IconComponent size={28} color="#ffffff" />
+                  </LinearGradient>
+                  <Text category="c1" style={[styles.categoryName, isRTL && styles.textRTL]}>
+                    {t(`categories.${category.id}.name`) || category.id}
                   </Text>
-                </View>
-                <TouchableOpacity onPress={() => handleToggleFavorite(message.id)}>
-                  <Star
-                    size={16}
-                    color={palette.warning}
-                    fill={message.is_favorited ? palette.warning : 'transparent'}
-                  />
-                </TouchableOpacity>
-              </View>
-              <Text style={[styles.bodyText, styles.mb1]}>{getMessageContent(message)}</Text>
-              <Text style={styles.caption}>
-                {getTimeAgo(message.created_at)}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <View style={[styles.card, styles.center, { padding: spacing.xl }]}>
-            <Text style={styles.bodyTextSecondary}>{t('motivation.noMessages')}</Text>
-          </View>
-        )}
+                </Card>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-        {/* Premium Prompt */}
-        <LinearGradient
-          colors={[palette.primary, palette.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.card, { padding: spacing.lg }]}
-        >
-          <View style={styles.rowBetween}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.heading3, { color: '#fff', marginBottom: spacing.sm }]}>
-                {t('motivation.upgradeToPremium')}
+        {/* Motivational Messages */}
+        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+          {t('motivation.aiMessages')}
+        </Text>
+        <Text category="p2" appearance="hint" style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
+          {t('motivation.aiMessagesDesc')}
+        </Text>
+
+        {motivationalMessages.map((message) => (
+          <Card key={message.id} style={styles.messageCard}>
+            <View style={[styles.messageHeader, isRTL && styles.messageHeaderRTL]}>
+              <Text category="c1" appearance="hint" style={styles.categoryBadge}>
+                {message.category}
               </Text>
-              <Text style={[styles.smallText, { color: 'rgba(255,255,255,0.9)' }]}>
-                {t('motivation.customRingtones')}, {t('motivation.advancedAI')}
-              </Text>
+              {message.isFavorite && <Star size={16} color="#f59e0b" fill="#f59e0b" />}
             </View>
-            <TouchableOpacity
-              style={[
-                styles.button,
-                { backgroundColor: '#fff', paddingHorizontal: spacing.lg }
-              ]}
-            >
-              <Text style={[styles.buttonText, { color: palette.primary }]}>
-                {t('motivation.upgradeNow')}
+            <Text category="p1" style={[styles.messageContent, isRTL && styles.textRTL]}>
+              {language === 'ar' ? message.content.ar : message.content.en}
+            </Text>
+            {message.author && (
+              <Text category="c1" appearance="hint" style={styles.messageAuthor}>
+                - {message.author}
               </Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+            )}
+          </Card>
+        ))}
       </ScrollView>
-    </View>
+    </Layout>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  sectionTitle: {
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    marginBottom: 16,
+  },
+  textRTL: {
+    textAlign: 'right',
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 24,
+  },
+  categoryItem: {
+    width: (width - 64) / 4,
+  },
+  categoryCard: {
+    padding: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  categoryGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  categoryName: {
+    fontSize: 10,
+    textAlign: 'center',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  categoryIcon: {
+    width: 24,
+    height: 24,
+  },
+  messageCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  messageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  messageHeaderRTL: {
+    flexDirection: 'row-reverse',
+  },
+  categoryBadge: {
+    textTransform: 'uppercase',
+    fontFamily: 'IBMPlexSansArabic-Medium',
+  },
+  messageContent: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    marginBottom: 8,
+  },
+  messageAuthor: {
+    fontStyle: 'italic',
+    fontFamily: 'IBMPlexSansArabic-Light',
+  },
+});

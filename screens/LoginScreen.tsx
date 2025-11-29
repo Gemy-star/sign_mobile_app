@@ -1,43 +1,44 @@
 // screens/LoginScreen.tsx
-// User Authentication Screen
+// User Authentication Screen - Redesigned with UI Kitten
 
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAppStyles } from '@/hooks/useAppStyles';
-import { authService } from '@/services/auth.service';
+import { useTheme } from '@/contexts/ThemeContext';
+import { Button, Card, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Lock, Mail } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
-  const { styles, colors, palette, spacing } = useAppStyles();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const { login } = useAuth();
+  const { colorScheme } = useTheme();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const isDark = colorScheme === 'dark';
 
   const handleLogin = async () => {
     // Validation
     if (!username.trim()) {
-      setError('Please enter your username');
+      setError(t('auth.loginError'));
       return;
     }
 
     if (!password.trim()) {
-      setError('Please enter your password');
+      setError(t('auth.loginError'));
       return;
     }
 
@@ -45,32 +46,29 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
       setLoading(true);
       setError(null);
 
-      const response = await authService.login({
-        username: username.trim(),
-        password: password.trim(),
-      });
+      // Add timeout wrapper
+      const timeoutPromise = new Promise<boolean>((_, reject) =>
+        setTimeout(() => reject(new Error('Login timeout')), 15000)
+      );
 
-      if (response.success) {
-        // Login successful
-        Alert.alert(
-          'Success',
-          'You have successfully logged in!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                if (onLoginSuccess) {
-                  onLoginSuccess();
-                }
-              },
-            },
-          ]
-        );
+      const loginPromise = login(username.trim(), password.trim());
+
+      const success = await Promise.race([loginPromise, timeoutPromise]);
+
+      if (success) {
+        // Login successful - auth context will handle state update
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
       } else {
-        setError(response.error || 'Login failed. Please check your credentials.');
+        setError(t('auth.loginError'));
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      if (err.message === 'Login timeout') {
+        setError('Login timeout. Please try again.');
+      } else {
+        setError(t('auth.loginError'));
+      }
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -83,161 +81,248 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
     setTimeout(() => handleLogin(), 100);
   };
 
+  const renderPasswordIcon = (props: any) => (
+    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+      <Icon
+        {...props}
+        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+        style={styles.iconStyle}
+        fill="#8F9BB3"
+      />
+    </TouchableOpacity>
+  );
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={[styles.contentContainer, styles.center]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Logo Section */}
-        <LinearGradient
-          colors={[palette.primary, palette.accent]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{
-            width: 120,
-            height: 120,
-            borderRadius: 60,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: spacing.xl,
-          }}
+      <Layout style={styles.container} level="1">
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Image
-            source={require('@/assets/images/loader.png')}
-            style={{ width: 80, height: 80 }}
-            resizeMode="contain"
-          />
-        </LinearGradient>
-
-        {/* Title */}
-        <Text style={[styles.heading1, { marginBottom: spacing.sm }]}>
-          {t('motivation.welcome')}
-        </Text>
-        <Text style={[styles.bodyTextSecondary, { marginBottom: spacing.xl, textAlign: 'center' }]}>
-          {t('motivation.tagline')}
-        </Text>
-
-        {/* Error Message */}
-        {error && (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: `${palette.danger}15`,
-                borderLeftWidth: 4,
-                borderLeftColor: palette.danger,
-                marginBottom: spacing.lg,
-              },
-            ]}
-          >
-            <Text style={{ color: palette.danger }}>{error}</Text>
-          </View>
-        )}
-
-        {/* Login Form */}
-        <View style={{ width: '100%', maxWidth: 400 }}>
-          {/* Username Input */}
-          <View style={[styles.mb3]}>
-            <Text style={[styles.bodyText, styles.mb1]}>{t('auth.username')}</Text>
-            <View
-              style={[
-                styles.input,
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: spacing.md,
-                },
-              ]}
+          {/* Logo Section with Gradient */}
+          <View style={styles.logoSection}>
+            <LinearGradient
+              colors={['#6366f1', '#8b5cf6', '#ec4899']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.logoGradient}
             >
-              <Mail size={20} color={colors.textSecondary} style={{ marginRight: spacing.sm }} />
-              <TextInput
-                style={{ flex: 1, color: colors.text, fontSize: 16 }}
-                placeholder="Enter your username"
-                placeholderTextColor={colors.textSecondary}
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-            </View>
-          </View>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('@/assets/images/loader.png')}
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </LinearGradient>
 
-          {/* Password Input */}
-          <View style={styles.mb4}>
-            <Text style={[styles.bodyText, styles.mb1]}>{t('auth.password')}</Text>
-            <View
-              style={[
-                styles.input,
-                {
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: spacing.md,
-                },
-              ]}
-            >
-              <Lock size={20} color={colors.textSecondary} style={{ marginRight: spacing.sm }} />
-              <TextInput
-                style={{ flex: 1, color: colors.text, fontSize: 16 }}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!loading}
-              />
-            </View>
-          </View>
-
-          {/* Login Button */}
-          <TouchableOpacity
-            style={[
-              styles.button,
-              styles.buttonPrimary,
-              loading && { opacity: 0.6 },
-            ]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>{t('auth.login')}</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Demo Login Button */}
-          <TouchableOpacity
-            style={[styles.button, styles.buttonOutline, styles.mt2]}
-            onPress={handleDemoLogin}
-            disabled={loading}
-          >
-            <Text style={[styles.buttonText, styles.buttonTextOutline]}>
-              {t('auth.tryDemo')}
+            {/* Title */}
+            <Text category="h1" style={styles.title}>
+              {t('motivation.welcome')}
             </Text>
-          </TouchableOpacity>
+            <Text category="s1" appearance="hint" style={styles.subtitle}>
+              {t('motivation.tagline')}
+            </Text>
+          </View>
 
-          {/* Forgot Password */}
-          <TouchableOpacity style={[styles.center, styles.mt3]}>
-            <Text style={[styles.bodyTextSecondary]}>{t('auth.forgotPassword')}</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Login Card */}
+          <Card style={styles.loginCard}>
+            {/* Error Message */}
+            {error && (
+              <View style={styles.errorContainer}>
+                <Icon name="alert-circle-outline" style={styles.errorIcon} fill="#EF4444" />
+                <Text category="s1" status="danger" style={styles.errorText}>{error}</Text>
+              </View>
+            )}
 
-        {/* Register Link */}
-        <View style={[styles.row, styles.center, styles.mt4]}>
-          <Text style={styles.bodyTextSecondary}>{t('auth.noAccount')} </Text>
-          <TouchableOpacity>
-            <Text style={{ color: palette.primary, fontWeight: '600' }}>{t('auth.signUp')}</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+            {/* Login Form */}
+            <View style={styles.formContainer}>
+            {/* Username Input */}
+            <Input
+              label={t('auth.username')}
+              placeholder={t('auth.usernamePlaceholder')}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              disabled={loading}
+              accessoryLeft={(props) => <Icon name="email-outline" style={styles.iconStyle} fill="#8F9BB3" />}
+              style={styles.input}
+              textStyle={styles.inputText}
+            />
+
+            {/* Password Input */}
+            <Input
+              label={t('auth.password')}
+              placeholder={t('auth.passwordPlaceholder')}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              disabled={loading}
+              accessoryLeft={(props) => <Icon name="lock-outline" style={styles.iconStyle} fill="#8F9BB3" />}
+              accessoryRight={renderPasswordIcon}
+              style={styles.input}
+              textStyle={styles.inputText}
+            />
+
+            {/* Login Button */}
+            <Button
+              onPress={handleLogin}
+              disabled={loading}
+              accessoryLeft={loading ? () => <Spinner size="small" status="control" /> : undefined}
+              style={styles.loginButton}
+            >
+              {loading ? '' : t('auth.login')}
+            </Button>
+
+            {/* Demo Login Button */}
+            <Button
+              onPress={handleDemoLogin}
+              disabled={loading}
+              appearance="outline"
+              style={styles.demoButton}
+            >
+              {t('auth.tryDemo')}
+            </Button>
+
+            {/* Forgot Password */}
+            <TouchableOpacity style={styles.forgotPassword}>
+              <Text category="s1" appearance="hint">{t('auth.forgotPassword')}</Text>
+            </TouchableOpacity>
+          </View>
+          </Card>
+
+          {/* Register Link */}
+          <View style={styles.registerContainer}>
+            <Text category="s1" appearance="hint">{t('auth.noAccount')} </Text>
+            <TouchableOpacity>
+              <Text category="s1" status="primary" style={styles.signUpText}>{t('auth.signUp')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </Layout>
     </KeyboardAvoidingView>
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    paddingTop: 60,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logoGradient: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  logoContainer: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
+  },
+  title: {
+    marginBottom: 8,
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 32,
+  },
+  subtitle: {
+    marginBottom: 16,
+    textAlign: 'center',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 16,
+  },
+  loginCard: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorIcon: {
+    width: 20,
+    height: 20,
+  },
+  errorText: {
+    flex: 1,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  input: {
+    marginBottom: 16,
+  },
+  inputText: {
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  loginButton: {
+    marginTop: 8,
+    borderRadius: 12,
+    height: 48,
+  },
+  demoButton: {
+    marginTop: 12,
+    borderRadius: 12,
+    height: 48,
+  },
+  forgotPassword: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  signUpText: {
+    fontWeight: '600',
+  },
+});

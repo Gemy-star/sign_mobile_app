@@ -1,227 +1,136 @@
-import React from 'react';
-import { View, StyleSheet, FlatList, TextInput, Image, TouchableOpacity } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useTheme } from '@/contexts/ThemeContext';
+import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Menu, Search } from 'lucide-react-native';
-
-interface ChatMessage {
-  id: string;
-  sender: string;
-  lastMessage: string;
-  time: string;
-  unreadCount?: number;
-  avatar: string;
-}
-
-const DUMMY_CHAT_DATA: ChatMessage[] = [
-  {
-    id: '1',
-    sender: 'ابراهيم علي',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    unreadCount: 1,
-    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-  },
-  {
-    id: '2',
-    sender: 'علي أحمد',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-  },
-  {
-    id: '3',
-    sender: 'محمد صابر',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-  },
-  {
-    id: '4',
-    sender: 'عادل احمد',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-  },
-  {
-    id: '5',
-    sender: 'علي أحمد',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/5.jpg',
-  },
-  {
-    id: '6',
-    sender: 'عادل احمد',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/6.jpg',
-  },
-  {
-    id: '7',
-    sender: 'محمد صابر',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/7.jpg',
-  },
-  {
-    id: '8',
-    sender: 'علي أحمد',
-    lastMessage: 'هذا النص هو مثال لنص يمكن أن يص...',
-    time: '02:30 م',
-    avatar: 'https://randomuser.me/api/portraits/men/8.jpg',
-  },
-];
+import { useTheme } from '@/contexts/ThemeContext';
+import { MOCK_CHAT_MESSAGES } from '@/services/message.mock';
+import { Card, Icon, Input, Layout, Text } from '@ui-kitten/components';
+import React, { useState } from 'react';
+import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function MessagesScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const renderChatItem = ({ item }: { item: ChatMessage }) => (
-    <View style={styles.chatItemContainer}>
-      {/* Avatar */}
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
+  const isRTL = language === 'ar';
 
-      {/* Chat details */}
-      <View style={styles.chatDetails}>
-        <ThemedText style={[styles.senderName, { color: colors.text }]}>
-          {item.sender}
-        </ThemedText>
-        <ThemedText style={[styles.lastMessage, { color: colors.fontSecondary }]}>
-          {item.lastMessage}
-        </ThemedText>
-      </View>
+  const filteredMessages = MOCK_CHAT_MESSAGES.filter(msg =>
+    (language === 'ar' ? msg.sender.name.ar : msg.sender.name.en)
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
-      {/* Time and Unread Count */}
-      <View style={styles.timeAndCount}>
-        <ThemedText style={[styles.chatTime, { color: colors.fontSecondary }]}>
-          {item.time}
-        </ThemedText>
-        {item.unreadCount && (
-          <View style={[styles.unreadBadge, { backgroundColor: colors.accent }]}>
-            <ThemedText style={styles.unreadCount}>
-              {item.unreadCount}
-            </ThemedText>
+  const renderChatItem = ({ item }: { item: typeof MOCK_CHAT_MESSAGES[0] }) => (
+    <TouchableOpacity>
+      <Card style={styles.chatCard}>
+        <View style={[styles.chatItemContainer, isRTL && styles.chatItemContainerRTL]}>
+          <Image source={{ uri: item.avatar }} style={styles.avatar} />
+
+          <View style={styles.chatDetails}>
+            <Text category="s1" style={[styles.senderName, isRTL && styles.textRTL]}>
+              {language === 'ar' ? item.sender.name.ar : item.sender.name.en}
+            </Text>
+            <Text category="p2" appearance="hint" style={[styles.lastMessage, isRTL && styles.textRTL]}>
+              {language === 'ar' ? item.lastMessage.ar : item.lastMessage.en}
+            </Text>
           </View>
-        )}
-      </View>
-    </View>
+
+          <View style={styles.timeAndCount}>
+            <Text category="c1" appearance="hint">{item.time}</Text>
+            {item.unreadCount && item.unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{item.unreadCount}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Card>
+    </TouchableOpacity>
   );
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
+    <Layout style={styles.container} level="1">
+      <AppHeader title={t('messages.title')} showUserInfo={false} />
 
-      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
-        <TextInput
-          style={[styles.searchInput, { color: colors.text }]}
-          placeholder={t('messages.searchPlaceholder') || 'أبحث هنا'}
-          placeholderTextColor={colors.fontSecondary}
+      <View style={styles.searchContainer}>
+        <Input
+          placeholder={t('messages.searchPlaceholder')}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          accessoryLeft={(props) => <Icon {...props} name="search-outline" />}
+          style={styles.searchInput}
         />
-        <Search size={20} color={colors.fontSecondary} />
       </View>
 
-      {/* Chat List */}
       <FlatList
-        data={DUMMY_CHAT_DATA}
+        data={filteredMessages}
         renderItem={renderChatItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.chatListContent}
-        ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
-    </ThemedView>
+    </Layout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 20,
-  },
-  header: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'IBMPlexSansArabic-Bold',
   },
   searchContainer: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 20,
+    padding: 16,
   },
   searchInput: {
-    flex: 1,
-    textAlign: 'right',
-    fontSize: 16,
-    fontFamily: 'IBMPlexSansArabic-Regular',
-    marginHorizontal: 8,
+    borderRadius: 12,
   },
-  chatListContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+  listContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  chatCard: {
+    marginBottom: 12,
+    borderRadius: 12,
   },
   chatItemContainer: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+  },
+  chatItemContainerRTL: {
+    flexDirection: 'row-reverse',
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginLeft: 12,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
   },
   chatDetails: {
     flex: 1,
-    marginRight: 12,
   },
   senderName: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'right',
-    marginBottom: 2,
     fontFamily: 'IBMPlexSansArabic-Bold',
+    marginBottom: 4,
   },
   lastMessage: {
-    fontSize: 13,
-    textAlign: 'right',
     fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  textRTL: {
+    textAlign: 'right',
   },
   timeAndCount: {
     alignItems: 'flex-end',
   },
-  chatTime: {
-    fontSize: 12,
-    fontFamily: 'IBMPlexSansArabic-Regular',
-    marginBottom: 4,
-  },
   unreadBadge: {
+    backgroundColor: '#6366f1',
     minWidth: 20,
     height: 20,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    marginTop: 4,
   },
-  unreadCount: {
+  unreadText: {
+    color: '#ffffff',
     fontSize: 12,
-    color: '#000',
     fontWeight: 'bold',
-  },
-  itemSeparator: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    marginVertical: 4,
   },
 });

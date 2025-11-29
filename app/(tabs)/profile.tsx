@@ -1,46 +1,37 @@
 // app/(tabs)/profile.tsx
-// User Profile Screen with Logout
+// User Profile Screen with UI Kitten
 
-import { ThemedView } from '@/components/ThemedView';
+import AppHeader from '@/components/AppHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useAppStyles } from '@/hooks/useAppStyles';
-import {
-    Bell,
-    ChevronRight,
-    Globe,
-    HelpCircle,
-    Lock,
-    LogOut,
-    Moon,
-    Shield,
-    Star,
-    Sun,
-    User
-} from 'lucide-react-native';
+import ChangePasswordScreen from '@/screens/ChangePasswordScreen';
+import HelpSupportScreen from '@/screens/HelpSupportScreen';
+import PrivacySecurityScreen from '@/screens/PrivacySecurityScreen';
+import { Button, Card, Icon, Layout, Text, Toggle } from '@ui-kitten/components';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
-import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
-  const { colors, colorScheme } = useTheme();
+  const { colors, colorScheme, toggleColorScheme } = useTheme();
   const { t, language, setLanguage } = useLanguage();
   const { user, logout } = useAuth();
-  const { styles, spacing, palette } = useAppStyles();
-
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showPrivacySecurity, setShowPrivacySecurity] = useState(false);
+  const [showHelpSupport, setShowHelpSupport] = useState(false);
+
+  const isRTL = language === 'ar';
 
   const handleLogout = () => {
     Alert.alert(
       t('profile.logout'),
       t('profile.logoutConfirm'),
       [
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
+          text: t('profile.logout'),
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -55,189 +46,272 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+    <Layout style={styles.container} level="1">
+      <AppHeader showUserInfo={false} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
-        <View style={[styles.card, styles.center, { marginTop: spacing.lg, marginBottom: spacing.lg }]}>
-          <View
-            style={{
-              width: 100,
-              height: 100,
-              borderRadius: 50,
-              backgroundColor: `${palette.primary}20`,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: spacing.md,
-            }}
+        <Card style={styles.profileCard}>
+          <LinearGradient
+            colors={['#6366f1', '#8b5cf6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatarGradient}
           >
-            <User size={48} color={palette.primary} />
-          </View>
-          <Text style={[styles.heading2, { color: colors.text }]}>
+            <Icon name="person-outline" style={styles.profileIcon} fill="#ffffff" />
+          </LinearGradient>
+          <Text category="h5" style={styles.userName}>
             {user?.username || 'Guest User'}
           </Text>
-          <Text style={[styles.bodyTextSecondary, { color: colors.textSecondary, marginTop: spacing.xs }]}>
+          <Text category="p2" appearance="hint">
             {user?.email || 'user@example.com'}
           </Text>
 
-          <View style={[styles.row, { marginTop: spacing.md, gap: spacing.lg }]}>
-            <View style={styles.center}>
-              <Text style={[styles.heading3, { color: colors.text }]}>12</Text>
-              <Text style={[styles.smallText, { color: colors.textSecondary }]}>Goals</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text category="h6">12</Text>
+              <Text category="c1" appearance="hint">{t('profile.goals')}</Text>
             </View>
-            <View style={styles.center}>
-              <Text style={[styles.heading3, { color: colors.text }]}>45</Text>
-              <Text style={[styles.smallText, { color: colors.textSecondary }]}>Messages</Text>
+            <View style={styles.statItem}>
+              <Text category="h6">45</Text>
+              <Text category="c1" appearance="hint">{t('profile.messagesCount')}</Text>
             </View>
-            <View style={styles.center}>
-              <Text style={[styles.heading3, { color: colors.text }]}>7</Text>
-              <Text style={[styles.smallText, { color: colors.textSecondary }]}>Streak</Text>
+            <View style={styles.statItem}>
+              <Text category="h6">7</Text>
+              <Text category="c1" appearance="hint">{t('profile.streak')}</Text>
             </View>
           </View>
-        </View>
+        </Card>
 
-        {/* Settings Sections */}
-        <View style={styles.mb3}>
-          <Text style={[styles.heading3, { color: colors.text, marginBottom: spacing.md }]}>
-            {t('profile.preferences')}
-          </Text>
+        {/* Settings Section */}
+        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+          {t('profile.preferences')}
+        </Text>
 
-          {/* Theme Toggle */}
-          <View
-            style={[styles.card, styles.row, { justifyContent: 'space-between', marginBottom: spacing.sm }]}
-          >
-            <View style={styles.row}>
-              {colorScheme === 'dark' ? (
-                <Moon size={20} color={colors.text} />
-              ) : (
-                <Sun size={20} color={colors.text} />
-              )}
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                {t('profile.darkMode')}
-              </Text>
+        <Card style={styles.settingCard}>
+          <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+            <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+              <Icon name={colorScheme === 'dark' ? 'moon-outline' : 'sun-outline'} style={styles.iconStyle} />
+              <Text category="s1" style={styles.settingText}>{t('profile.darkMode')}</Text>
             </View>
-            <Text style={[styles.bodyTextSecondary, { color: colors.textSecondary }]}>
-              {colorScheme === 'dark' ? t('profile.on') : t('profile.off')}
-            </Text>
+            <Toggle checked={colorScheme === 'dark'} onChange={toggleColorScheme} />
           </View>
+        </Card>
 
-          {/* Language Toggle */}
-          <TouchableOpacity
-            style={[styles.card, styles.row, { justifyContent: 'space-between', marginBottom: spacing.sm }]}
-            onPress={toggleLanguage}
-          >
-            <View style={styles.row}>
-              <Globe size={20} color={colors.text} />
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                {t('profile.language')}
-              </Text>
+        <Card style={styles.settingCard}>
+          <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+            <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+              <Icon name="globe-outline" style={styles.iconStyle} />
+              <Text category="s1" style={styles.settingText}>{t('profile.language')}</Text>
             </View>
-            <View style={styles.row}>
-              <Text style={[styles.bodyTextSecondary, { color: colors.textSecondary, marginRight: spacing.sm }]}>
-                {language === 'en' ? t('profile.english') : t('profile.arabic')}
+            <TouchableOpacity onPress={toggleLanguage}>
+              <Text category="s1" style={styles.languageText}>
+                {language === 'ar' ? t('profile.arabic') : t('profile.english')}
               </Text>
-              <ChevronRight size={20} color={colors.textSecondary} />
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </Card>
 
-          {/* Notifications */}
-          <TouchableOpacity
-            style={[styles.card, styles.row, { justifyContent: 'space-between', marginBottom: spacing.sm }]}
-            onPress={() => setNotificationsEnabled(!notificationsEnabled)}
-          >
-            <View style={styles.row}>
-              <Bell size={20} color={colors.text} />
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                {t('profile.notifications')}
-              </Text>
+        <Card style={styles.settingCard}>
+          <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+            <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+              <Icon name="bell-outline" style={styles.iconStyle} />
+              <Text category="s1" style={styles.settingText}>{t('profile.notifications')}</Text>
             </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#767577', true: palette.primary }}
-              thumbColor={notificationsEnabled ? '#fff' : '#f4f3f4'}
-            />
-          </TouchableOpacity>
-        </View>
+            <Toggle checked={notificationsEnabled} onChange={setNotificationsEnabled} />
+          </View>
+        </Card>
 
         {/* Account Section */}
-        <View style={styles.mb3}>
-          <Text style={[styles.heading3, { color: colors.text, marginBottom: spacing.md }]}>
-            {t('profile.account')}
-          </Text>
+        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+          {t('profile.account')}
+        </Text>
 
-          <TouchableOpacity style={[styles.card, styles.row, { justifyContent: 'space-between' }, { marginBottom: spacing.sm }]}>
-            <View style={styles.row}>
-              <Lock size={20} color={colors.text} />
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                Change Password
-              </Text>
+        <TouchableOpacity onPress={() => setShowChangePassword(true)}>
+          <Card style={styles.settingCard}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="lock-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.changePassword')}</Text>
+              </View>
+              <Icon name="chevron-right-outline" style={styles.iconStyle} />
             </View>
-            <ChevronRight size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.card, styles.row, { justifyContent: 'space-between' }, { marginBottom: spacing.sm }]}>
-            <View style={styles.row}>
-              <Shield size={20} color={colors.text} />
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                Privacy & Security
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* More Section */}
-        <View style={styles.mb3}>
-          <Text style={[styles.heading3, { color: colors.text, marginBottom: spacing.md }]}>
-            {t('profile.more')}
-          </Text>
-
-          <TouchableOpacity style={[styles.card, styles.row, { justifyContent: 'space-between' }, { marginBottom: spacing.sm }]}>
-            <View style={styles.row}>
-              <HelpCircle size={20} color={colors.text} />
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                Help & Support
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.card, styles.row, { justifyContent: 'space-between' }, { marginBottom: spacing.sm }]}>
-            <View style={styles.row}>
-              <Star size={20} color={colors.text} />
-              <Text style={[styles.bodyText, { color: colors.text, marginLeft: spacing.md }]}>
-                Rate App
-              </Text>
-            </View>
-            <ChevronRight size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              backgroundColor: `${palette.danger}15`,
-              borderWidth: 1,
-              borderColor: palette.danger,
-              marginTop: spacing.lg,
-            }
-          ]}
-          onPress={handleLogout}
-        >
-          <LogOut size={20} color={palette.danger} />
-          <Text style={[styles.buttonText, { color: palette.danger, marginLeft: spacing.sm }]}>
-            {t('profile.logout')}
-          </Text>
+          </Card>
         </TouchableOpacity>
 
-        {/* App Version */}
-        <Text style={[styles.smallText, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xl }]}>
-          {t('profile.version')} 1.0.0
+        <TouchableOpacity onPress={() => setShowPrivacySecurity(true)}>
+          <Card style={styles.settingCard}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="shield-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.privacySecurity')}</Text>
+              </View>
+              <Icon name="chevron-right-outline" style={styles.iconStyle} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+
+        {/* More Section */}
+        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+          {t('profile.more')}
         </Text>
+
+        <TouchableOpacity onPress={() => setShowHelpSupport(true)}>
+          <Card style={styles.settingCard}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="question-mark-circle-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.helpSupport')}</Text>
+              </View>
+              <Icon name="chevron-right-outline" style={styles.iconStyle} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+          <Card style={styles.settingCard}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="star-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.rateApp')}</Text>
+              </View>
+              <Icon name="chevron-right-outline" style={styles.iconStyle} />
+            </View>
+          </Card>
+        </TouchableOpacity>
+
+        {/* Logout Button */}
+        <Button
+          onPress={handleLogout}
+          status="danger"
+          accessoryLeft={(props) => <Icon name="log-out-outline" style={styles.iconStyle} />}
+          style={styles.logoutButton}
+        >
+          {t('profile.logout')}
+        </Button>
       </ScrollView>
-    </ThemedView>
+
+      {/* Modals */}
+      <Modal
+        visible={showChangePassword}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowChangePassword(false)}
+      >
+        <ChangePasswordScreen
+          onClose={() => setShowChangePassword(false)}
+          onSuccess={() => {
+            Alert.alert(
+              t('common.success') || 'Success',
+              t('changePassword.success') || 'Password changed successfully!'
+            );
+          }}
+        />
+      </Modal>
+
+      <Modal
+        visible={showPrivacySecurity}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPrivacySecurity(false)}
+      >
+        <PrivacySecurityScreen onClose={() => setShowPrivacySecurity(false)} />
+      </Modal>
+
+      <Modal
+        visible={showHelpSupport}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowHelpSupport(false)}
+      >
+        <HelpSupportScreen onClose={() => setShowHelpSupport(false)} />
+      </Modal>
+    </Layout>
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  profileCard: {
+    borderRadius: 16,
+    alignItems: 'center',
+    padding: 24,
+    marginBottom: 24,
+  },
+  avatarGradient: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  userName: {
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    marginBottom: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 32,
+    marginTop: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  textRTL: {
+    textAlign: 'right',
+  },
+  settingCard: {
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  settingRowRTL: {
+    flexDirection: 'row-reverse',
+  },
+  settingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  settingLeftRTL: {
+    flexDirection: 'row-reverse',
+  },
+  settingText: {
+    fontFamily: 'IBMPlexSansArabic-Regular',
+  },
+  languageText: {
+    fontFamily: 'IBMPlexSansArabic-Medium',
+  },
+  logoutButton: {
+    marginTop: 24,
+    borderRadius: 12,
+  },
+  statIcon: {
+    width: 20,
+    height: 20,
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  profileIcon: {
+    width: 48,
+    height: 48,
+  },
+});
