@@ -2,13 +2,7 @@
 // Onboarding screen for the motivation app
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Button, Card, Layout, Text } from '@ui-kitten/components';
-import {
-    ArrowRight,
-    Target,
-    TrendingUp,
-    Zap
-} from 'lucide-react-native';
+import { Button, Card, Icon, Layout, Text } from '@ui-kitten/components';
 import React from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -23,19 +17,19 @@ export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivat
 
   const features = [
     {
-      icon: Zap,
+      icon: 'flash-outline',
       title: t('motivation.aiMessages'),
       description: t('motivation.aiMessagesDesc'),
       color: '#ED8936',
     },
     {
-      icon: Target,
+      icon: 'radio-button-on-outline',
       title: t('motivation.lifeAreas'),
       description: t('motivation.lifeAreasDesc'),
       color: '#4299E1',
     },
     {
-      icon: TrendingUp,
+      icon: 'trending-up-outline',
       title: t('motivation.trackProgress'),
       description: t('motivation.trackProgressDesc'),
       color: '#48BB78',
@@ -72,7 +66,6 @@ export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivat
         {/* Features Cards */}
         <View style={styles.featuresSection}>
           {features.map((feature, index) => {
-            const Icon = feature.icon;
             return (
               <Card
                 key={index}
@@ -80,7 +73,7 @@ export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivat
               >
                 <View style={[styles.featureContent, isRTL && styles.featureContentRTL]}>
                   <View style={[styles.iconContainer, { backgroundColor: `${feature.color}15` }]}>
-                    <Icon size={24} color={feature.color} />
+                    <Icon name={feature.icon} width={24} height={24} fill={feature.color} />
                   </View>
                   <View style={styles.featureText}>
                     <Text category="s1" style={[styles.featureTitle, isRTL && styles.textRTL]}>
@@ -102,10 +95,11 @@ export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivat
             size="large"
             onPress={onGetStarted}
             accessoryRight={(props) => (
-              <ArrowRight
-                size={20}
-                color="#fff"
-                style={isRTL ? { transform: [{ scaleX: -1 }] } : {}}
+              <Icon
+                {...props}
+                name={isRTL ? 'arrow-back-outline' : 'arrow-forward-outline'}
+                width={20}
+                height={20}
               />
             )}
             style={styles.startButton}

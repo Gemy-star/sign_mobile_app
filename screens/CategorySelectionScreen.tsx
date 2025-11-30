@@ -4,32 +4,22 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppStyles } from '@/hooks/useAppStyles';
 import { MOTIVATION_CATEGORIES } from '@/types/motivation';
-import {
-    Brain,
-    Briefcase,
-    CheckCircle,
-    DollarSign,
-    Dumbbell,
-    Heart,
-    Palette,
-    Sparkles,
-    Sun
-} from 'lucide-react-native';
+import { Icon } from '@ui-kitten/components';
 import React, { useState } from 'react';
 import { Dimensions, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
 
-const iconMap: { [key: string]: any } = {
-  brain: Brain,
-  dumbbell: Dumbbell,
-  briefcase: Briefcase,
-  'dollar-sign': DollarSign,
-  heart: Heart,
-  sparkles: Sparkles,
-  palette: Palette,
-  sun: Sun,
+const iconMap: { [key: string]: string } = {
+  brain: 'activity-outline',
+  dumbbell: 'activity-outline',
+  briefcase: 'briefcase-outline',
+  'dollar-sign': 'pricetags-outline',
+  heart: 'heart-outline',
+  sparkles: 'star-outline',
+  palette: 'color-palette-outline',
+  sun: 'sun-outline',
 };
 
 export default function CategorySelectionScreen() {
@@ -68,7 +58,7 @@ export default function CategorySelectionScreen() {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
           {MOTIVATION_CATEGORIES.map((category) => {
             const isSelected = selectedCategories.includes(category.id);
-            const IconComponent = iconMap[category.icon];
+            const iconName = iconMap[category.icon];
             const categoryColor = category.color;
 
             return (
@@ -97,7 +87,7 @@ export default function CategorySelectionScreen() {
                       zIndex: 1,
                     }}
                   >
-                    <CheckCircle size={24} color={categoryColor} fill={categoryColor} />
+                    <Icon name="checkmark-circle" width={24} height={24} fill={categoryColor} />
                   </View>
                 )}
 
@@ -111,7 +101,7 @@ export default function CategorySelectionScreen() {
                     },
                   ]}
                 >
-                  {IconComponent && <IconComponent size={28} color={categoryColor} />}
+                  {iconName && <Icon name={iconName} width={28} height={28} fill={categoryColor} />}
                 </View>
 
                 {/* Category Emoji */}

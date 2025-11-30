@@ -1,9 +1,9 @@
 // screens/LoginScreen.tsx
 // User Authentication Screen - Redesigned with UI Kitten
 
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuthActions, useAuthState } from '@/hooks/useAuth';
 import { Button, Card, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
@@ -19,8 +19,10 @@ import {
 
 export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () => void }) {
   const { t, isRTL } = useLanguage();
-  const { login } = useAuth();
+  const { login } = useAuthActions();
   const { colorScheme } = useTheme();
+  // Use Redux for auth state
+  const { isLoading: reduxLoading, error: reduxError } = useAuthState();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +53,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
         setTimeout(() => reject(new Error('Login timeout')), 15000)
       );
 
-      const loginPromise = login(username.trim(), password.trim());
+      const loginPromise = login({ username: username.trim(), password: password.trim() });
 
       const success = await Promise.race([loginPromise, timeoutPromise]);
 

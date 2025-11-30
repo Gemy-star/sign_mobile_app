@@ -3,7 +3,7 @@
 
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppStyles } from '@/hooks/useAppStyles';
-import { Moon, Sun } from 'lucide-react-native';
+import { Icon } from '@ui-kitten/components';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -48,9 +48,9 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
     >
       <View style={localStyles.iconContainer}>
         {isDark ? (
-          <Moon size={iconSizes[size]} color={palette.accent} />
+          <Icon name="moon-outline" width={iconSizes[size]} height={iconSizes[size]} fill={palette.accent} />
         ) : (
-          <Sun size={iconSizes[size]} color={palette.primary} />
+          <Icon name="sun-outline" width={iconSizes[size]} height={iconSizes[size]} fill={palette.primary} />
         )}
       </View>
       {showLabel && (

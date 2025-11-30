@@ -61,7 +61,9 @@
     "title": "الرسائل",
     "searchPlaceholder": "ابحث هنا...",
     "noMessages": "لا توجد رسائل",
-    "loadingMessages": "جاري تحميل الرسائل..."
+    "loadingMessages": "جاري تحميل الرسائل...",
+    "noContent": "لا يوجد محتوى",
+    "messagesCount": "الرسائل"
   },
   "header": {
     "welcome": "مرحباً",
@@ -100,11 +102,19 @@
     "messagesTitle": "رسائل اليوم",
     "totalMessages": "إجمالي الرسائل",
     "favorites": "المفضلة",
+    "favoriteMessages": "الرسائل المفضلة",
     "streak": "السلسلة",
     "categories": "الفئات",
     "recentMessages": "الرسائل الأخيرة",
+    "motivationalMessages": "رسائل تحفيزية",
     "noRecentMessages": "لا توجد رسائل حديثة",
-    "viewAll": "عرض الكل"
+    "viewAll": "عرض الكل",
+    "stats": {
+      "todayMessages": "رسائل اليوم",
+      "totalMessages": "إجمالي الرسائل",
+      "favoriteMessages": "الرسائل المفضلة",
+      "currentStreak": "السلسلة الحالية"
+    }
   },
   "profile": {
     "account": "الحساب",
@@ -169,6 +179,49 @@
     "phoneSupport": "الدعم الهاتفي",
     "callUs": "اتصل بنا في أي وقت",
     "phoneNumber": "الهاتف: +966 50 000 0000"
+  },
+  "packages": {
+    "title": "اختر باقتك",
+    "subtitle": "اختر الباقة المثالية لتحقيق أهدافك",
+    "loading": "جاري تحميل الباقات...",
+    "loadError": "فشل تحميل الباقات",
+    "free": "مجاني",
+    "currency": "ريال",
+    "popular": "الأكثر شعبية",
+    "selected": "محدد",
+    "package": "الباقة",
+    "scopes": "مجالات",
+    "duration": {
+      "monthly": "شهري",
+      "quarterly": "ربع سنوي",
+      "yearly": "سنوي"
+    },
+    "features": {
+      "scopes": "{{count}} مجالات حياتية",
+      "messages": "{{count}} رسائل/يوم",
+      "customGoals": "أهداف مخصصة",
+      "prioritySupport": "دعم أولوية"
+    },
+    "selectScopes": "اختر مجالاتك الحياتية",
+    "selectScopesHint": "تم تحديد {{selected}} من {{max}} مجالات",
+    "scopeLimitTitle": "تم الوصول للحد الأقصى",
+    "scopeLimitMessage": "يمكنك تحديد ما يصل إلى {{max}} مجالات حياتية مع هذه الباقة",
+    "noScopesTitle": "لم يتم تحديد مجالات",
+    "noScopesMessage": "يرجى تحديد مجال حياتي واحد على الأقل للمتابعة",
+    "startFreeTrial": "ابدأ الفترة التجريبية",
+    "continueToPayment": "متابعة للدفع",
+    "paymentTitle": "إتمام عملية الشراء",
+    "orderSummary": "ملخص الطلب",
+    "selectedScopes": "المجالات المحددة",
+    "total": "الإجمالي",
+    "paymentNote": "سيتم معالجة اشتراكك بشكل آمن من خلال بوابة الدفع الخاصة بنا",
+    "pay": "ادفع الآن",
+    "freeTrialSuccess": "تم بدء الفترة التجريبية!",
+    "freeTrialSuccessMessage": "تم تفعيل فترتك التجريبية المجانية بنجاح. استمتع باستكشاف التطبيق!",
+    "paymentSuccess": "تم الدفع بنجاح!",
+    "paymentSuccessMessage": "تم تفعيل اشتراكك. مرحباً بك!",
+    "subscriptionError": "فشل إنشاء الاشتراك",
+    "paymentError": "فشل الدفع. يرجى المحاولة مرة أخرى."
   },
   "categories": {
     "mental": {

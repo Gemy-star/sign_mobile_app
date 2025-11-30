@@ -4,17 +4,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppStyles } from '@/hooks/useAppStyles';
 import { MessageFrequency, MessageTone } from '@/types/motivation';
-import {
-    Calendar,
-    CheckCircle,
-    Clock,
-    Heart,
-    Laugh,
-    Smile,
-    Sparkles,
-    Target,
-    Zap
-} from 'lucide-react-native';
+import { Icon } from '@ui-kitten/components';
 import React, { useState } from 'react';
 import { ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 
@@ -26,21 +16,21 @@ export default function MessageCustomizationScreen() {
   const [selectedFrequency, setSelectedFrequency] = useState<MessageFrequency>('daily');
   const [enableNotifications, setEnableNotifications] = useState(true);
 
-  const tones: Array<{ id: MessageTone; icon: any; color: string }> = [
-    { id: 'encouraging', icon: Smile, color: palette.success },
-    { id: 'energetic', icon: Zap, color: palette.warning },
-    { id: 'calm', icon: Heart, color: palette.info },
-    { id: 'direct', icon: Target, color: palette.primary },
-    { id: 'inspirational', icon: Sparkles, color: palette.secondary },
-    { id: 'humorous', icon: Laugh, color: '#9a7cb6' },
+  const tones: Array<{ id: MessageTone; icon: string; color: string }> = [
+    { id: 'encouraging', icon: 'smiling-face-outline', color: palette.success },
+    { id: 'energetic', icon: 'flash-outline', color: palette.warning },
+    { id: 'calm', icon: 'heart-outline', color: palette.info },
+    { id: 'direct', icon: 'radio-button-on-outline', color: palette.primary },
+    { id: 'inspirational', icon: 'star-outline', color: palette.secondary },
+    { id: 'humorous', icon: 'smiling-face-outline', color: '#9a7cb6' },
   ];
 
-  const frequencies: Array<{ id: MessageFrequency; icon: any }> = [
-    { id: 'hourly', icon: Clock },
-    { id: 'daily', icon: Calendar },
-    { id: 'twice-daily', icon: Calendar },
-    { id: 'weekly', icon: Calendar },
-    { id: 'custom', icon: Clock },
+  const frequencies: Array<{ id: MessageFrequency; icon: string }> = [
+    { id: 'hourly', icon: 'clock-outline' },
+    { id: 'daily', icon: 'calendar-outline' },
+    { id: 'twice-daily', icon: 'calendar-outline' },
+    { id: 'weekly', icon: 'calendar-outline' },
+    { id: 'custom', icon: 'clock-outline' },
   ];
 
   return (
@@ -68,7 +58,6 @@ export default function MessageCustomizationScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -spacing.xs }}>
             {tones.map((tone) => {
               const isSelected = selectedTone === tone.id;
-              const Icon = tone.icon;
 
               return (
                 <TouchableOpacity
@@ -89,8 +78,10 @@ export default function MessageCustomizationScreen() {
                   onPress={() => setSelectedTone(tone.id)}
                 >
                   <Icon
-                    size={32}
-                    color={isSelected ? tone.color : colors.textSecondary}
+                    name={tone.icon}
+                    width={32}
+                    height={32}
+                    fill={isSelected ? tone.color : colors.textSecondary}
                     style={{ marginBottom: spacing.sm }}
                   />
                   <Text
@@ -106,9 +97,10 @@ export default function MessageCustomizationScreen() {
                     {t(`motivation.tone${tone.id.charAt(0).toUpperCase() + tone.id.slice(1)}`)}
                   </Text>
                   {isSelected && (
-                    <CheckCircle
-                      size={16}
-                      color={tone.color}
+                    <Icon
+                      name="checkmark-circle"
+                      width={16}
+                      height={16}
                       fill={tone.color}
                       style={{ position: 'absolute', top: spacing.xs, right: spacing.xs }}
                     />
@@ -130,7 +122,6 @@ export default function MessageCustomizationScreen() {
 
           {frequencies.map((freq) => {
             const isSelected = selectedFrequency === freq.id;
-            const Icon = freq.icon;
 
             return (
               <TouchableOpacity
@@ -156,7 +147,7 @@ export default function MessageCustomizationScreen() {
                     },
                   ]}
                 >
-                  <Icon size={20} color={isSelected ? '#fff' : colors.textSecondary} />
+                  <Icon name={freq.icon} width={20} height={20} fill={isSelected ? '#fff' : colors.textSecondary} />
                 </View>
                 <View style={styles.listItemContent}>
                   <Text style={[styles.listItemTitle, isSelected && { color: palette.primary }]}>
@@ -164,7 +155,7 @@ export default function MessageCustomizationScreen() {
                   </Text>
                 </View>
                 {isSelected && (
-                  <CheckCircle size={24} color={palette.primary} fill={palette.primary} />
+                  <Icon name="checkmark-circle" width={24} height={24} fill={palette.primary} />
                 )}
               </TouchableOpacity>
             );

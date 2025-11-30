@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import ar from '../locales/ar.json';
 import en from '../locales/en.json';
+import { signSAService } from '../services/signsa.service';
 
 export type Language = 'en' | 'ar';
 type SupportedLanguage = Language;
@@ -13,6 +14,7 @@ interface LanguageContextType {
   setLanguage: (language: SupportedLanguage) => void;
   changeLanguage: (language: SupportedLanguage) => void; // Added this for compatibility
   t: (key: string, params?: Record<string, string | number>) => string;
+  isRTL: boolean;
 }
 
 const translations: Record<SupportedLanguage, Record<string, any>> = {
@@ -54,14 +56,22 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
         if (savedLanguage === 'en' || savedLanguage === 'ar') {
           setLanguage(savedLanguage);
+          signSAService.setLanguage(savedLanguage);
+        } else {
+          // If no saved language, set Arabic as default
+          signSAService.setLanguage('ar');
         }
-        // If no saved language, Arabic remains as default
       } catch (error) {
         console.error('Failed to load language preference:', error);
       }
     };
     loadLanguage();
   }, []);
+
+  // Update service language when language changes
+  useEffect(() => {
+    signSAService.setLanguage(language);
+  }, [language]);
 
   const changeLanguage = async (newLanguage: SupportedLanguage) => {
     try {
@@ -90,6 +100,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         setLanguage,
         changeLanguage,
         t,
+        isRTL: language === 'ar',
       }}
     >
       {children}
@@ -110,6 +121,7 @@ export const useLanguage = (): LanguageContextType => {
         console.warn(`Translation attempted outside provider: ${key}`);
         return key;
       },
+      isRTL: true,
     };
   }
   return context;

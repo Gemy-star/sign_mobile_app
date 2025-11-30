@@ -4,14 +4,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppStyles } from '@/hooks/useAppStyles';
 import { MotivationCategory } from '@/types/motivation';
-import {
-    CheckCircle,
-    Clock,
-    Search,
-    Share,
-    Star,
-    Trash2
-} from 'lucide-react-native';
+import { Icon } from '@ui-kitten/components';
 import React, { useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -111,7 +104,7 @@ export default function MessageHistoryScreen() {
 
           {/* Search Bar */}
           <View style={[styles.input, styles.rowCenter, styles.mb2]}>
-            <Search size={20} color={colors.textSecondary} style={{ marginRight: spacing.sm }} />
+            <Icon name="search-outline" width={20} height={20} fill={colors.textSecondary} style={{ marginRight: spacing.sm }} />
             <TextInput
               style={[styles.bodyText, { flex: 1, padding: 0 }]}
               placeholder={t('motivation.searchMessages')}
@@ -148,10 +141,11 @@ export default function MessageHistoryScreen() {
               ]}
               onPress={() => setFilterMode('favorites')}
             >
-              <Star
-                size={12}
-                color={filterMode === 'favorites' ? palette.warning : colors.textSecondary}
-                fill={filterMode === 'favorites' ? palette.warning : 'transparent'}
+              <Icon
+                name={filterMode === 'favorites' ? 'star' : 'star-outline'}
+                width={12}
+                height={12}
+                fill={filterMode === 'favorites' ? palette.warning : colors.textSecondary}
               />
               <Text
                 style={[
@@ -194,10 +188,11 @@ export default function MessageHistoryScreen() {
                   </View>
 
                   <TouchableOpacity>
-                    <Star
-                      size={20}
-                      color={palette.warning}
-                      fill={message.isFavorite ? palette.warning : 'transparent'}
+                    <Icon
+                      name={message.isFavorite ? 'star' : 'star-outline'}
+                      width={20}
+                      height={20}
+                      fill={palette.warning}
                     />
                   </TouchableOpacity>
                 </View>
@@ -208,7 +203,7 @@ export default function MessageHistoryScreen() {
                 {/* Message Footer */}
                 <View style={[styles.rowBetween, { alignItems: 'center' }]}>
                   <View style={styles.rowCenter}>
-                    <Clock size={14} color={colors.textSecondary} />
+                    <Icon name="clock-outline" width={14} height={14} fill={colors.textSecondary} />
                     <Text style={[styles.caption, { marginLeft: spacing.xs }]}>
                       {getTimeAgo(message.timestamp)}
                     </Text>
@@ -216,10 +211,10 @@ export default function MessageHistoryScreen() {
 
                   <View style={styles.rowCenter}>
                     <TouchableOpacity style={styles.mr3}>
-                      <Share size={18} color={colors.textSecondary} />
+                      <Icon name="share-outline" width={18} height={18} fill={colors.textSecondary} />
                     </TouchableOpacity>
                     <TouchableOpacity>
-                      <Trash2 size={18} color={palette.danger} />
+                      <Icon name="trash-2-outline" width={18} height={18} fill={palette.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -232,7 +227,7 @@ export default function MessageHistoryScreen() {
         {filteredMessages.length > 0 && (
           <View style={[styles.card, styles.mt3, { backgroundColor: `${palette.info}10` }]}>
             <View style={styles.rowCenter}>
-              <CheckCircle size={20} color={palette.info} style={{ marginRight: spacing.sm }} />
+              <Icon name="checkmark-circle-outline" width={20} height={20} fill={palette.info} style={{ marginRight: spacing.sm }} />
               <Text style={[styles.smallText, { color: palette.info }]}>
                 {filteredMessages.length} messages found
               </Text>

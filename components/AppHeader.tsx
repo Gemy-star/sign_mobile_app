@@ -1,9 +1,9 @@
 // components/AppHeader.tsx
 // New attractive header using UI Kitten
 
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAppSelector } from '@/store/hooks';
 import { Avatar, Card, Icon, Text } from '@ui-kitten/components';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -33,7 +33,9 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps) {
-  const { user } = useAuth();
+  // Use Redux for auth state (global state)
+  const { user } = useAppSelector((state) => state.auth);
+  // Use Context for theme and language (UI preferences)
   const { t, language, setLanguage } = useLanguage();
   const { colors, colorScheme, toggleColorScheme } = useTheme();
   const insets = useSafeAreaInsets();

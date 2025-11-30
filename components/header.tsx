@@ -1,8 +1,8 @@
 import { FontFamily } from '@/constants/Typography';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuthState } from '@/hooks/useAuth';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -12,7 +12,7 @@ import { ThemedView } from './ThemedView';
 const Header = () => {
   const { language, t } = useLanguage();
   const { colorScheme } = useTheme();
-  const { user } = useAuth();
+  const { user } = useAuthState();
   const isRTL = language === 'ar';
   const { toggleSidebar } = useSidebar();
 

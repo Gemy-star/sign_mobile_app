@@ -1,11 +1,16 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, ReactNode, useContext, useState } from 'react';
 
-const SidebarContext = createContext({
+interface SidebarContextType {
+  isVisible: boolean;
+  toggleSidebar: () => void;
+}
+
+const SidebarContext = createContext<SidebarContextType>({
   isVisible: false,
   toggleSidebar: () => {},
 });
 
-export const SidebarProvider = ({ children }) => {
+export const SidebarProvider = ({ children }: { children: ReactNode }) => {
   const [isVisible, setIsVisible] = useState(false);
   const toggleSidebar = () => setIsVisible((prev) => !prev);
 

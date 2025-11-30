@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { RefreshCw } from 'lucide-react-native';
+import { Icon } from '@ui-kitten/components';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ThemedText } from './ThemedText';
@@ -32,7 +32,7 @@ export function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
       </ThemedText>
       {onRetry && (
         <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-          <RefreshCw color={colors.primary} size={16} strokeWidth={2} />
+          <Icon name="refresh-outline" width={16} height={16} fill={colors.primary} />
           <ThemedText size="sm" weight="semibold" color={colors.primary}>
             {t('common.retry')}
           </ThemedText>

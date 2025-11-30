@@ -1,8 +1,8 @@
 import { FontFamily } from '@/constants/Typography';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAppSelector } from '@/store/hooks';
 import { Entypo, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -17,7 +17,8 @@ const Sidebar = () => {
   const { isVisible, toggleSidebar } = useSidebar();
   const { language, t } = useLanguage();
   const { colorScheme } = useTheme();
-  const { user } = useAuth();
+  // Use Redux for auth state (global state)
+  const { user } = useAppSelector((state) => state.auth);
   const insets = useSafeAreaInsets();
   const isRTL = language === 'ar';
 

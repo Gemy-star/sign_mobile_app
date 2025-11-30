@@ -4,44 +4,46 @@
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { MOCK_MESSAGES } from '@/services/message.mock';
-import { Card, Layout, Spinner, Text } from '@ui-kitten/components';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchMessages } from '@/store/slices/messagesSlice';
+import { Card, Icon, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-    Brain,
-    Briefcase,
-    DollarSign,
-    Dumbbell,
-    Heart,
-    Palette,
-    Sparkles,
-    Star,
-    Sun
-} from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function MotivationScreen() {
-  const { colors } = useTheme();
+  // Context for UI preferences (theme, language)
+  const { colors, colorScheme } = useTheme();
   const { t, language } = useLanguage();
-  const [loading] = useState(false);
+
+  // Redux state for global/API data
+  const dispatch = useAppDispatch();
+  const { messages, isLoading } = useAppSelector((state) => state.messages);
+  const [loading, setLoading] = useState(false);
 
   const isRTL = language === 'ar';
 
-  const categories = [
-    { id: 'mental', icon: Brain, color: '#6366f1', emoji: '🧠' },
-    { id: 'physical', icon: Dumbbell, color: '#10b981', emoji: '💪' },
-    { id: 'career', icon: Briefcase, color: '#8b5cf6', emoji: '💼' },
-    { id: 'financial', icon: DollarSign, color: '#f59e0b', emoji: '💰' },
-    { id: 'relationships', icon: Heart, color: '#ef4444', emoji: '❤️' },
-    { id: 'spiritual', icon: Sparkles, color: '#3b82f6', emoji: '🕊️' },
-    { id: 'creativity', icon: Palette, color: '#9a7cb6', emoji: '🎨' },
-    { id: 'lifestyle', icon: Sun, color: '#38b2ac', emoji: '🌍' },
+  useEffect(() => {
+    // Fetch motivational messages if not already loaded
+    if (messages.length === 0) {
+      dispatch(fetchMessages({
+        pagination: { page: 1, page_size: 5 }
+      }));
+    }
+  }, [dispatch, messages.length]);  const categories = [
+    { id: 'mental', iconName: 'bulb-outline', color: '#6366f1', emoji: '🧠' },
+    { id: 'physical', iconName: 'activity-outline', color: '#10b981', emoji: '💪' },
+    { id: 'career', iconName: 'briefcase-outline', color: '#8b5cf6', emoji: '💼' },
+    { id: 'financial', iconName: 'credit-card-outline', color: '#f59e0b', emoji: '💰' },
+    { id: 'relationships', iconName: 'heart-outline', color: '#ef4444', emoji: '❤️' },
+    { id: 'spiritual', iconName: 'star-outline', color: '#3b82f6', emoji: '🕊️' },
+    { id: 'creativity', iconName: 'color-palette-outline', color: '#9a7cb6', emoji: '🎨' },
+    { id: 'lifestyle', iconName: 'sun-outline', color: '#38b2ac', emoji: '🌍' },
   ];
 
-  const motivationalMessages = MOCK_MESSAGES.slice(0, 5);
+  const motivationalMessages = messages.slice(0, 5);
 
   if (loading) {
     return (
@@ -68,7 +70,6 @@ export default function MotivationScreen() {
 
         <View style={styles.categoriesGrid}>
           {categories.map((category) => {
-            const IconComponent = category.icon;
             return (
               <TouchableOpacity key={category.id} style={styles.categoryItem}>
                 <Card style={styles.categoryCard}>
@@ -78,7 +79,7 @@ export default function MotivationScreen() {
                     end={{ x: 1, y: 1 }}
                     style={styles.categoryGradient}
                   >
-                    <IconComponent size={28} color="#ffffff" />
+                    <Icon name={category.iconName} style={styles.categoryIcon} fill="#ffffff" />
                   </LinearGradient>
                   <Text category="c1" style={[styles.categoryName, isRTL && styles.textRTL]}>
                     {t(`categories.${category.id}.name`) || category.id}
@@ -97,20 +98,20 @@ export default function MotivationScreen() {
           {t('motivation.aiMessagesDesc')}
         </Text>
 
-        {motivationalMessages.map((message) => (
+        {motivationalMessages.map((message: any) => (
           <Card key={message.id} style={styles.messageCard}>
             <View style={[styles.messageHeader, isRTL && styles.messageHeaderRTL]}>
               <Text category="c1" appearance="hint" style={styles.categoryBadge}>
-                {message.category}
+                {message.scope_name || message.message_type_display}
               </Text>
-              {message.isFavorite && <Star size={16} color="#f59e0b" fill="#f59e0b" />}
+              {message.is_favorited && <Icon name="star" style={styles.starIcon} fill="#f59e0b" />}
             </View>
             <Text category="p1" style={[styles.messageContent, isRTL && styles.textRTL]}>
-              {language === 'ar' ? message.content.ar : message.content.en}
+              {message.content || ''}
             </Text>
-            {message.author && (
+            {message.ai_model && (
               <Text category="c1" appearance="hint" style={styles.messageAuthor}>
-                - {message.author}
+                - {message.ai_model}
               </Text>
             )}
           </Card>
@@ -173,8 +174,12 @@ const styles = StyleSheet.create({
     fontFamily: 'IBMPlexSansArabic-Regular',
   },
   categoryIcon: {
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
+  },
+  starIcon: {
+    width: 16,
+    height: 16,
   },
   messageCard: {
     marginBottom: 12,

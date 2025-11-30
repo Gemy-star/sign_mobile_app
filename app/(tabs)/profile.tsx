@@ -2,22 +2,29 @@
 // User Profile Screen with UI Kitten
 
 import AppHeader from '@/components/AppHeader';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import ChangePasswordScreen from '@/screens/ChangePasswordScreen';
 import HelpSupportScreen from '@/screens/HelpSupportScreen';
 import PrivacySecurityScreen from '@/screens/PrivacySecurityScreen';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { logout as logoutAction } from '@/store/slices/authSlice';
+import { setPreferences } from '@/store/slices/profileSlice';
 import { Button, Card, Icon, Layout, Text, Toggle } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
+  const dispatch = useAppDispatch();
+  // Context for UI preferences (theme, language)
   const { colors, colorScheme, toggleColorScheme } = useTheme();
   const { t, language, setLanguage } = useLanguage();
-  const { user, logout } = useAuth();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  // Redux for global app-wide state (auth, profile)
+  const { user } = useAppSelector((state) => state.auth);
+  const { preferences } = useAppSelector((state) => state.profile);
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(preferences.notifications);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showPrivacySecurity, setShowPrivacySecurity] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
@@ -33,8 +40,8 @@ export default function ProfileScreen() {
         {
           text: t('profile.logout'),
           style: 'destructive',
-          onPress: async () => {
-            await logout();
+          onPress: () => {
+            dispatch(logoutAction());
           },
         },
       ]
@@ -42,7 +49,17 @@ export default function ProfileScreen() {
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'en' ? 'ar' : 'en');
+    const newLang = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLang); // Context handles language (UI preference)
+  };
+
+  const handleToggleTheme = () => {
+    toggleColorScheme(); // Context handles theme (UI preference)
+  };
+
+  const handleToggleNotifications = (value: boolean) => {
+    setNotificationsEnabled(value);
+    dispatch(setPreferences({ notifications: value })); // Redux handles profile preferences (global state)
   };
 
   return (
@@ -90,10 +107,10 @@ export default function ProfileScreen() {
         <Card style={styles.settingCard}>
           <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
             <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
-              <Icon name={colorScheme === 'dark' ? 'moon-outline' : 'sun-outline'} style={styles.iconStyle} />
+              <Icon name="moon-outline" style={styles.iconStyle} />
               <Text category="s1" style={styles.settingText}>{t('profile.darkMode')}</Text>
             </View>
-            <Toggle checked={colorScheme === 'dark'} onChange={toggleColorScheme} />
+            <Toggle checked={colorScheme === 'dark'} onChange={handleToggleTheme} />
           </View>
         </Card>
 
@@ -117,7 +134,7 @@ export default function ProfileScreen() {
               <Icon name="bell-outline" style={styles.iconStyle} />
               <Text category="s1" style={styles.settingText}>{t('profile.notifications')}</Text>
             </View>
-            <Toggle checked={notificationsEnabled} onChange={setNotificationsEnabled} />
+            <Toggle checked={notificationsEnabled} onChange={handleToggleNotifications} />
           </View>
         </Card>
 

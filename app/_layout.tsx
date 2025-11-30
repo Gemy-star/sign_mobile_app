@@ -1,10 +1,12 @@
 import { customTheme } from '@/constants/theme';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
-import { LoadingProvider } from '@/contexts/LoadingContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { useAuthActions, useAuthState } from '@/hooks/useAuth';
 import LoginScreen from '@/screens/LoginScreen';
+import PackagesScreen from '@/screens/PackagesScreen';
 import WelcomeMotivationScreen from '@/screens/WelcomeMotivationScreen';
+import { dataSource } from '@/services/data-source.service';
+import { store } from '@/store';
 import * as eva from '@eva-design/eva';
 import { ApplicationProvider, IconRegistry, Layout, Spinner, Text } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
@@ -13,6 +15,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { Provider as ReduxProvider } from 'react-redux';
+import { logger } from '@/utils/logger';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -26,16 +30,50 @@ const AuthenticatedLayout = () => {
 };
 
 const AppContent = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthState();
+  const { checkAuth } = useAuthActions();
   const { colorScheme } = useTheme();
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
+  const [showPackages, setShowPackages] = useState<boolean | null>(null);
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
 
   const isDark = colorScheme === 'dark';
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && showWelcome === null) {
-      setShowWelcome(true);
-    }
+    // Check if user is already logged in on mount
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const checkSubscription = async () => {
+      if (!isLoading && isAuthenticated && showWelcome === null) {
+        setShowWelcome(true);
+
+        // Check if user has an active subscription
+        try {
+          setCheckingSubscription(true);
+          const response = await dataSource.getActiveSubscription();
+
+          if (response.success && response.data) {
+            // User has active subscription, skip packages screen
+            logger.info('User has active subscription', { subscription: response.data });
+            setShowPackages(false);
+          } else {
+            // No active subscription, show packages screen after welcome
+            logger.info('No active subscription found, will show packages');
+            setShowPackages(true);
+          }
+        } catch (error) {
+          logger.error('Error checking subscription', error as Error);
+          // On error, show packages screen to be safe
+          setShowPackages(true);
+        } finally {
+          setCheckingSubscription(false);
+        }
+      }
+    };
+
+    checkSubscription();
   }, [isLoading, isAuthenticated]);
 
   // Show loader while checking auth
@@ -76,6 +114,29 @@ const AppContent = () => {
           setShowWelcome(false);
         }}
       />
+    );
+  }
+
+  // Show packages screen if no active subscription
+  if (showPackages === true) {
+    return (
+      <PackagesScreen
+        onComplete={() => {
+          setShowPackages(false);
+        }}
+      />
+    );
+  }
+
+  // Show loading while checking subscription
+  if (checkingSubscription) {
+    return (
+      <Layout style={styles.loaderContainer} level="1">
+        <Spinner size="giant" />
+        <Text category="h6" style={styles.loaderText}>
+          {isDark ? 'Checking subscription...' : 'جاري التحقق من الاشتراك...'}
+        </Text>
+      </Layout>
     );
   }
 
@@ -125,15 +186,13 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <LoadingProvider>
-            <ThemedApp />
-          </LoadingProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <ReduxProvider store={store}>
+      <ThemeProvider>
+        <LanguageProvider>
+          <ThemedApp />
+        </LanguageProvider>
+      </ThemeProvider>
+    </ReduxProvider>
   );
 }const styles = StyleSheet.create({
   loaderContainer: {

@@ -2,13 +2,7 @@
 // Example component showcasing all available styles from the new styling system
 
 import { useAppStyles } from '@/hooks/useAppStyles';
-import {
-    AlertTriangle,
-    Bell,
-    CheckCircle,
-    Info,
-    XCircle
-} from 'lucide-react-native';
+import { Icon } from '@ui-kitten/components';
 import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
@@ -71,7 +65,7 @@ export const StyleShowcase = () => {
           <View style={styles.statCard}>
             <View style={styles.statHeader}>
               <View style={[styles.statIcon, { backgroundColor: palette.primary }]}>
-                <Bell size={24} color="#fff" />
+                <Icon name="bell-outline" width={24} height={24} fill="#fff" />
               </View>
             </View>
             <Text style={styles.statValue}>1,234</Text>
@@ -88,24 +82,24 @@ export const StyleShowcase = () => {
 
           <View style={styles.rowCenter}>
             <View style={[styles.badge, styles.badgeSuccess, styles.mr2]}>
-              <CheckCircle size={12} color={palette.success} />
+              <Icon name="checkmark-circle-outline" width={12} height={12} fill={palette.success} />
               <Text style={[styles.badgeText, styles.badgeTextSuccess]}>Success</Text>
             </View>
 
             <View style={[styles.badge, styles.badgeWarning, styles.mr2]}>
-              <AlertTriangle size={12} color={palette.warning} />
+              <Icon name="alert-triangle-outline" width={12} height={12} fill={palette.warning} />
               <Text style={[styles.badgeText, styles.badgeTextWarning]}>Warning</Text>
             </View>
           </View>
 
           <View style={[styles.rowCenter, styles.mt2]}>
             <View style={[styles.badge, styles.badgeDanger, styles.mr2]}>
-              <XCircle size={12} color={palette.danger} />
+              <Icon name="close-circle-outline" width={12} height={12} fill={palette.danger} />
               <Text style={[styles.badgeText, styles.badgeTextDanger]}>Danger</Text>
             </View>
 
             <View style={[styles.badge, styles.badgeInfo, styles.mr2]}>
-              <Info size={12} color={palette.info} />
+              <Icon name="info-outline" width={12} height={12} fill={palette.info} />
               <Text style={[styles.badgeText, styles.badgeTextInfo]}>Info</Text>
             </View>
 

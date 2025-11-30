@@ -29,6 +29,20 @@ import {
 import { authService } from './auth.service';
 
 class SignSAService {
+  private language: string = 'en';
+
+  // ============================================================================
+  // Language Management
+  // ============================================================================
+
+  setLanguage(language: string) {
+    this.language = language;
+  }
+
+  getLanguage(): string {
+    return this.language;
+  }
+
   // ============================================================================
   // Generic Request Handler
   // ============================================================================
@@ -39,7 +53,7 @@ class SignSAService {
   ): Promise<ApiResponse<T>> {
     try {
       const url = getApiUrl(endpoint);
-      const response = await authService.authenticatedRequest(url, options);
+      const response = await authService.authenticatedRequest(url, options, this.language);
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));

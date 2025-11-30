@@ -1,51 +1,98 @@
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { MOCK_CHAT_MESSAGES } from '@/services/message.mock';
-import { Card, Icon, Input, Layout, Text } from '@ui-kitten/components';
-import React, { useState } from 'react';
-import { FlatList, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchMessages } from '@/store/slices/messagesSlice';
+import { Card, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
+import React, { useEffect, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 export default function MessagesScreen() {
-  const { colors } = useTheme();
+  // Context for UI preferences (theme, language)
+  const { colors, colorScheme } = useTheme();
   const { t, language } = useLanguage();
+
+  // Redux state for global/API data
+  const dispatch = useAppDispatch();
+  const { messages, isLoading, error } = useAppSelector((state) => state.messages);
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const isRTL = language === 'ar';
 
-  const filteredMessages = MOCK_CHAT_MESSAGES.filter(msg =>
-    (language === 'ar' ? msg.sender.name.ar : msg.sender.name.en)
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    dispatch(fetchMessages({ pagination: { page: 1, page_size: 50 } }));
+  }, [dispatch]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await dispatch(fetchMessages({ pagination: { page: 1, page_size: 50 } }));
+    setRefreshing(false);
+  };
+
+  const filteredMessages = messages.filter((msg) =>
+    msg.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    msg.scope_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderChatItem = ({ item }: { item: typeof MOCK_CHAT_MESSAGES[0] }) => (
-    <TouchableOpacity>
-      <Card style={styles.chatCard}>
-        <View style={[styles.chatItemContainer, isRTL && styles.chatItemContainerRTL]}>
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
-
-          <View style={styles.chatDetails}>
-            <Text category="s1" style={[styles.senderName, isRTL && styles.textRTL]}>
-              {language === 'ar' ? item.sender.name.ar : item.sender.name.en}
+  const renderMessageItem = ({ item }: { item: typeof messages[0] }) => (
+    <Card style={styles.messageCard}>
+      <View style={[styles.messageContainer, isRTL && styles.messageContainerRTL]}>
+        <View style={styles.messageDetails}>
+          <Text category="s1" style={[styles.messageType, isRTL && styles.textRTL]}>
+            {item.message_type_display || item.message_type}
+          </Text>
+          {item.scope_name && (
+            <Text category="c1" appearance="hint" style={[isRTL && styles.textRTL]}>
+              {item.scope_name}
             </Text>
-            <Text category="p2" appearance="hint" style={[styles.lastMessage, isRTL && styles.textRTL]}>
-              {language === 'ar' ? item.lastMessage.ar : item.lastMessage.en}
-            </Text>
-          </View>
-
-          <View style={styles.timeAndCount}>
-            <Text category="c1" appearance="hint">{item.time}</Text>
-            {item.unreadCount && item.unreadCount > 0 && (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadText}>{item.unreadCount}</Text>
-              </View>
-            )}
-          </View>
+          )}
+          <Text category="p2" style={[styles.messageContent, isRTL && styles.textRTL]} numberOfLines={2}>
+            {item.content || t('messages.noContent')}
+          </Text>
+          {item.user_rating && (
+            <View style={styles.ratingContainer}>
+              <Icon name="star" fill="#FFD700" style={styles.starIcon} />
+              <Text category="c1">{item.user_rating}/5</Text>
+            </View>
+          )}
         </View>
-      </Card>
-    </TouchableOpacity>
+
+        <View style={styles.messageStatus}>
+          {!item.is_read && (
+            <View style={styles.unreadDot} />
+          )}
+          {item.is_favorited && (
+            <Icon name="heart" fill="#FF6B6B" style={styles.favoriteIcon} />
+          )}
+        </View>
+      </View>
+    </Card>
   );
+
+  if (isLoading && !refreshing && messages.length === 0) {
+    return (
+      <Layout style={styles.container} level="1">
+        <AppHeader title={t('messages.title')} showUserInfo={false} />
+        <View style={styles.centerContainer}>
+          <Spinner size="giant" />
+        </View>
+      </Layout>
+    );
+  }
+
+  if (error && messages.length === 0) {
+    return (
+      <Layout style={styles.container} level="1">
+        <AppHeader title={t('messages.title')} showUserInfo={false} />
+        <View style={styles.centerContainer}>
+          <Text category="h6" status="danger">{t('common.error')}</Text>
+          <Text category="p2" appearance="hint">{error}</Text>
+        </View>
+      </Layout>
+    );
+  }
 
   return (
     <Layout style={styles.container} level="1">
@@ -63,10 +110,18 @@ export default function MessagesScreen() {
 
       <FlatList
         data={filteredMessages}
-        renderItem={renderChatItem}
-        keyExtractor={(item) => item.id}
+        renderItem={renderMessageItem}
+        keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text category="h6" appearance="hint">{t('messages.noMessages')}</Text>
+          </View>
+        }
       />
     </Layout>
   );
@@ -75,6 +130,12 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
   },
   searchContainer: {
     padding: 16,
@@ -86,51 +147,58 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 100,
   },
-  chatCard: {
+  messageCard: {
     marginBottom: 12,
     borderRadius: 12,
   },
-  chatItemContainer: {
+  messageContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
-  chatItemContainerRTL: {
+  messageContainerRTL: {
     flexDirection: 'row-reverse',
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  chatDetails: {
+  messageDetails: {
     flex: 1,
   },
-  senderName: {
-    fontFamily: 'IBMPlexSansArabic-Bold',
+  messageType: {
+    fontWeight: 'bold',
     marginBottom: 4,
   },
-  lastMessage: {
-    fontFamily: 'IBMPlexSansArabic-Regular',
+  messageContent: {
+    marginTop: 4,
   },
-  textRTL: {
-    textAlign: 'right',
+  messageStatus: {
+    alignItems: 'center',
+    marginLeft: 8,
   },
-  timeAndCount: {
-    alignItems: 'flex-end',
+  unreadDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#3366FF',
+    marginBottom: 4,
   },
-  unreadBadge: {
-    backgroundColor: '#6366f1',
-    minWidth: 20,
+  favoriteIcon: {
+    width: 20,
     height: 20,
-    borderRadius: 10,
-    justifyContent: 'center',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
   },
-  unreadText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
+  starIcon: {
+    width: 16,
+    height: 16,
+    marginRight: 4,
+  },
+  emptyContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  textRTL: {
+    textAlign: 'right',
   },
 });

@@ -1,14 +1,20 @@
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { MOCK_GOALS } from '@/services/goals.mock';
-import { Card, Icon, Layout, ProgressBar, Text } from '@ui-kitten/components';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchGoals, setFilters } from '@/store/slices/goalsSlice';
+import { Button, Card, Icon, Layout, ProgressBar, Spinner, Text } from '@ui-kitten/components';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 export default function GoalsScreen() {
+  const dispatch = useAppDispatch();
+  // Context for UI preferences (theme, language)
   const { t, language } = useLanguage();
-  const { colors, colorScheme } = useTheme();
+  const { colorScheme } = useTheme();
+  // Redux for goals data
+  const { goals, isLoading, filters } = useAppSelector((state) => state.goals);
+
   const isRTL = language === 'ar';
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
@@ -16,16 +22,37 @@ export default function GoalsScreen() {
   const textColor = isDark ? '#FFFFFF' : '#000000';
   const mutedColor = isDark ? '#A0AEC0' : '#718096';
   const borderColor = isDark ? '#2D3748' : '#E2E8F0';
-  const filterBgInactive = isDark ? '#1A1A1A' : '#F7FAFC';
-  const filterBgActive = isDark ? '#FFFFFF' : '#000000';
-  const filterTextInactive = isDark ? '#A0AEC0' : '#4A5568';
-  const filterTextActive = isDark ? '#000000' : '#FFFFFF';
 
-  const filteredGoals = MOCK_GOALS.filter(goal => {
-    if (filter === 'completed') return goal.isCompleted;
-    if (filter === 'active') return !goal.isCompleted;
-    return true;
-  });
+  // Fetch goals on mount
+  useEffect(() => {
+    dispatch(fetchGoals({}));
+  }, [dispatch]);
+
+  // Apply filter
+  useEffect(() => {
+    const goalFilters = filter === 'completed'
+      ? { is_completed: true }
+      : filter === 'active'
+      ? { is_completed: false }
+      : {};
+
+    dispatch(setFilters(goalFilters));
+    dispatch(fetchGoals({ filters: goalFilters }));
+  }, [filter, dispatch]);
+
+  const handleRefresh = () => {
+    dispatch(fetchGoals({ filters: filters }));
+  };
+
+  // Filter goals based on current filter state
+  const filteredGoals = React.useMemo(() => {
+    if (filter === 'completed') {
+      return goals.filter(g => g.status === 'completed');
+    } else if (filter === 'active') {
+      return goals.filter(g => g.status !== 'completed');
+    }
+    return goals;
+  }, [goals, filter]);
 
   const getProgressColor = (progress: number) => {
     if (progress >= 75) return '#48BB78';
@@ -46,66 +73,58 @@ export default function GoalsScreen() {
 
       {/* Filter Buttons */}
       <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            { backgroundColor: filter === 'all' ? filterBgActive : filterBgInactive }
-          ]}
+        <Button
+          style={styles.filterButton}
+          appearance={filter === 'all' ? 'filled' : 'outline'}
+          size="small"
           onPress={() => setFilter('all')}
         >
-          <Text style={[
-            styles.filterText,
-            { color: filter === 'all' ? filterTextActive : filterTextInactive }
-          ]}>
-            {t('goals.all')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            { backgroundColor: filter === 'active' ? filterBgActive : filterBgInactive }
-          ]}
+          {() => <Text>{t('goals.all')}</Text>}
+        </Button>
+        <Button
+          style={styles.filterButton}
+          appearance={filter === 'active' ? 'filled' : 'outline'}
+          size="small"
           onPress={() => setFilter('active')}
         >
-          <Text style={[
-            styles.filterText,
-            { color: filter === 'active' ? filterTextActive : filterTextInactive }
-          ]}>
-            {t('goals.active')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            { backgroundColor: filter === 'completed' ? filterBgActive : filterBgInactive }
-          ]}
+          {() => <Text>{t('goals.active')}</Text>}
+        </Button>
+        <Button
+          style={styles.filterButton}
+          appearance={filter === 'completed' ? 'filled' : 'outline'}
+          size="small"
           onPress={() => setFilter('completed')}
         >
-          <Text style={[
-            styles.filterText,
-            { color: filter === 'completed' ? filterTextActive : filterTextInactive }
-          ]}>
-            {t('goals.completed')}
-          </Text>
-        </TouchableOpacity>
+          {() => <Text>{t('goals.completed')}</Text>}
+        </Button>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Stats Summary */}
-        <View style={styles.statsContainer}>
-          <Card style={styles.statCard}>
-            <Text category="h4" style={styles.statNumber}>{MOCK_GOALS.length}</Text>
-            <Text category="s2" appearance="hint">{t('goals.total')}</Text>
-          </Card>
+      {isLoading && goals.length === 0 ? (
+        <View style={styles.center}>
+          <Spinner size="giant" />
+        </View>
+      ) : (
+        <ScrollView
+          contentContainerStyle={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+          }
+        >
+          {/* Stats Summary */}
+          <View style={styles.statsContainer}>
+            <Card style={styles.statCard}>
+              <Text category="h4" style={styles.statNumber}>{goals.length}</Text>
+              <Text category="s2" appearance="hint">{t('goals.total')}</Text>
+            </Card>
           <Card style={styles.statCard}>
             <Text category="h4" style={[styles.statNumber, { color: '#48BB78' }]}>
-              {MOCK_GOALS.filter(g => g.isCompleted).length}
+              {goals.filter(g => g.status === 'completed').length}
             </Text>
             <Text category="s2" appearance="hint">{t('goals.completed')}</Text>
           </Card>
           <Card style={styles.statCard}>
             <Text category="h4" style={[styles.statNumber, { color: '#4299E1' }]}>
-              {MOCK_GOALS.filter(g => !g.isCompleted).length}
+              {goals.filter(g => g.status !== 'completed').length}
             </Text>
             <Text category="s2" appearance="hint">{t('goals.active')}</Text>
           </Card>
@@ -116,54 +135,60 @@ export default function GoalsScreen() {
           <Card key={goal.id} style={styles.goalCard}>
             <View style={[styles.goalHeader, isRTL && styles.goalHeaderRTL]}>
               <View style={styles.goalTitleContainer}>
-                {goal.isCompleted && (
+                {goal.status === 'completed' && (
                   <Icon name="checkmark-circle" style={styles.checkIcon} fill="#48BB78" />
                 )}
                 <Text category="h6" style={[styles.goalTitle, isRTL && styles.textRTL]}>
-                  {language === 'ar' ? goal.title.ar : goal.title.en}
+                  {goal.title}
                 </Text>
               </View>
-              <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(goal.priority) }]}>
+              <View style={[styles.priorityBadge, { backgroundColor: '#6366f1' }]}>
                 <Text style={styles.priorityText}>
-                  {goal.priority === 'high' ? '🔴' : goal.priority === 'medium' ? '🟡' : '🔵'}
+                  {goal.status_display || goal.status}
                 </Text>
               </View>
             </View>
 
-            <Text category="p2" appearance="hint" style={[styles.goalDescription, isRTL && styles.textRTL]}>
-              {language === 'ar' ? goal.description.ar : goal.description.en}
-            </Text>
-
-            <View style={styles.categoryBadgeContainer}>
-              <Text style={styles.categoryBadge}>
-                {t(`categories.${goal.category}.name`)}
+            {goal.description && (
+              <Text category="p2" appearance="hint" style={[styles.goalDescription, isRTL && styles.textRTL]}>
+                {goal.description}
               </Text>
-            </View>
+            )}
 
-            {!goal.isCompleted && (
+            {goal.scope_name && (
+              <View style={styles.categoryBadgeContainer}>
+                <Text style={styles.categoryBadge}>
+                  {goal.scope_name}
+                </Text>
+              </View>
+            )}
+
+            {goal.status !== 'completed' && (
               <>
                 <View style={styles.progressContainer}>
                   <Text category="s2" appearance="hint">{t('goals.progress')}</Text>
-                  <Text category="s2" style={{ color: getProgressColor(goal.progress) }}>
-                    {goal.progress}%
+                  <Text category="s2" style={{ color: getProgressColor(goal.progress_percentage) }}>
+                    {goal.progress_percentage}%
                   </Text>
                 </View>
                 <ProgressBar
-                  progress={goal.progress / 100}
+                  progress={goal.progress_percentage / 100}
                   style={styles.progressBar}
-                  status={goal.progress >= 75 ? 'success' : goal.progress >= 50 ? 'info' : 'warning'}
+                  status={goal.progress_percentage >= 75 ? 'success' : goal.progress_percentage >= 50 ? 'info' : 'warning'}
                 />
               </>
             )}
 
-            <View style={[styles.goalFooter, isRTL && styles.goalFooterRTL]}>
-              <View style={styles.dateContainer}>
-                <Icon name="calendar-outline" style={styles.dateIcon} fill={mutedColor} />
-                <Text category="c1" appearance="hint">
-                  {t('goals.targetDate')}: {new Date(goal.targetDate).toLocaleDateString()}
-                </Text>
+            {goal.target_date && (
+              <View style={[styles.goalFooter, isRTL && styles.goalFooterRTL]}>
+                <View style={styles.dateContainer}>
+                  <Icon name="calendar-outline" style={styles.dateIcon} fill={mutedColor} />
+                  <Text category="c1" appearance="hint">
+                    {t('goals.targetDate')}: {new Date(goal.target_date).toLocaleDateString()}
+                  </Text>
+                </View>
               </View>
-            </View>
+            )}
           </Card>
         ))}
 
@@ -176,11 +201,17 @@ export default function GoalsScreen() {
           </Card>
         )}
       </ScrollView>
+      )}
     </Layout>
   );
 }
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: { flex: 1 },
   filterContainer: {
     flexDirection: 'row',
@@ -190,14 +221,6 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  filterText: {
-    fontSize: 14,
-    fontFamily: 'IBMPlexSansArabic-Medium',
   },
   content: { padding: 16 },
   statsContainer: {

@@ -363,12 +363,26 @@ class AuthService {
    */
   async authenticatedRequest<T>(
     url: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    language?: string
   ): Promise<Response> {
     const headers = await this.getAuthHeaders();
 
+    // If language is provided and there's a body, add language to it
+    let body = options.body;
+    if (language && options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+      try {
+        const bodyData = body ? JSON.parse(body as string) : {};
+        bodyData.language = language;
+        body = JSON.stringify(bodyData);
+      } catch (e) {
+        // If body is not JSON, just use original body
+      }
+    }
+
     let response = await fetch(url, {
       ...options,
+      body,
       headers: {
         'Content-Type': 'application/json',
         ...headers,
@@ -385,6 +399,7 @@ class AuthService {
         const newHeaders = await this.getAuthHeaders();
         response = await fetch(url, {
           ...options,
+          body,
           headers: {
             'Content-Type': 'application/json',
             ...newHeaders,

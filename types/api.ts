@@ -377,6 +377,7 @@ export interface MessageFilters {
   date_from?: string;
   date_to?: string;
   search?: string;
+  language?: string; // 'en' or 'ar'
 }
 
 export interface GoalFilters {

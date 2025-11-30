@@ -61,7 +61,9 @@
     "title": "Messages",
     "searchPlaceholder": "Search here...",
     "noMessages": "No messages",
-    "loadingMessages": "Loading messages..."
+    "loadingMessages": "Loading messages...",
+    "noContent": "No content available",
+    "messagesCount": "Messages"
   },
   "header": {
     "welcome": "Welcome",
@@ -81,11 +83,19 @@
     "messagesTitle": "Today's Messages",
     "totalMessages": "Total Messages",
     "favorites": "Favorites",
+    "favoriteMessages": "Favorite Messages",
     "streak": "Streak",
     "categories": "Categories",
     "recentMessages": "Recent Messages",
+    "motivationalMessages": "Motivational Messages",
     "noRecentMessages": "No recent messages",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "stats": {
+      "todayMessages": "Today's Messages",
+      "totalMessages": "Total Messages",
+      "favoriteMessages": "Favorite Messages",
+      "currentStreak": "Current Streak"
+    }
   },
   "profile": {
     "preferences": "Preferences",
@@ -150,21 +160,6 @@
     "phoneSupport": "Phone Support",
     "callUs": "Call us anytime",
     "phoneNumber": "Phone: +966 50 000 0000"
-  },
-  "home": {
-    "title": "Global Resource Finder",
-    "subtitle": "Stay connected with the latest updates",
-    "recentPosts": "Recent Posts",
-    "activeUsers": "Active Users",
-    "growth": "Growth",
-    "recentActivity": "Recent Activity",
-    "hoursAgo": "{{count}} hours ago",
-    "browseConference": "Browse Conference",
-    "linkingAndEnabling": "Linking and Enabling",
-    "information": "Information",
-    "layers": "Layers",
-    "circles": "Circles",
-    "quotient": "Quotient"
   },
   "news": {
     "title": "My Goals",
@@ -257,6 +252,49 @@
     "manageSubscription": "Manage Subscription",
     "categories": "categories",
     "categoriesSelected": "categories selected"
+  },
+  "packages": {
+    "title": "Choose Your Plan",
+    "subtitle": "Select the perfect package to achieve your goals",
+    "loading": "Loading packages...",
+    "loadError": "Failed to load packages",
+    "free": "FREE",
+    "currency": "SAR",
+    "popular": "Popular",
+    "selected": "Selected",
+    "package": "Package",
+    "scopes": "scopes",
+    "duration": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    },
+    "features": {
+      "scopes": "{{count}} Life Areas",
+      "messages": "{{count}} Messages/Day",
+      "customGoals": "Custom Goals",
+      "prioritySupport": "Priority Support"
+    },
+    "selectScopes": "Select Your Life Areas",
+    "selectScopesHint": "Selected {{selected}} of {{max}} areas",
+    "scopeLimitTitle": "Maximum Reached",
+    "scopeLimitMessage": "You can select up to {{max}} life areas with this package",
+    "noScopesTitle": "No Areas Selected",
+    "noScopesMessage": "Please select at least one life area to continue",
+    "startFreeTrial": "Start Free Trial",
+    "continueToPayment": "Continue to Payment",
+    "paymentTitle": "Complete Your Purchase",
+    "orderSummary": "Order Summary",
+    "selectedScopes": "Selected Areas",
+    "total": "Total",
+    "paymentNote": "Your subscription will be processed securely through our payment gateway",
+    "pay": "Pay Now",
+    "freeTrialSuccess": "Free Trial Started!",
+    "freeTrialSuccessMessage": "Your free trial has been activated successfully. Enjoy exploring the app!",
+    "paymentSuccess": "Payment Successful!",
+    "paymentSuccessMessage": "Your subscription has been activated. Welcome aboard!",
+    "subscriptionError": "Failed to create subscription",
+    "paymentError": "Payment failed. Please try again."
   },
   "categories": {
     "mental": {
