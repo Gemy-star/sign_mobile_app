@@ -113,6 +113,7 @@
     "version": "Version",
     "goals": "Goals",
     "messages": "Messages",
+    "messagesCount": "Messages",
     "streak": "Streak",
     "on": "On",
     "off": "Off",

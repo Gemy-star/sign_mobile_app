@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchMessages } from '@/store/slices/messagesSlice';
 import { Card, Icon, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -17,6 +18,7 @@ export default function MotivationScreen() {
   // Context for UI preferences (theme, language)
   const { colors, colorScheme } = useTheme();
   const { t, language } = useLanguage();
+  const router = useRouter();
 
   // Redux state for global/API data
   const dispatch = useAppDispatch();
@@ -24,6 +26,8 @@ export default function MotivationScreen() {
   const [loading, setLoading] = useState(false);
 
   const isRTL = language === 'ar';
+  const isDark = colorScheme === 'dark';
+  const textColor = isDark ? '#F8F8F8' : '#0F0F0F';
 
   useEffect(() => {
     // Fetch motivational messages if not already loaded
@@ -50,7 +54,7 @@ export default function MotivationScreen() {
       <Layout style={styles.container} level="1">
         <AppHeader title={t('motivation.appName')} showUserInfo={false} />
         <View style={styles.center}>
-          <Spinner size="giant" />
+          <Spinner size="giant" status="primary" />
         </View>
       </Layout>
     );
@@ -61,17 +65,21 @@ export default function MotivationScreen() {
       <AppHeader title={t('motivation.appName')} showUserInfo={false} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Categories */}
-        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+        <Text category="h6" style={[styles.sectionTitle, styles.highlightText, isRTL && styles.textRTL]}>
           {t('motivation.lifeAreas')}
         </Text>
-        <Text category="p2" appearance="hint" style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
+        <Text category="p2" appearance="hint" style={[styles.sectionSubtitle, styles.mutedText, isRTL && styles.textRTL]}>
           {t('motivation.lifeAreasDesc')}
         </Text>
 
         <View style={styles.categoriesGrid}>
           {categories.map((category) => {
             return (
-              <TouchableOpacity key={category.id} style={styles.categoryItem}>
+              <TouchableOpacity
+                key={category.id}
+                style={styles.categoryItem}
+                onPress={() => router.push(`/category-detail?categoryId=${category.id}`)}
+              >
                 <Card style={styles.categoryCard}>
                   <LinearGradient
                     colors={[category.color, `${category.color}dd`]}
@@ -91,30 +99,35 @@ export default function MotivationScreen() {
         </View>
 
         {/* Motivational Messages */}
-        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+        <Text category="h6" style={[styles.sectionTitle, styles.highlightText, isRTL && styles.textRTL]}>
           {t('motivation.aiMessages')}
         </Text>
-        <Text category="p2" appearance="hint" style={[styles.sectionSubtitle, isRTL && styles.textRTL]}>
+        <Text category="p2" appearance="hint" style={[styles.sectionSubtitle, styles.mutedText, isRTL && styles.textRTL]}>
           {t('motivation.aiMessagesDesc')}
         </Text>
 
         {motivationalMessages.map((message: any) => (
-          <Card key={message.id} style={styles.messageCard}>
-            <View style={[styles.messageHeader, isRTL && styles.messageHeaderRTL]}>
-              <Text category="c1" appearance="hint" style={styles.categoryBadge}>
-                {message.scope_name || message.message_type_display}
+          <TouchableOpacity
+            key={message.id}
+            onPress={() => router.push(`/message-detail?messageId=${message.id}`)}
+          >
+            <Card style={styles.messageCard}>
+              <View style={[styles.messageHeader, isRTL && styles.messageHeaderRTL]}>
+                <Text category="c1" appearance="hint" style={[styles.categoryBadge, styles.highlightText]}>
+                  {message.scope_name || message.message_type_display}
+                </Text>
+                {message.is_favorited && <Icon name="star" style={styles.starIcon} fill="#f59e0b" />}
+              </View>
+              <Text category="p1" style={[styles.messageContent, { color: textColor }, isRTL && styles.textRTL]}>
+                {message.content || ''}
               </Text>
-              {message.is_favorited && <Icon name="star" style={styles.starIcon} fill="#f59e0b" />}
-            </View>
-            <Text category="p1" style={[styles.messageContent, isRTL && styles.textRTL]}>
-              {message.content || ''}
-            </Text>
-            {message.ai_model && (
-              <Text category="c1" appearance="hint" style={styles.messageAuthor}>
-                - {message.ai_model}
-              </Text>
-            )}
-          </Card>
+              {message.ai_model && (
+                <Text category="c1" appearance="hint" style={[styles.messageAuthor, styles.mutedText]}>
+                  - {message.ai_model}
+                </Text>
+              )}
+            </Card>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </Layout>
@@ -142,6 +155,13 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontFamily: 'IBMPlexSansArabic-Regular',
     marginBottom: 16,
+  },
+  highlightText: {
+    color: '#A48111',
+  },
+  mutedText: {
+    color: '#A48111',
+    opacity: 0.7,
   },
   textRTL: {
     textAlign: 'right',

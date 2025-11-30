@@ -107,7 +107,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
           {/* Logo Section with Gradient */}
           <View style={styles.logoSection}>
             <LinearGradient
-              colors={['#6366f1', '#8b5cf6', '#ec4899']}
+              colors={['#A48111', '#C69D1A', '#A48111']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.logoGradient}

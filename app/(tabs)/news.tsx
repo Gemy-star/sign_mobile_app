@@ -19,9 +19,10 @@ export default function GoalsScreen() {
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
 
   const isDark = colorScheme === 'dark';
-  const textColor = isDark ? '#FFFFFF' : '#000000';
+  const textColor = isDark ? '#F8F8F8' : '#0F0F0F';
   const mutedColor = isDark ? '#A0AEC0' : '#718096';
   const borderColor = isDark ? '#2D3748' : '#E2E8F0';
+  const progressBgColor = isDark ? '#2E2E2E' : '#F8F8F8';
 
   // Fetch goals on mount
   useEffect(() => {
@@ -101,7 +102,7 @@ export default function GoalsScreen() {
 
       {isLoading && goals.length === 0 ? (
         <View style={styles.center}>
-          <Spinner size="giant" />
+          <Spinner size="giant" status="primary" />
         </View>
       ) : (
         <ScrollView
@@ -113,20 +114,20 @@ export default function GoalsScreen() {
           {/* Stats Summary */}
           <View style={styles.statsContainer}>
             <Card style={styles.statCard}>
-              <Text category="h4" style={styles.statNumber}>{goals.length}</Text>
-              <Text category="s2" appearance="hint">{t('goals.total')}</Text>
+              <Text category="h4" style={[styles.statNumber, styles.highlightText]}>{goals.length}</Text>
+              <Text category="s2" appearance="hint" style={styles.mutedText}>{t('goals.total')}</Text>
             </Card>
           <Card style={styles.statCard}>
-            <Text category="h4" style={[styles.statNumber, { color: '#48BB78' }]}>
+            <Text category="h4" style={[styles.statNumber, styles.highlightText]}>
               {goals.filter(g => g.status === 'completed').length}
             </Text>
-            <Text category="s2" appearance="hint">{t('goals.completed')}</Text>
+            <Text category="s2" appearance="hint" style={styles.mutedText}>{t('goals.completed')}</Text>
           </Card>
           <Card style={styles.statCard}>
-            <Text category="h4" style={[styles.statNumber, { color: '#4299E1' }]}>
+            <Text category="h4" style={[styles.statNumber, styles.highlightText]}>
               {goals.filter(g => g.status !== 'completed').length}
             </Text>
-            <Text category="s2" appearance="hint">{t('goals.active')}</Text>
+            <Text category="s2" appearance="hint" style={styles.mutedText}>{t('goals.active')}</Text>
           </Card>
         </View>
 
@@ -166,15 +167,16 @@ export default function GoalsScreen() {
             {goal.status !== 'completed' && (
               <>
                 <View style={styles.progressContainer}>
-                  <Text category="s2" appearance="hint">{t('goals.progress')}</Text>
-                  <Text category="s2" style={{ color: getProgressColor(goal.progress_percentage) }}>
+                  <Text category="s2" appearance="hint" style={styles.mutedText}>{t('goals.progress')}</Text>
+                  <Text category="s2" style={styles.highlightText}>
                     {goal.progress_percentage}%
                   </Text>
                 </View>
                 <ProgressBar
                   progress={goal.progress_percentage / 100}
-                  style={styles.progressBar}
-                  status={goal.progress_percentage >= 75 ? 'success' : goal.progress_percentage >= 50 ? 'info' : 'warning'}
+                  style={[styles.progressBar, { backgroundColor: progressBgColor }]}
+                  indicatorStyle={{ backgroundColor: '#A48111' }}
+                  status="warning"
                 />
               </>
             )}
@@ -237,6 +239,13 @@ const styles = StyleSheet.create({
   statNumber: {
     fontFamily: 'IBMPlexSansArabic-Bold',
     marginBottom: 4,
+  },
+  highlightText: {
+    color: '#A48111',
+  },
+  mutedText: {
+    color: '#A48111',
+    opacity: 0.7,
   },
   goalCard: {
     borderRadius: 12,

@@ -200,10 +200,10 @@ export default function ProfileScreen() {
         <Button
           onPress={handleLogout}
           status="danger"
-          accessoryLeft={(props) => <Icon name="log-out-outline" style={styles.iconStyle} />}
+          accessoryLeft={(props) => <Icon {...props} name="log-out-outline" />}
           style={styles.logoutButton}
         >
-          {t('profile.logout')}
+          {() => <Text>{t('profile.logout')}</Text>}
         </Button>
       </ScrollView>
 

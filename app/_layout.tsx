@@ -7,6 +7,7 @@ import PackagesScreen from '@/screens/PackagesScreen';
 import WelcomeMotivationScreen from '@/screens/WelcomeMotivationScreen';
 import { dataSource } from '@/services/data-source.service';
 import { store } from '@/store';
+import { logger } from '@/utils/logger';
 import * as eva from '@eva-design/eva';
 import { ApplicationProvider, IconRegistry, Layout, Spinner, Text } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
@@ -16,7 +17,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { Provider as ReduxProvider } from 'react-redux';
-import { logger } from '@/utils/logger';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -87,7 +87,7 @@ const AppContent = () => {
             resizeMode="contain"
           />
         </View>
-        <Spinner size="giant" />
+        <Spinner size="giant" status="primary" />
         <Text category="h6" style={styles.loaderText}>
           {isDark ? 'Loading...' : 'جاري التحميل...'}
         </Text>
