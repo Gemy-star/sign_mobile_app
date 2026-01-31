@@ -10,7 +10,7 @@ import { fetchMessages } from '@/store/slices/messagesSlice';
 import { Button, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 export default function AllMessagesScreen() {
   const dispatch = useAppDispatch();
@@ -66,46 +66,39 @@ export default function AllMessagesScreen() {
 
   if (isLoading && messages.length === 0) {
     return (
-      <Layout style={styles.container} level="1">
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Icon name={isRTL ? 'arrow-forward-outline' : 'arrow-back-outline'} style={styles.backIcon} fill="#fff" />
-          </TouchableOpacity>
-          <Text category="h6" style={styles.headerTitle}>
-            {t('home.motivationalMessages')}
-          </Text>
-          <View style={styles.headerSpacer} />
-        </View>
-        <View style={styles.center}>
-          <Spinner size="giant" />
-        </View>
-      </Layout>
+      <SafeAreaView style={styles.container}>
+        <Layout style={styles.container} level="1">
+          <ModernHeader
+            title={t('home.motivationalMessages')}
+            showBack={true}
+          />
+          <View style={styles.center}>
+            <Spinner size="giant" />
+          </View>
+        </Layout>
+      </SafeAreaView>
     );
   }
 
   return (
-    <Layout style={styles.container} level="1">
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-          <Icon name={isRTL ? 'arrow-forward-outline' : 'arrow-back-outline'} style={styles.backIcon} fill="#fff" />
-        </TouchableOpacity>
-        <Text category="h6" style={styles.headerTitle}>
-          {t('home.motivationalMessages')}
-        </Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Input
-          placeholder={t('messages.searchPlaceholder')}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          accessoryLeft={renderSearchIcon}
-          style={styles.searchInput}
+    <SafeAreaView style={styles.container}>
+      <Layout style={styles.container} level="1">
+        <ModernHeader
+          title={t('home.motivationalMessages')}
+          subtitle={`${filteredMessages.length} ${isRTL ? 'رسالة' : 'messages'}`}
+          showBack={true}
         />
-      </View>
+
+        {/* Search */}
+        <View style={styles.searchContainer}>
+          <Input
+            placeholder={t('messages.searchPlaceholder')}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            accessoryLeft={renderSearchIcon}
+            style={styles.searchInput}
+          />
+        </View>
 
       {/* Category Filter */}
       <ScrollView
@@ -159,7 +152,8 @@ export default function AllMessagesScreen() {
           ))
         )}
       </ScrollView>
-    </Layout>
+      </Layout>
+    </SafeAreaView>
   );
 }
 

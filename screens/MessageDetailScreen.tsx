@@ -7,7 +7,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { dataSource } from '@/services/dataSource.service';
 import { Message } from '@/types/api';
 import { Icon, Layout, Spinner, Text } from '@ui-kitten/components';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
