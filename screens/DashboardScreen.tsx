@@ -33,13 +33,13 @@ export default function DashboardScreen() {
     const isStale = !lastFetched || Date.now() - lastFetched > CACHE_TIME;
 
     if (isStale) {
-      dispatch(fetchDashboardStats(language));
+      dispatch(fetchDashboardStats());
       dispatch(fetchDailyMessage());
     }
   }, [dispatch, lastFetched, language]);
 
   const handleRefresh = () => {
-    dispatch(fetchDashboardStats(language));
+    dispatch(fetchDashboardStats());
     dispatch(fetchDailyMessage());
   };
 
@@ -171,51 +171,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    padding: 16,
+    padding: width > 600 ? 24 : 16,
     paddingBottom: 100,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -6,
-    marginBottom: 12,
+    marginHorizontal: width > 600 ? -8 : -6,
+    marginBottom: width > 600 ? 16 : 12,
   },
   statItem: {
     width: '50%',
-    padding: 6,
+    padding: width > 600 ? 8 : 6,
   },
   streakContainer: {
-    marginBottom: 16,
+    marginBottom: width > 600 ? 20 : 16,
   },
   sectionCard: {
-    borderRadius: 16,
-    marginBottom: 16,
-    padding: 16,
+    borderRadius: width > 600 ? 20 : 16,
+    marginBottom: width > 600 ? 20 : 16,
+    padding: width > 600 ? 20 : 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: width > 600 ? 20 : 16,
   },
   sectionHeaderRTL: {
     flexDirection: 'row-reverse',
   },
   sectionTitle: {
     fontFamily: FontFamily.arabicBold,
-    fontSize: 18,
+    fontSize: width > 600 ? 22 : 18,
   },
   textRTL: {
     textAlign: 'right',
   },
   emptyContainer: {
-    padding: 40,
+    padding: width > 600 ? 60 : 40,
     alignItems: 'center',
   },
   emptyText: {
     textAlign: 'center',
     opacity: 0.5,
     fontFamily: FontFamily.arabic,
-    fontSize: 14,
+    fontSize: width > 600 ? 16 : 14,
   },
 });

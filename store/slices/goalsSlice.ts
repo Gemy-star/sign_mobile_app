@@ -1,7 +1,7 @@
 // store/slices/goalsSlice.ts
 // Redux slice for goals data from API
 
-import { dataSource } from '@/services/data-source.service';
+import { dataSource } from '@/services/dataSource.service';
 import { Goal, GoalFilters, PaginationParams } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -73,7 +73,7 @@ export const updateGoalProgress = createAsyncThunk(
   async ({ goalId, progress }: { goalId: number; progress: number }, { rejectWithValue }) => {
     try {
       logger.reduxAction('goals/updateProgress', { goalId, progress });
-      const response = await dataSource.updateGoalProgress(goalId, { progress });
+      const response = await dataSource.updateGoalProgress(goalId, progress);
       if (response.success && response.data) {
         return response.data;
       }

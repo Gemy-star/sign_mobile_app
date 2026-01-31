@@ -1,8 +1,8 @@
 // hooks/useAuth.ts
-// Custom auth hooks using Redux directly - replaces AuthContext
+// Custom auth hooks using Redux directly - Updated to use dataSource
 
 import { useCallback } from 'react';
-import { authService } from '../services/auth.service';
+import { dataSource } from '../services/dataSource.service';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginFailure, loginStart, loginSuccess, logout as logoutAction, updateUser } from '../store/slices/authSlice';
 import { LoginRequest, User } from '../types/api';
@@ -35,20 +35,17 @@ export const useAuthActions = () => {
       dispatch(loginStart());
       logger.info('Attempting login', { username: credentials.username });
 
-      const response = await authService.login(credentials);
+      const response = await dataSource.login(credentials);
 
       if (response.success && response.data) {
-        const { access, refresh } = response.data;
+        const { access } = response.data;
 
-        // Save tokens using authService
-        await authService.setTokens(access, refresh);
+        // Get user profile
+        const profileResponse = await dataSource.getProfile();
 
-        // Get user data
-        const user = await authService.getUser();
-
-        if (user) {
-          dispatch(loginSuccess({ user, token: access }));
-          logger.info('Login successful', { userId: user.id });
+        if (profileResponse.success && profileResponse.data) {
+          dispatch(loginSuccess({ user: profileResponse.data, token: access }));
+          logger.info('Login successful', { userId: profileResponse.data.id });
           return true;
         } else {
           const errorMessage = 'Failed to get user data';
@@ -74,8 +71,8 @@ export const useAuthActions = () => {
     try {
       logger.info('Logging out');
 
-      // Clear tokens using authService
-      await authService.clearTokens();
+      // Clear tokens using dataSource
+      await dataSource.logout();
 
       dispatch(logoutAction());
       logger.info('Logout successful');
@@ -88,30 +85,23 @@ export const useAuthActions = () => {
 
   const checkAuth = useCallback(async (): Promise<User | null> => {
     try {
-      const token = await authService.getAccessToken();
+      const profileResponse = await dataSource.getProfile();
 
-      if (!token) {
-        logger.debug('No auth token found');
-        return null;
-      }
-
-      const user = await authService.getUser();
-
-      if (user) {
-        dispatch(updateUser(user));
-        logger.info('Auth check successful', { userId: user.id });
-        return user;
+      if (profileResponse.success && profileResponse.data) {
+        dispatch(updateUser(profileResponse.data));
+        logger.info('Auth check successful', { userId: profileResponse.data.id });
+        return profileResponse.data;
       } else {
-        // Token is invalid, clear it
-        await authService.clearTokens();
+        // Clear auth state
+        await dataSource.logout();
         dispatch(logoutAction());
-        logger.warn('Auth check failed - invalid token');
+        logger.warn('Auth check failed - no user data');
         return null;
       }
     } catch (error) {
       logger.error('Auth check error', error instanceof Error ? error : new Error(String(error)));
       // On error, clear auth state
-      await authService.clearTokens();
+      await dataSource.logout();
       dispatch(logoutAction());
       return null;
     }

@@ -5,7 +5,9 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchGoals, setFilters } from '@/store/slices/goalsSlice';
 import { Button, Card, Icon, Layout, ProgressBar, Spinner, Text } from '@ui-kitten/components';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function GoalsScreen() {
   const dispatch = useAppDispatch();
@@ -217,24 +219,32 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   filterContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    paddingHorizontal: width > 600 ? 24 : 16,
+    paddingVertical: width > 600 ? 16 : 12,
+    gap: width > 600 ? 12 : 8,
   },
   filterButton: {
     flex: 1,
   },
-  content: { padding: 16 },
+  content: {
+    padding: width > 600 ? 24 : 16,
+    paddingBottom: 100,
+  },
   statsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    gap: width > 600 ? 16 : 12,
+    marginBottom: width > 600 ? 20 : 16,
   },
   statCard: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: width > 600 ? 16 : 12,
     alignItems: 'center',
-    padding: 16,
+    padding: width > 600 ? 20 : 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   statNumber: {
     fontFamily: 'IBMPlexSansArabic-Bold',
@@ -248,9 +258,14 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   goalCard: {
-    borderRadius: 12,
-    marginBottom: 12,
-    padding: 16,
+    borderRadius: width > 600 ? 16 : 12,
+    marginBottom: width > 600 ? 16 : 12,
+    padding: width > 600 ? 20 : 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
   goalHeader: {
     flexDirection: 'row',
@@ -305,9 +320,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressBar: {
-    marginBottom: 12,
-    height: 8,
-    borderRadius: 4,
+    marginBottom: width > 600 ? 16 : 12,
+    height: width > 600 ? 10 : 8,
+    borderRadius: width > 600 ? 5 : 4,
   },
   goalFooter: {
     flexDirection: 'row',
@@ -323,18 +338,23 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dateIcon: {
-    width: 14,
-    height: 14,
+    width: width > 600 ? 16 : 14,
+    height: width > 600 ? 16 : 14,
   },
   emptyCard: {
-    borderRadius: 16,
+    borderRadius: width > 600 ? 20 : 16,
     alignItems: 'center',
-    padding: 48,
+    padding: width > 600 ? 64 : 48,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   emptyIcon: {
-    width: 64,
-    height: 64,
-    marginBottom: 16,
+    width: width > 600 ? 80 : 64,
+    height: width > 600 ? 80 : 64,
+    marginBottom: width > 600 ? 20 : 16,
   },
   emptyText: {
     fontFamily: 'IBMPlexSansArabic-Regular',

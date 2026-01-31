@@ -1,8 +1,8 @@
 // store/slices/dashboardSlice.ts
 // Redux slice for dashboard statistics from API
 
-import { dataSource } from '@/services/data-source.service';
-import { DashboardStats } from '@/types/api';
+import { DashboardStats } from '@/services/api';
+import { dataSource } from '@/services/dataSource.service';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
@@ -24,14 +24,14 @@ const initialState: DashboardState = {
 
 export const fetchDashboardStats = createAsyncThunk<
   DashboardStats,
-  string | undefined,
+  void,
   { rejectValue: string }
 >(
   'dashboard/fetchStats',
-  async (language, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      logger.reduxAction('dashboard/fetchStats', { language });
-      const response = await dataSource.getDashboardStats(language);
+      logger.reduxAction('dashboard/fetchStats');
+      const response = await dataSource.getDashboardStats();
       if (response.success && response.data) {
         return response.data;
       }

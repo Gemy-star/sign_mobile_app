@@ -7,7 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchGoals } from '@/store/slices/goalsSlice';
 import { fetchMessages } from '@/store/slices/messagesSlice';
-import { Button, Card, Icon, Layout, ProgressBar, Spinner, Tab, TabView, Text } from '@ui-kitten/components';
+import { Card, Icon, Layout, ProgressBar, Spinner, Tab, TabView, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -47,14 +47,20 @@ export default function CategoryDetailScreen() {
 
   useEffect(() => {
     // Fetch data for this category
-    dispatch(fetchMessages({ pagination: { page: 1, page_size: 20 } }));
+    dispatch(fetchMessages({
+      pagination: { page: 1, page_size: 20 },
+      filters: { language }
+    }));
     dispatch(fetchGoals({}));
-  }, [dispatch, categoryId]);
+  }, [dispatch, categoryId, language]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
-      dispatch(fetchMessages({ pagination: { page: 1, page_size: 20 } })),
+      dispatch(fetchMessages({
+        pagination: { page: 1, page_size: 20 },
+        filters: { language }
+      })),
       dispatch(fetchGoals({}))
     ]);
     setRefreshing(false);

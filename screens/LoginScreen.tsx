@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuthActions, useAuthState } from '@/hooks/useAuth';
 import { Button, Card, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Image,
@@ -202,7 +203,7 @@ export default function LoginScreen({ onLoginSuccess }: { onLoginSuccess?: () =>
           {/* Register Link */}
           <View style={styles.registerContainer}>
             <Text category="s1" appearance="hint">{t('auth.noAccount')} </Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/register')}>
               <Text category="s1" status="primary" style={styles.signUpText}>{t('auth.signUp')}</Text>
             </TouchableOpacity>
           </View>

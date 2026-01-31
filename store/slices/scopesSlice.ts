@@ -1,7 +1,7 @@
 // store/slices/scopesSlice.ts
 // Redux slice for scopes/categories data from API
 
-import { dataSource } from '@/services/data-source.service';
+import { dataSource } from '@/services/dataSource.service';
 import { Scope, ScopeCategory } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';

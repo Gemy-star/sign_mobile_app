@@ -63,10 +63,10 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
                 source={{ uri: `https://ui-avatars.com/api/?name=${userName}&background=random` }}
               />
               <View style={styles.userInfo}>
-                <Text style={[styles.greeting, { color: textColor }]}>
+                <Text style={[styles.greeting, { color: textColor }, isRTL && styles.textRTL]}>
                   {t('header.welcome')}
                 </Text>
-                <Text style={[styles.userName, { color: textColor }]}>{userName}</Text>
+                <Text style={[styles.userName, { color: textColor }, isRTL && styles.textRTL]}>{userName}</Text>
               </View>
             </>
           ) : (
@@ -226,9 +226,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   greeting: {
-    fontSize: 14,
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
     opacity: 0.7,
-    fontFamily: 'IBMPlexSansArabic-Regular',
   },
   userName: {
     fontSize: 18,
@@ -237,9 +238,9 @@ const styles = StyleSheet.create({
     fontFamily: 'IBMPlexSansArabic-Bold',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 20,
+    fontWeight: '600',
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
   },
   rightSection: {
     flexDirection: 'row',

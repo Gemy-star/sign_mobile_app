@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import ar from '../locales/ar.json';
 import en from '../locales/en.json';
-import { signSAService } from '../services/signsa.service';
 
 export type Language = 'en' | 'ar';
 type SupportedLanguage = Language;
@@ -56,10 +55,6 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
         if (savedLanguage === 'en' || savedLanguage === 'ar') {
           setLanguage(savedLanguage);
-          signSAService.setLanguage(savedLanguage);
-        } else {
-          // If no saved language, set Arabic as default
-          signSAService.setLanguage('ar');
         }
       } catch (error) {
         console.error('Failed to load language preference:', error);
@@ -67,11 +62,6 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     };
     loadLanguage();
   }, []);
-
-  // Update service language when language changes
-  useEffect(() => {
-    signSAService.setLanguage(language);
-  }, [language]);
 
   const changeLanguage = async (newLanguage: SupportedLanguage) => {
     try {

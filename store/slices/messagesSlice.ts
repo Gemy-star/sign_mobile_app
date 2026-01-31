@@ -1,7 +1,7 @@
 // store/slices/messagesSlice.ts
 // Redux slice for messages data from API
 
-import { dataSource } from '@/services/data-source.service';
+import { dataSource } from '@/services/dataSource.service';
 import { Message, MessageFilters, PaginationParams } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -57,7 +57,7 @@ export const fetchDailyMessage = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       logger.reduxAction('messages/fetchDailyMessage');
-      const response = await dataSource.getDailyMessage();
+      const response = await dataSource.getDailyMessages();
       if (response.success && response.data) {
         return response.data;
       }
@@ -93,7 +93,7 @@ export const rateMessage = createAsyncThunk(
   async ({ messageId, rating }: { messageId: number; rating: number }, { rejectWithValue }) => {
     try {
       logger.reduxAction('messages/rateMessage', { messageId, rating });
-      const response = await dataSource.rateMessage(messageId, { rating });
+      const response = await dataSource.rateMessage(messageId, rating);
       if (response.success) {
         return { messageId, rating };
       }

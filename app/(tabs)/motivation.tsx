@@ -33,10 +33,11 @@ export default function MotivationScreen() {
     // Fetch motivational messages if not already loaded
     if (messages.length === 0) {
       dispatch(fetchMessages({
-        pagination: { page: 1, page_size: 5 }
+        pagination: { page: 1, page_size: 5 },
+        filters: { language }
       }));
     }
-  }, [dispatch, messages.length]);  const categories = [
+  }, [dispatch, messages.length, language]);  const categories = [
     { id: 'mental', iconName: 'bulb-outline', color: '#6366f1', emoji: '🧠' },
     { id: 'physical', iconName: 'activity-outline', color: '#10b981', emoji: '💪' },
     { id: 'career', iconName: 'briefcase-outline', color: '#8b5cf6', emoji: '💼' },

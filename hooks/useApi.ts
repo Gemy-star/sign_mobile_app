@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ApiResponse } from '@/services/api';
+import { ApiResponse } from '@/types/api';
+import { useEffect, useState } from 'react';
 
 export function useApi<T>(
   apiCall: () => Promise<ApiResponse<T>>,

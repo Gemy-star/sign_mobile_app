@@ -4,13 +4,14 @@
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { dataSource } from '@/services/data-source.service';
+import { dataSource } from '@/services/dataSource.service';
 import { Message } from '@/types/api';
-import { Button, Card, Icon, Layout, Spinner, Text } from '@ui-kitten/components';
+import { Icon, Layout, Spinner, Text } from '@ui-kitten/components';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ImageBackground, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function MessageDetailScreen() {
   const { messageId } = useLocalSearchParams<{ messageId: string }>();
@@ -43,7 +44,7 @@ export default function MessageDetailScreen() {
           setIsFavorited(msg.is_favorited || false);
           setRating(msg.user_rating || null);
           // Mark as read
-          await dataSource.rateMessage(msg.id, { rating: msg.user_rating || 0 });
+          await dataSource.rateMessage(msg.id, msg.user_rating || 0);
         }
       }
     } catch (error) {
@@ -72,7 +73,7 @@ export default function MessageDetailScreen() {
 
     try {
       setRating(newRating);
-      await dataSource.rateMessage(message.id, { rating: newRating });
+      await dataSource.rateMessage(message.id, newRating);
     } catch (error) {
       console.error('Failed to rate message:', error);
     }
@@ -121,74 +122,75 @@ export default function MessageDetailScreen() {
       <AppHeader title={t('messages.title')} showUserInfo={false} />
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Category Badge */}
-        <View style={styles.categoryContainer}>
-          <LinearGradient
-            colors={[categoryColor, `${categoryColor}dd`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.categoryBadge}
+        {/* Message Card with Background */}
+        <View style={styles.messageCardContainer}>
+          <ImageBackground
+            source={require('@/assets/images/logo.png')}
+            style={styles.imageBackground}
+            imageStyle={styles.backgroundImage}
           >
-            <Text style={styles.categoryText}>{message.scope_name}</Text>
-          </LinearGradient>
-          <Text category="c1" appearance="hint" style={styles.messageType}>
-            {message.message_type_display}
-          </Text>
+            <LinearGradient
+              colors={['rgba(49, 30, 19, 0.3)', 'rgba(83, 50, 29, 0.5)', 'rgba(147, 96, 54, 0.4)']}
+              style={styles.gradientOverlay}
+            >
+              <BlurView intensity={40} tint="dark" style={styles.blurContainer}>
+                {/* Category badge at top */}
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryText}>{message.scope_name}</Text>
+                </View>
+
+                {/* Message content - centered */}
+                <View style={styles.contentContainer}>
+                  <Text style={[styles.messageContent, isRTL && styles.textRTL]}>
+                    {message.content}
+                  </Text>
+                  {message.ai_model && (
+                    <View style={styles.aiModelContainer}>
+                      <Icon name="sparkles-outline" style={styles.aiIcon} fill="#EBCE90" />
+                      <Text style={styles.aiModel}>
+                        {t('motivation.aiMessages')} • {message.ai_model}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Bottom action buttons */}
+                <View style={styles.actionsContainer}>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={handleToggleFavorite}
+                  >
+                    <Icon
+                      name={isFavorited ? "heart" : "heart-outline"}
+                      style={styles.actionIcon}
+                      fill={isFavorited ? "#C96F4A" : "#FAF8F5"}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleRate(rating === 5 ? 0 : 5)}
+                  >
+                    <Icon
+                      name={rating ? "bookmark" : "bookmark-outline"}
+                      style={styles.actionIcon}
+                      fill={rating ? "#EBCE90" : "#FAF8F5"}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+                    <Icon name="share" style={styles.actionIcon} fill="#FAF8F5" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.actionButton}>
+                    <Icon name="more-horizontal" style={styles.actionIcon} fill="#FAF8F5" />
+                  </TouchableOpacity>
+                </View>
+              </BlurView>
+            </LinearGradient>
+          </ImageBackground>
         </View>
 
-        {/* Message Content */}
-        <Card style={styles.messageCard}>
-          <Text category="h5" style={[styles.messageContent, isRTL && styles.textRTL]}>
-            {message.content}
-          </Text>
-
-          {message.ai_model && (
-            <View style={styles.aiModelContainer}>
-              <Icon name="sparkles-outline" style={styles.aiIcon} fill="#6366f1" />
-              <Text category="c1" appearance="hint" style={styles.aiModel}>
-                {t('motivation.aiMessages')} • {message.ai_model}
-              </Text>
-            </View>
-          )}
-
-          {/* Date */}
-          <View style={[styles.dateContainer, isRTL && styles.dateContainerRTL]}>
-            <Icon name="clock-outline" style={styles.dateIcon} fill="#A0AEC0" />
-            <Text category="c1" appearance="hint">
-              {new Date(message.created_at).toLocaleString()}
-            </Text>
-          </View>
-        </Card>
-
-        {/* Actions */}
-        <View style={styles.actionsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, isFavorited && styles.actionButtonActive]}
-            onPress={handleToggleFavorite}
-          >
-            <Icon
-              name={isFavorited ? 'star' : 'star-outline'}
-              style={styles.actionIcon}
-              fill={isFavorited ? '#f59e0b' : '#A0AEC0'}
-            />
-            <Text category="c1" style={styles.actionText}>
-              {isFavorited ? t('messages.noMessages') : t('common.like')}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-            <Icon name="share-outline" style={styles.actionIcon} fill="#A0AEC0" />
-            <Text category="c1" style={styles.actionText}>
-              {t('common.share')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Rating */}
-        <Card style={styles.ratingCard}>
-          <Text category="h6" style={[styles.ratingTitle, isRTL && styles.textRTL]}>
-            Rate this message
-          </Text>
+        {/* Rating Section */}
+        <View style={styles.ratingSection}>
+          <Text style={styles.ratingSectionTitle}>{t('messages.rateMessage') || 'Rate this message'}</Text>
           <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity
@@ -198,32 +200,27 @@ export default function MessageDetailScreen() {
               >
                 <Icon
                   name={rating && rating >= star ? 'star' : 'star-outline'}
-                  style={styles.starIconLarge}
-                  fill={rating && rating >= star ? '#f59e0b' : '#A0AEC0'}
+                  style={styles.starIcon}
+                  fill={rating && rating >= star ? '#C96F4A' : '#936036'}
                 />
               </TouchableOpacity>
             ))}
           </View>
-          {rating && (
-            <Text category="c1" appearance="hint" style={styles.ratingText}>
-              You rated this {rating} out of 5
-            </Text>
-          )}
-        </Card>
+        </View>
 
         {/* Related Goal */}
         {message.goal_title && (
-          <Card style={styles.relatedCard}>
+          <View style={styles.relatedCard}>
             <View style={[styles.relatedHeader, isRTL && styles.relatedHeaderRTL]}>
-              <Icon name="radio-button-on-outline" style={styles.relatedIcon} fill={categoryColor} />
-              <Text category="h6" style={[styles.relatedTitle, isRTL && styles.textRTL]}>
-                Related Goal
+              <Icon name="radio-button-on-outline" style={styles.relatedIcon} fill="#C96F4A" />
+              <Text style={[styles.relatedTitle, isRTL && styles.textRTL]}>
+                {t('messages.relatedGoal') || 'Related Goal'}
               </Text>
             </View>
-            <Text category="p1" style={[styles.relatedText, isRTL && styles.textRTL]}>
+            <Text style={[styles.relatedText, isRTL && styles.textRTL]}>
               {message.goal_title}
             </Text>
-          </Card>
+          </View>
         )}
       </ScrollView>
     </Layout>
@@ -256,96 +253,127 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  categoryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+  messageCardContainer: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    height: 550,
+    marginBottom: 24,
+    elevation: 8,
+    shadowColor: '#311E13',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  imageBackground: {
+    width: '100%',
+    height: '100%',
+  },
+  backgroundImage: {
+    borderRadius: 24,
+  },
+  gradientOverlay: {
+    flex: 1,
+    borderRadius: 24,
+  },
+  blurContainer: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'space-between',
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   categoryBadge: {
-    paddingHorizontal: 12,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(213, 204, 195, 0.25)',
+    paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.2)',
   },
   categoryText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontFamily: 'IBMPlexSansArabic-Medium',
-  },
-  messageType: {
-    fontFamily: 'IBMPlexSansArabic-Medium',
+    fontSize: 11,
     textTransform: 'uppercase',
+    fontWeight: '600',
+    fontFamily: 'Inter',
+    color: '#FAF8F5',
+    letterSpacing: 1,
   },
-  messageCard: {
-    borderRadius: 16,
-    marginBottom: 16,
-    padding: 20,
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   messageContent: {
-    fontFamily: 'IBMPlexSansArabic-Regular',
-    lineHeight: 28,
-    marginBottom: 16,
+    fontSize: 22,
+    lineHeight: 36,
+    fontFamily: 'Inter',
+    color: '#FAF8F5',
+    textAlign: 'center',
+    fontWeight: '400',
+    letterSpacing: 0.3,
+    textShadowColor: 'rgba(49, 30, 19, 0.8)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   aiModelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(160, 174, 192, 0.2)',
-    marginBottom: 12,
+    gap: 6,
+    marginTop: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(213, 204, 195, 0.2)',
   },
   aiIcon: {
-    width: 16,
-    height: 16,
-  },
-  aiModel: {
-    fontFamily: 'IBMPlexSansArabic-Light',
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  dateContainerRTL: {
-    flexDirection: 'row-reverse',
-  },
-  dateIcon: {
     width: 14,
     height: 14,
   },
+  aiModel: {
+    fontSize: 11,
+    fontFamily: 'Inter',
+    color: '#EBCE90',
+    fontWeight: '500',
+  },
   actionsContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+    justifyContent: 'center',
+    gap: 20,
+    paddingTop: 16,
   },
   actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(213, 204, 195, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.3)',
     justifyContent: 'center',
-    gap: 8,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(160, 174, 192, 0.1)',
-  },
-  actionButtonActive: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    alignItems: 'center',
+    shadowColor: '#311E13',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   actionIcon: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
   },
-  actionText: {
-    fontFamily: 'IBMPlexSansArabic-Medium',
-  },
-  ratingCard: {
-    borderRadius: 16,
+  ratingSection: {
     padding: 20,
-    marginBottom: 16,
+    backgroundColor: 'rgba(213, 204, 195, 0.1)',
+    borderRadius: 16,
+    marginBottom: 24,
   },
-  ratingTitle: {
-    fontFamily: 'IBMPlexSansArabic-Bold',
+  ratingSectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    color: '#311E13',
+    textAlign: 'center',
     marginBottom: 16,
   },
   ratingContainer: {
@@ -356,18 +384,16 @@ const styles = StyleSheet.create({
   starButton: {
     padding: 4,
   },
-  starIconLarge: {
-    width: 32,
-    height: 32,
-  },
-  ratingText: {
-    textAlign: 'center',
-    marginTop: 12,
-    fontFamily: 'IBMPlexSansArabic-Regular',
+  starIcon: {
+    width: 28,
+    height: 28,
   },
   relatedCard: {
-    borderRadius: 16,
     padding: 20,
+    backgroundColor: 'rgba(235, 206, 144, 0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(201, 111, 74, 0.2)',
   },
   relatedHeader: {
     flexDirection: 'row',
@@ -383,10 +409,15 @@ const styles = StyleSheet.create({
     height: 20,
   },
   relatedTitle: {
-    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 16,
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    color: '#311E13',
   },
   relatedText: {
-    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 14,
+    fontFamily: 'Inter',
+    color: '#53321D',
     lineHeight: 22,
   },
   emptyIcon: {
@@ -395,6 +426,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   textRTL: {
-    textAlign: 'right',
+    textAlign: 'center',
   },
 });

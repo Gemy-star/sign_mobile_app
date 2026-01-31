@@ -2,19 +2,18 @@
 // Mock Data Service for Testing and Offline Mode - Updated to match real API schema
 
 import {
-    ApiResponse,
-    CreateSubscriptionRequest,
-    DailyMessage,
-    DashboardStats,
-    Goal,
-    Message,
-    Package,
-    PaginatedResponse,
-    Scope,
-    ScopeCategory,
-    ScopeCategoryType,
-    SubscriptionDetail,
-    User
+  ApiResponse,
+  CreateSubscriptionRequest,
+  DailyMessage,
+  Goal,
+  Message,
+  Package,
+  PaginatedResponse,
+  Scope,
+  ScopeCategory,
+  ScopeCategoryType,
+  SubscriptionDetail,
+  User
 } from '@/types/api';
 
 class MockDataService {
@@ -28,6 +27,18 @@ class MockDataService {
     email: 'demo@sign-sa.net',
     first_name: 'Ahmed',
     last_name: 'Al-Mansour',
+    full_name: 'Ahmed Al-Mansour',
+    role: 'subscriber',
+    role_display: 'Subscriber',
+    mobile_phone: '+966501234567',
+    country: 'SA',
+    date_of_birth: '1990-01-15',
+    is_phone_verified: true,
+    trial_started_at: null,
+    trial_expires_at: null,
+    has_used_trial: true,
+    has_active_trial: 'false',
+    trial_remaining_days: '0',
     date_joined: '2024-01-15T10:00:00Z',
   };
 
@@ -588,7 +599,7 @@ class MockDataService {
       scope: 1,
       scope_name: 'Mental Health',
       goal: null,
-      goal_title: null,
+      goal_title: undefined,
       message_type: 'supportive',
       message_type_display: 'Supportive',
       prompt_used: 'Generate calm breathing exercise message',
@@ -608,7 +619,7 @@ class MockDataService {
       scope: 4,
       scope_name: 'Financial Wellness',
       goal: null,
-      goal_title: null,
+      goal_title: undefined,
       message_type: 'reminder',
       message_type_display: 'Reminder',
       prompt_used: 'Generate direct message about financial planning',
@@ -692,7 +703,7 @@ class MockDataService {
       scope: 1,
       scope_name: 'الصحة النفسية',
       goal: null,
-      goal_title: null,
+      goal_title: undefined,
       message_type: 'supportive',
       message_type_display: 'داعمة',
       prompt_used: 'إنشاء رسالة تمرين تنفس هادئ',
@@ -712,7 +723,7 @@ class MockDataService {
       scope: 4,
       scope_name: 'العافية المالية',
       goal: null,
-      goal_title: null,
+      goal_title: undefined,
       message_type: 'reminder',
       message_type_display: 'تذكير',
       prompt_used: 'إنشاء رسالة مباشرة حول التخطيط المالي',
@@ -736,32 +747,39 @@ class MockDataService {
   // Public API Methods
   // ============================================================================
 
-  async getDashboardStats(language?: string): Promise<ApiResponse<DashboardStats>> {
+  async getProfile(): Promise<ApiResponse<User>> {
+    await this.simulateDelay();
+    return {
+      success: true,
+      data: this.mockUser,
+    };
+  }
+
+  async getDashboardStats(language?: string): Promise<ApiResponse<any>> {
     await this.simulateDelay();
 
-    const messages = this.getMessagesByLanguage(language);
-    const goals = this.getGoalsByLanguage(language);
-
-    const stats: DashboardStats = {
-      user: this.mockUser,
-      subscription: this.mockSubscription,
-      stats: {
-        total_messages: 127,
-        messages_today: 3,
-        favorite_messages: 23,
-        current_streak: 12,
-        longest_streak: 28,
-        active_goals: 3,
-        completed_goals: 8,
-        active_scopes: 3,
+    // Return simple dashboard stats matching dashboard.api.ts structure
+    const stats = {
+      total_goals: 11,
+      completed_goals: 8,
+      active_goals: 3,
+      in_progress_goals: 2,
+      total_messages: 127,
+      unread_messages: 8,
+      favorited_messages: 23,
+      total_scopes: 3,
+      active_subscription: true,
+      subscription_expires_at: '2025-03-01T00:00:00Z',
+      days_until_expiry: 89,
+      trial_status: {
+        has_trial: false,
+        is_active: false,
+        days_remaining: 0,
       },
-      recent_messages: messages.slice(0, 5),
-      upcoming_messages: [],
-      goals_progress: goals.map(goal => ({
-        goal,
-        progress_percentage: goal.progress_percentage,
-        days_remaining: this.calculateDaysRemaining(goal.target_date || ''),
-      })),
+      overall_progress: 73,
+      weekly_progress: 15,
+      monthly_progress: 42,
+      recent_activity: [],
     };
 
     return {
@@ -965,7 +983,7 @@ class MockDataService {
       scope: data.scope_id,
       scope_name: this.mockScopes.find(s => s.id === data.scope_id)?.name,
       goal: data.goal_id || null,
-      goal_title: null,
+      goal_title: undefined,
       message_type: data.tone || 'motivational',
       message_type_display: 'Motivational',
       content: 'Your AI-generated motivational message here.',

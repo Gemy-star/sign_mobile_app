@@ -1,20 +1,20 @@
 // screens/PackagesScreen.tsx
 // Packages (Subscription Plans) Screen with Free Trial and Payment Handling
 
-import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { Button, Card, Icon, Layout, Spinner, Text, useTheme } from '@ui-kitten/components';
-import { useTranslation } from 'react-i18next';
-import { dataSource } from '@/services/data-source.service';
+import { dataSource } from '@/services/dataSource.service';
 import { Package, Scope } from '@/types/api';
 import { logger } from '@/utils/logger';
+import { Button, Card, Icon, Layout, Spinner, Text, useTheme } from '@ui-kitten/components';
 import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+    Alert,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    View,
+} from 'react-native';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;

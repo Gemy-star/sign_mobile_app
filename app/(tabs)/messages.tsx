@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchMessages } from '@/store/slices/messagesSlice';
 import { Card, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
 import React, { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function MessagesScreen() {
   // Context for UI preferences (theme, language)
@@ -22,12 +22,18 @@ export default function MessagesScreen() {
   const isRTL = language === 'ar';
 
   useEffect(() => {
-    dispatch(fetchMessages({ pagination: { page: 1, page_size: 50 } }));
-  }, [dispatch]);
+    dispatch(fetchMessages({
+      pagination: { page: 1, page_size: 50 },
+      filters: { language }
+    }));
+  }, [dispatch, language]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await dispatch(fetchMessages({ pagination: { page: 1, page_size: 50 } }));
+    await dispatch(fetchMessages({
+      pagination: { page: 1, page_size: 50 },
+      filters: { language }
+    }));
     setRefreshing(false);
   };
 
@@ -37,7 +43,8 @@ export default function MessagesScreen() {
   );
 
   const renderMessageItem = ({ item }: { item: typeof messages[0] }) => (
-    <Card style={styles.messageCard}>
+    <TouchableOpacity activeOpacity={0.7}>
+      <Card style={styles.messageCard}>
       <View style={[styles.messageContainer, isRTL && styles.messageContainerRTL]}>
         <View style={styles.messageDetails}>
           <Text category="s1" style={[styles.messageType, isRTL && styles.textRTL]}>
@@ -69,6 +76,7 @@ export default function MessagesScreen() {
         </View>
       </View>
     </Card>
+    </TouchableOpacity>
   );
 
   if (isLoading && !refreshing && messages.length === 0) {

@@ -1,11 +1,15 @@
 import { customTheme } from '@/constants/theme';
-import { LanguageProvider } from '@/contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { useAuthActions, useAuthState } from '@/hooks/useAuth';
+import AllSetScreen from '@/screens/AllSetScreen';
+import FindingTopicsScreen from '@/screens/FindingTopicsScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import PackagesScreen from '@/screens/PackagesScreen';
+import TopicSelectionScreen from '@/screens/TopicSelectionScreen';
 import WelcomeMotivationScreen from '@/screens/WelcomeMotivationScreen';
-import { dataSource } from '@/services/data-source.service';
+import { apiClient } from '@/services/api.client';
+import { dataSource } from '@/services/dataSource.service';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
 import * as eva from '@eva-design/eva';
@@ -33,11 +37,20 @@ const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuthState();
   const { checkAuth } = useAuthActions();
   const { colorScheme } = useTheme();
+  const { language } = useLanguage();
+  const [showTopicSelection, setShowTopicSelection] = useState<boolean | null>(null);
+  const [showFindingTopics, setShowFindingTopics] = useState(false);
+  const [showAllSet, setShowAllSet] = useState(false);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
   const [showPackages, setShowPackages] = useState<boolean | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
 
   const isDark = colorScheme === 'dark';
+
+  // Update API client language when language changes
+  useEffect(() => {
+    apiClient.setLanguage(language);
+  }, [language]);
 
   useEffect(() => {
     // Check if user is already logged in on mount
@@ -45,35 +58,43 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    const checkSubscription = async () => {
-      if (!isLoading && isAuthenticated && showWelcome === null) {
-        setShowWelcome(true);
+    const checkOnboarding = async () => {
+      if (!isLoading && isAuthenticated && showTopicSelection === null) {
+        // Check if user has completed topic selection
+        // For now, always show it on first login
+        // In production, you'd check localStorage or user preferences
+        const hasCompletedTopicSelection = false; // await AsyncStorage.getItem('topicsSelected');
 
-        // Check if user has an active subscription
-        try {
-          setCheckingSubscription(true);
-          const response = await dataSource.getActiveSubscription();
-
-          if (response.success && response.data) {
-            // User has active subscription, skip packages screen
-            logger.info('User has active subscription', { subscription: response.data });
-            setShowPackages(false);
-          } else {
-            // No active subscription, show packages screen after welcome
-            logger.info('No active subscription found, will show packages');
-            setShowPackages(true);
-          }
-        } catch (error) {
-          logger.error('Error checking subscription', error as Error);
-          // On error, show packages screen to be safe
-          setShowPackages(true);
-        } finally {
-          setCheckingSubscription(false);
+        if (!hasCompletedTopicSelection) {
+          setShowTopicSelection(true);
+        } else {
+          setShowWelcome(true);
+          checkSubscription();
         }
       }
     };
 
-    checkSubscription();
+    const checkSubscription = async () => {
+      try {
+        setCheckingSubscription(true);
+        const response = await dataSource.getActiveSubscription();
+
+        if (response.success && response.data) {
+          logger.info('User has active subscription', { subscription: response.data });
+          setShowPackages(false);
+        } else {
+          logger.info('No active subscription found, will show packages');
+          setShowPackages(true);
+        }
+      } catch (error) {
+        logger.error('Error checking subscription', error as Error);
+        setShowPackages(true);
+      } finally {
+        setCheckingSubscription(false);
+      }
+    };
+
+    checkOnboarding();
   }, [isLoading, isAuthenticated]);
 
   // Show loader while checking auth
@@ -82,7 +103,7 @@ const AppContent = () => {
       <Layout style={styles.loaderContainer} level="1">
         <View style={styles.logoContainer}>
           <Image
-            source={require('../assets/images/loader.png')}
+            source={require('../assets/images/logo.png')}
             style={styles.loaderImage}
             resizeMode="contain"
           />
@@ -100,13 +121,52 @@ const AppContent = () => {
     return (
       <LoginScreen
         onLoginSuccess={() => {
+          setShowTopicSelection(true);
+        }}
+      />
+    );
+  }
+
+  // Show topic selection first
+  if (showTopicSelection === true) {
+    return (
+      <TopicSelectionScreen
+        onComplete={(topics) => {
+          // Save topics to user preferences
+          // await AsyncStorage.setItem('topicsSelected', 'true');
+          // await AsyncStorage.setItem('selectedTopics', JSON.stringify(topics));
+          setShowTopicSelection(false);
+          setShowFindingTopics(true);
+        }}
+      />
+    );
+  }
+
+  // Show finding topics loading screen
+  if (showFindingTopics) {
+    return (
+      <FindingTopicsScreen
+        onComplete={() => {
+          setShowFindingTopics(false);
+          setShowAllSet(true);
+        }}
+      />
+    );
+  }
+
+  // Show all set screen
+  if (showAllSet) {
+    return (
+      <AllSetScreen
+        onComplete={() => {
+          setShowAllSet(false);
           setShowWelcome(true);
         }}
       />
     );
   }
 
-  // Show welcome screen after login
+  // Show welcome screen after onboarding
   if (showWelcome === true) {
     return (
       <WelcomeMotivationScreen

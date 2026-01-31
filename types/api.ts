@@ -2,6 +2,43 @@
 // TypeScript interfaces for Sign SA API
 
 // ============================================================================
+// API Response Wrapper Types
+// ============================================================================
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: ApiError;
+}
+
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, any>;
+}
+
+export interface PaginationMeta {
+  current_page: number;
+  total_pages: number;
+  total_count: number;
+  per_page: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  results: T[];
+  pagination: PaginationMeta;
+}
+
+export interface PaginationParams {
+  page?: number;
+  page_size?: number;
+  ordering?: string;
+  search?: string;
+}
+
+// ============================================================================
 // Authentication Types
 // ============================================================================
 
@@ -16,6 +53,9 @@ export interface RegisterRequest {
   password: string;
   first_name?: string;
   last_name?: string;
+  mobile_phone?: string;
+  country?: string;
+  date_of_birth?: string; // YYYY-MM-DD
 }
 
 export interface TokenResponse {
@@ -31,12 +71,26 @@ export interface TokenVerifyRequest {
   token: string;
 }
 
+export type UserRole = 'normal' | 'subscriber' | 'admin';
+
 export interface User {
   id: number;
   username: string;
   email: string;
   first_name: string;
   last_name: string;
+  full_name: string;
+  role: UserRole;
+  role_display: string;
+  mobile_phone?: string | null;
+  country?: string;
+  date_of_birth?: string | null;
+  is_phone_verified: boolean;
+  trial_started_at?: string | null;
+  trial_expires_at?: string | null;
+  has_used_trial: boolean;
+  has_active_trial: string;
+  trial_remaining_days: string;
   is_active?: boolean;
   date_joined: string;
 }
@@ -186,42 +240,43 @@ export interface UpdateScopesRequest {
 
 export interface Goal {
   id: number;
-  user: number;
+  user: number; // readOnly
   subscription: number;
   scope?: number | null;
-  scope_name?: string;
+  scope_name?: string; // readOnly
   title: string;
   description?: string;
-  target_date?: string | null;
+  target_date?: string | null; // date format
   status: GoalStatus;
-  status_display?: string;
+  status_display?: string; // readOnly
   progress_percentage: number; // 0-100
-  created_at: string;
-  updated_at: string;
+  created_at: string; // readOnly
+  updated_at: string; // readOnly
   completed_at?: string | null;
 }
 
 export type GoalStatus = 'not_started' | 'in_progress' | 'completed' | 'abandoned';
 
-export interface Milestone {
-  id: number;
+export interface CreateGoalRequest {
+  subscription: number;
+  scope?: number | null;
   title: string;
-  description: string;
-  is_completed: boolean;
-  completed_at?: string;
-  order: number;
+  description?: string;
+  target_date?: string | null; // YYYY-MM-DD
 }
 
-export interface CreateGoalRequest {
-  scope_id: number;
-  title: string;
-  description: string;
-  target_date: string;
-  milestones?: Omit<Milestone, 'id' | 'is_completed' | 'completed_at'>[];
+export interface UpdateGoalRequest {
+  subscription?: number;
+  scope?: number | null;
+  title?: string;
+  description?: string;
+  target_date?: string | null;
+  status?: GoalStatus;
+  progress_percentage?: number;
 }
 
 export interface UpdateProgressRequest {
-  progress: number;
+  progress_percentage: number;
 }
 
 export interface CompleteGoalRequest {
@@ -387,8 +442,3 @@ export interface GoalFilters {
   search?: string;
 }
 
-export interface PaginationParams {
-  page?: number;
-  page_size?: number;
-  ordering?: string;
-}

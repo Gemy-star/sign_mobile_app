@@ -46,7 +46,7 @@ export const Typography = {
 
 // Font families
 export const FontFamily = {
-  system: 'System',
+  system: 'Inter',
   arabic: 'IBMPlexSansArabic-Regular',
   arabicBold: 'IBMPlexSansArabic-Bold',
   arabicMedium: 'IBMPlexSansArabic-Medium',

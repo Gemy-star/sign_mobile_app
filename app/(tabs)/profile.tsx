@@ -64,7 +64,7 @@ export default function ProfileScreen() {
 
   return (
     <Layout style={styles.container} level="1">
-      <AppHeader showUserInfo={false} />
+      <AppHeader title={t('profile.title')} showUserInfo={false} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
         <Card style={styles.profileCard}>
@@ -105,37 +105,41 @@ export default function ProfileScreen() {
         </Text>
 
         <Card style={styles.settingCard}>
-          <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
-            <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
-              <Icon name="moon-outline" style={styles.iconStyle} />
-              <Text category="s1" style={styles.settingText}>{t('profile.darkMode')}</Text>
+          <TouchableOpacity activeOpacity={1}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="moon-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.darkMode')}</Text>
+              </View>
+              <Toggle checked={colorScheme === 'dark'} onChange={handleToggleTheme} />
             </View>
-            <Toggle checked={colorScheme === 'dark'} onChange={handleToggleTheme} />
-          </View>
+          </TouchableOpacity>
         </Card>
 
-        <Card style={styles.settingCard}>
-          <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
-            <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
-              <Icon name="globe-outline" style={styles.iconStyle} />
-              <Text category="s1" style={styles.settingText}>{t('profile.language')}</Text>
-            </View>
-            <TouchableOpacity onPress={toggleLanguage}>
+        <TouchableOpacity onPress={toggleLanguage} activeOpacity={0.7}>
+          <Card style={styles.settingCard}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="globe-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.language')}</Text>
+              </View>
               <Text category="s1" style={styles.languageText}>
                 {language === 'ar' ? t('profile.arabic') : t('profile.english')}
               </Text>
-            </TouchableOpacity>
-          </View>
-        </Card>
+            </View>
+          </Card>
+        </TouchableOpacity>
 
         <Card style={styles.settingCard}>
-          <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
-            <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
-              <Icon name="bell-outline" style={styles.iconStyle} />
-              <Text category="s1" style={styles.settingText}>{t('profile.notifications')}</Text>
+          <TouchableOpacity activeOpacity={1}>
+            <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
+              <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
+                <Icon name="bell-outline" style={styles.iconStyle} />
+                <Text category="s1" style={styles.settingText}>{t('profile.notifications')}</Text>
+              </View>
+              <Toggle checked={notificationsEnabled} onChange={handleToggleNotifications} />
             </View>
-            <Toggle checked={notificationsEnabled} onChange={handleToggleNotifications} />
-          </View>
+          </TouchableOpacity>
         </Card>
 
         {/* Account Section */}
@@ -143,7 +147,7 @@ export default function ProfileScreen() {
           {t('profile.account')}
         </Text>
 
-        <TouchableOpacity onPress={() => setShowChangePassword(true)}>
+        <TouchableOpacity onPress={() => setShowChangePassword(true)} activeOpacity={0.7}>
           <Card style={styles.settingCard}>
             <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
               <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
@@ -155,7 +159,7 @@ export default function ProfileScreen() {
           </Card>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setShowPrivacySecurity(true)}>
+        <TouchableOpacity onPress={() => setShowPrivacySecurity(true)} activeOpacity={0.7}>
           <Card style={styles.settingCard}>
             <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
               <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
@@ -172,7 +176,7 @@ export default function ProfileScreen() {
           {t('profile.more')}
         </Text>
 
-        <TouchableOpacity onPress={() => setShowHelpSupport(true)}>
+        <TouchableOpacity onPress={() => setShowHelpSupport(true)} activeOpacity={0.7}>
           <Card style={styles.settingCard}>
             <View style={[styles.settingRow, isRTL && styles.settingRowRTL]}>
               <View style={[styles.settingLeft, isRTL && styles.settingLeftRTL]}>
@@ -211,12 +215,13 @@ export default function ProfileScreen() {
       <Modal
         visible={showChangePassword}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={false}
         onRequestClose={() => setShowChangePassword(false)}
       >
         <ChangePasswordScreen
           onClose={() => setShowChangePassword(false)}
           onSuccess={() => {
+            setShowChangePassword(false);
             Alert.alert(
               t('common.success') || 'Success',
               t('changePassword.success') || 'Password changed successfully!'
@@ -228,7 +233,7 @@ export default function ProfileScreen() {
       <Modal
         visible={showPrivacySecurity}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={false}
         onRequestClose={() => setShowPrivacySecurity(false)}
       >
         <PrivacySecurityScreen onClose={() => setShowPrivacySecurity(false)} />
@@ -237,7 +242,7 @@ export default function ProfileScreen() {
       <Modal
         visible={showHelpSupport}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={false}
         onRequestClose={() => setShowHelpSupport(false)}
       >
         <HelpSupportScreen onClose={() => setShowHelpSupport(false)} />
