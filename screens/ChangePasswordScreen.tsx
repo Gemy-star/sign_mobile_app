@@ -2,10 +2,11 @@
 // Change Password Screen - Dark Brown Visual Style
 
 import { useLanguage } from '@/contexts/LanguageContext';
+import { authApi } from '@/services/api';
+import { Icon, Input, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Icon, Input, Spinner, Toggle, Text } from '@ui-kitten/components';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface ChangePasswordScreenProps {
   onClose: () => void;
@@ -59,15 +60,10 @@ export default function ChangePasswordScreen({ onClose, onSuccess }: ChangePassw
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // const response = await fetch('/api/change-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ currentPassword, newPassword }),
-      // });
+      await authApi.changePassword({
+        old_password: currentPassword,
+        new_password: newPassword,
+      });
 
       Alert.alert(
         t('common.success') || 'Success',

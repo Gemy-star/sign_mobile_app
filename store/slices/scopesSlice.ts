@@ -1,7 +1,9 @@
 ﻿// store/slices/scopesSlice.ts
 // Redux slice for scopes/categories data from API
 
+import { API_CONFIG } from '@/config/api.config';
 import { scopesApi } from '@/services/api';
+import { mockDataService } from '@/services/mock.service';
 import { CheckAccessRequest, Scope, ScopeCategory } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -39,6 +41,12 @@ export const fetchScopes = createAsyncThunk(
       return scopes;
     } catch (error) {
       logger.error('fetchScopes error', error as Error);
+      // Fall back to mock data in development when the API is unreachable
+      if (__DEV__ || API_CONFIG.USE_MOCK_DATA) {
+        logger.reduxAction('scopes/fetchScopes — falling back to mock data');
+        const response = await mockDataService.getScopes();
+        return response.data ?? [];
+      }
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch scopes');
     }
   }

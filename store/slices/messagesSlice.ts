@@ -46,7 +46,12 @@ export const fetchMessages = createAsyncThunk(
       logger.reduxAction('messages/fetchMessages', params);
       const messages = await messagesApi.getAll(params.filters);
       return { results: messages, count: messages.length };
-    } catch (error) {
+    } catch (error: any) {
+      // 403 means the user has no active subscription — not an app error.
+      // Return an empty list so UI can show a "subscribe" prompt instead of an error.
+      if (error?.status === 403) {
+        return { results: [], count: 0, noSubscription: true };
+      }
       logger.error('fetchMessages error', error as Error);
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch messages');
     }

@@ -1,11 +1,14 @@
-// screens/TopicSelectionScreen.tsx
-// Pinterest-style topic selection onboarding
+﻿// screens/TopicSelectionScreen.tsx
+// Pinterest-style topic selection  scopes fetched from API
 
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchScopes } from '@/store/slices/scopesSlice';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Dimensions,
     Image,
     ScrollView,
@@ -17,227 +20,185 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 3; // 3 columns with 16px margins
+// 16px padding each side (32) + 2 gaps of 10px between 3 columns (20) = 52
+const CARD_WIDTH = (width - 52) / 3;
 
-// Using placeholder images for topics
-const PLACEHOLDER_IMAGES = [
-  'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400',
-  'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=400',
-  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400',
-  'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400',
-  'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=400',
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400',
-  'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=400',
-  'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=400',
-  'https://images.unsplash.com/photo-1499171832530-ed48d6e0e0d6?w=400',
-  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
-  'https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=400',
-  'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400',
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400',
-  'https://images.unsplash.com/photo-1519834785169-98be25ec3f84?w=400',
-  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400',
-];
+// Fallback image per category when scope has no icon
+const CATEGORY_IMAGES: Record<string, string> = {
+  mental:        'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=400',
+  physical:      'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=400',
+  career:        'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400',
+  financial:     'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=400',
+  relationships: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=400',
+  spiritual:     'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400',
+  creativity:    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400',
+  lifestyle:     'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
+};
 
-interface Topic {
-  id: string;
-  name: string;
-  nameAr: string;
-  image: string;
-  gradient: string[];
-}
-
-const TOPICS: Topic[] = [
-  {
-    id: 'motivation',
-    name: 'Motivation',
-    nameAr: 'تحفيز',
-    image: PLACEHOLDER_IMAGES[0],
-    gradient: ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'health',
-    name: 'Health & Fitness',
-    nameAr: 'صحة ولياقة',
-    image: PLACEHOLDER_IMAGES[1],
-    gradient: ['rgba(147, 96, 54, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'career',
-    name: 'Career',
-    nameAr: 'مهنة',
-    image: PLACEHOLDER_IMAGES[2],
-    gradient: ['rgba(232, 206, 128, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'mindfulness',
-    name: 'Mindfulness',
-    nameAr: 'اليقظة الذهنية',
-    image: PLACEHOLDER_IMAGES[3],
-    gradient: ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'relationships',
-    name: 'Relationships',
-    nameAr: 'علاقات',
-    image: PLACEHOLDER_IMAGES[4],
-    gradient: ['rgba(147, 96, 54, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'creativity',
-    name: 'Creativity',
-    nameAr: 'إبداع',
-    image: PLACEHOLDER_IMAGES[5],
-    gradient: ['rgba(232, 206, 128, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'productivity',
-    name: 'Productivity',
-    nameAr: 'إنتاجية',
-    image: PLACEHOLDER_IMAGES[6],
-    gradient: ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'finance',
-    name: 'Finance',
-    nameAr: 'مالية',
-    image: PLACEHOLDER_IMAGES[7],
-    gradient: ['rgba(147, 96, 54, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'spirituality',
-    name: 'Spirituality',
-    nameAr: 'روحانية',
-    image: PLACEHOLDER_IMAGES[8],
-    gradient: ['rgba(232, 206, 128, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'personal-growth',
-    name: 'Personal Growth',
-    nameAr: 'نمو شخصي',
-    image: PLACEHOLDER_IMAGES[9],
-    gradient: ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'leadership',
-    name: 'Leadership',
-    nameAr: 'قيادة',
-    image: PLACEHOLDER_IMAGES[10],
-    gradient: ['rgba(147, 96, 54, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'wellness',
-    name: 'Wellness',
-    nameAr: 'عافية',
-    image: PLACEHOLDER_IMAGES[11],
-    gradient: ['rgba(232, 206, 128, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'success',
-    name: 'Success',
-    nameAr: 'نجاح',
-    image: PLACEHOLDER_IMAGES[12],
-    gradient: ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'confidence',
-    name: 'Confidence',
-    nameAr: 'ثقة',
-    image: PLACEHOLDER_IMAGES[13],
-    gradient: ['rgba(147, 96, 54, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-  {
-    id: 'happiness',
-    name: 'Happiness',
-    nameAr: 'سعادة',
-    image: PLACEHOLDER_IMAGES[14],
-    gradient: ['rgba(232, 206, 128, 0.7)', 'rgba(49, 30, 19, 0.9)'],
-  },
-];
+const CATEGORY_GRADIENTS: Record<string, string[]> = {
+  mental:        ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
+  physical:      ['rgba(147, 96, 54, 0.7)',  'rgba(49, 30, 19, 0.9)'],
+  career:        ['rgba(232, 206, 128, 0.7)','rgba(49, 30, 19, 0.9)'],
+  financial:     ['rgba(147, 96, 54, 0.7)',  'rgba(49, 30, 19, 0.9)'],
+  relationships: ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
+  spiritual:     ['rgba(232, 206, 128, 0.7)','rgba(49, 30, 19, 0.9)'],
+  creativity:    ['rgba(147, 96, 54, 0.7)',  'rgba(49, 30, 19, 0.9)'],
+  lifestyle:     ['rgba(201, 111, 74, 0.7)', 'rgba(49, 30, 19, 0.9)'],
+};
 
 interface TopicSelectionScreenProps {
   onComplete?: (selectedTopics: string[]) => void;
 }
 
-export default function TopicSelectionScreen({ onComplete }: TopicSelectionScreenProps) {
-  const { t, language } = useLanguage();
+export default function TopicSelectionScreen({ onComplete }: Readonly<TopicSelectionScreenProps>) {
+  const { language } = useLanguage();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const isRTL = language === 'ar';
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
-  // Font helpers
+  const { scopes, isLoading, error } = useAppSelector((state) => state.scopes);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    dispatch(fetchScopes());
+  }, [dispatch]);
+
   const getFontFamily = (weight: 'regular' | 'bold' | 'semibold' = 'regular') => {
     if (isRTL) {
-      // Cairo font for Arabic
-      return weight === 'bold' ? 'Cairo-Bold' : weight === 'semibold' ? 'Cairo-SemiBold' : 'Cairo-Regular';
-    } else {
-      // Inter font for English
-      return weight === 'bold' ? 'Inter-Bold' : weight === 'semibold' ? 'Inter-SemiBold' : 'Inter-Regular';
+      if (weight === 'bold') return 'Cairo-Bold';
+      if (weight === 'semibold') return 'Cairo-SemiBold';
+      return 'Cairo-Regular';
     }
+    if (weight === 'bold') return 'Inter-Bold';
+    if (weight === 'semibold') return 'Inter-SemiBold';
+    return 'Inter-Regular';
   };
 
-  const toggleTopic = (topicId: string) => {
-    if (selectedTopics.includes(topicId)) {
-      setSelectedTopics(selectedTopics.filter(id => id !== topicId));
-    } else {
-      setSelectedTopics([...selectedTopics, topicId]);
-    }
+  const toggleScope = (id: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
   const handleNext = () => {
-    if (selectedTopics.length >= 3) {
+    if (selectedIds.length >= 3) {
       if (onComplete) {
-        onComplete(selectedTopics);
+        onComplete(selectedIds.map(String));
       } else {
-        // Navigate to the finding pins screen
         router.push('/finding-topics');
       }
     }
   };
 
-  const canProceed = selectedTopics.length >= 3;
+  const canProceed = selectedIds.length >= 3;
+
+  const renderGrid = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#C96F4A" />
+        </View>
+      );
+    }
+    if (error) {
+      return (
+        <View style={styles.loadingContainer}>
+          <Text style={[styles.errorText, { fontFamily: getFontFamily('regular') }]}>
+            {isRTL ? 'تعذر تحميل المواضيع' : 'Could not load topics'}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => dispatch(fetchScopes())}>
+            <Text style={[styles.retryButtonText, { fontFamily: getFontFamily('semibold') }]}>
+              {isRTL ? 'إعادة المحاولة' : 'Retry'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return (
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.grid}>
+          {scopes.filter((s) => s.is_active).map((scope) => {
+            const isSelected = selectedIds.includes(scope.id);
+            const imageUri = CATEGORY_IMAGES[scope.category] ?? CATEGORY_IMAGES.mental;
+            const gradient = CATEGORY_GRADIENTS[scope.category] ?? CATEGORY_GRADIENTS.mental;
+            return (
+              <TouchableOpacity
+                key={scope.id}
+                style={[styles.topicCard, isSelected && styles.topicCardSelected]}
+                onPress={() => toggleScope(scope.id)}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.topicImage}
+                  defaultSource={require('@/assets/images/logo.png')}
+                />
+                <LinearGradient colors={gradient as [string, string]} style={styles.topicOverlay}>
+                  <Text style={[styles.topicText, { fontFamily: getFontFamily('bold') }]}>
+                    {scope.name}
+                  </Text>
+                </LinearGradient>
+                {isSelected && (
+                  <View style={[styles.checkmarkContainer, isRTL ? { left: 12 } : { right: 12 }]}>
+                    <LinearGradient colors={['#C96F4A', '#936036']} style={styles.checkmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </LinearGradient>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Modern Header with Gradient Background */}
-      <LinearGradient
-        colors={['#FAF8F5', '#F5F1ED']}
-        style={styles.header}
-      >
+      {/* Header */}
+      <LinearGradient colors={['#FAF8F5', '#F5F1ED']} style={styles.header}>
         <View style={[styles.headerContent, isRTL && { flexDirection: 'row-reverse' }]}>
           <View style={[styles.headerTextContainer, isRTL ? { marginLeft: 16 } : { marginRight: 16 }]}>
             <View style={[styles.titleRow, isRTL && { flexDirection: 'row-reverse' }]}>
-              <Text style={[styles.title, { fontFamily: getFontFamily('bold') }, isRTL && { textAlign: 'right', marginRight: 0, marginLeft: 8 }]}>
-                {isRTL ? 'مرحباً' : 'Welcome'}
+              <Text
+                style={[
+                  styles.title,
+                  { fontFamily: getFontFamily('bold') },
+                  isRTL && { textAlign: 'right', marginRight: 0, marginLeft: 8 },
+                ]}
+              >
+                {isRTL ? 'مرحبا' : 'Welcome'}
               </Text>
-              <Text style={styles.emojiWave}>👋</Text>
+              <Text style={styles.emojiWave}></Text>
             </View>
-            <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }, isRTL && { textAlign: 'right' }]}>
+            <Text
+              style={[
+                styles.subtitle,
+                { fontFamily: getFontFamily('regular') },
+                isRTL && { textAlign: 'right' },
+              ]}
+            >
               {isRTL ? 'اختر 3 مواضيع أو أكثر' : 'Pick 3 or more topics'}
             </Text>
-            {selectedTopics.length > 0 && (
+            {selectedIds.length > 0 && (
               <View style={styles.progressContainer}>
                 <View style={styles.progressBar}>
                   <LinearGradient
                     colors={['#C96F4A', '#936036']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={[
-                      styles.progressFill,
-                      { width: `${Math.min((selectedTopics.length / 3) * 100, 100)}%` }
-                    ]}
+                    style={[styles.progressFill, { width: `${Math.min((selectedIds.length / 3) * 100, 100)}%` }]}
                   />
                 </View>
                 <Text style={[styles.progressText, { fontFamily: getFontFamily('semibold') }]}>
-                  {selectedTopics.length}/3
+                  {selectedIds.length}/3
                 </Text>
               </View>
             )}
           </View>
+
           <TouchableOpacity
-            style={[
-              styles.nextButton,
-              !canProceed && styles.nextButtonDisabled,
-            ]}
+            style={[styles.nextButton, !canProceed && styles.nextButtonDisabled]}
             onPress={handleNext}
             disabled={!canProceed}
           >
@@ -261,53 +222,10 @@ export default function TopicSelectionScreen({ onComplete }: TopicSelectionScree
         </View>
       </LinearGradient>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.grid}>
-          {TOPICS.map((topic) => {
-            const isSelected = selectedTopics.includes(topic.id);
-            return (
-              <TouchableOpacity
-                key={topic.id}
-                style={[
-                  styles.topicCard,
-                  isSelected && styles.topicCardSelected,
-                ]}
-                onPress={() => toggleTopic(topic.id)}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: topic.image }}
-                  style={styles.topicImage}
-                  defaultSource={require('@/assets/images/logo.png')}
-                />
-                <LinearGradient
-                  colors={topic.gradient}
-                  style={styles.topicOverlay}
-                >
-                  <Text style={[styles.topicText, { fontFamily: getFontFamily('bold') }]}>
-                    {isRTL ? topic.nameAr : topic.name}
-                  </Text>
-                </LinearGradient>
-                {isSelected && (
-                  <View style={[styles.checkmarkContainer, isRTL ? { left: 12 } : { right: 12 }]}>
-                    <LinearGradient
-                      colors={['#C96F4A', '#936036']}
-                      style={styles.checkmark}
-                    >
-                      <Text style={styles.checkmarkText}>✓</Text>
-                    </LinearGradient>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
+      {/* Grid */}
+      {renderGrid()}
 
-      {selectedTopics.length > 0 && (
+      {selectedIds.length > 0 && (
         <View style={styles.selectionIndicator}>
           <LinearGradient
             colors={['#C96F4A', '#936036']}
@@ -316,7 +234,7 @@ export default function TopicSelectionScreen({ onComplete }: TopicSelectionScree
             style={styles.selectionBadge}
           >
             <Text style={[styles.selectionText, { fontFamily: getFontFamily('bold') }]}>
-              {selectedTopics.length} {isRTL ? 'موضوع محدد' : 'topics selected'}
+              {selectedIds.length} {isRTL ? 'موضوع محدد' : 'topics selected'}
             </Text>
           </LinearGradient>
         </View>
@@ -414,6 +332,28 @@ const styles = StyleSheet.create({
   nextButtonTextDisabled: {
     color: '#936036',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#936036',
+    textAlign: 'center',
+    paddingHorizontal: 32,
+  },
+  retryButton: {
+    backgroundColor: '#C96F4A',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+    fontSize: 15,
+    color: '#FAF8F5',
+  },
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 20,
@@ -468,7 +408,6 @@ const styles = StyleSheet.create({
   checkmarkContainer: {
     position: 'absolute',
     top: 12,
-    // right/left applied dynamically based on isRTL
   },
   checkmark: {
     width: 32,
@@ -498,11 +437,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 24,
-    shadowColor: '#311E13',
+    shadowColor: '#C96F4A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   selectionText: {
     fontSize: 16,

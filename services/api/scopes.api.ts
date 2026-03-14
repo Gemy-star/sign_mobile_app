@@ -25,7 +25,8 @@ export const scopesApi = {
     category?: string;
     is_active?: boolean;
   }): Promise<Scope[]> => {
-    return apiClient.get<Scope[]>('/scopes/', { params });
+    const response = await apiClient.get<Scope[] | { results: Scope[] }>('/scopes/', { params });
+    return Array.isArray(response) ? response : response.results ?? [];
   },
 
   /**

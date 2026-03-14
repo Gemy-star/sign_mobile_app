@@ -2,9 +2,11 @@
 // Privacy & Security Settings Screen - Dark Brown Visual Style
 
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setPrivacy, setSecurity } from '@/store/slices/profileSlice';
 import { Icon, Text, Toggle } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface PrivacySecurityScreenProps {
@@ -13,10 +15,9 @@ interface PrivacySecurityScreenProps {
 
 export default function PrivacySecurityScreen({ onClose }: Readonly<PrivacySecurityScreenProps>) {
   const { t, language } = useLanguage();
-  const [twoFactorAuth, setTwoFactorAuth] = useState(false);
-  const [biometricAuth, setBiometricAuth] = useState(false);
-  const [shareAnalytics, setShareAnalytics] = useState(true);
-  const [personalizedAds, setPersonalizedAds] = useState(false);
+  const dispatch = useAppDispatch();
+  const security = useAppSelector((state) => state.profile.security);
+  const privacy = useAppSelector((state) => state.profile.privacy);
 
   const isRTL = language === 'ar';
 
@@ -78,7 +79,10 @@ export default function PrivacySecurityScreen({ onClose }: Readonly<PrivacySecur
               </Text>
             </View>
           </View>
-          <Toggle checked={twoFactorAuth} onChange={setTwoFactorAuth} />
+          <Toggle
+            checked={security.twoFactorAuth}
+            onChange={(v) => dispatch(setSecurity({ twoFactorAuth: v }))}
+          />
         </View>
 
         {/* Biometric Auth */}
@@ -96,7 +100,10 @@ export default function PrivacySecurityScreen({ onClose }: Readonly<PrivacySecur
               </Text>
             </View>
           </View>
-          <Toggle checked={biometricAuth} onChange={setBiometricAuth} />
+          <Toggle
+            checked={security.biometricAuth}
+            onChange={(v) => dispatch(setSecurity({ biometricAuth: v }))}
+          />
         </View>
 
         {/* ── Privacy section ──────────────────────────────── */}
@@ -119,7 +126,10 @@ export default function PrivacySecurityScreen({ onClose }: Readonly<PrivacySecur
               </Text>
             </View>
           </View>
-          <Toggle checked={shareAnalytics} onChange={setShareAnalytics} />
+          <Toggle
+            checked={privacy.shareAnalytics}
+            onChange={(v) => dispatch(setPrivacy({ shareAnalytics: v }))}
+          />
         </View>
 
         {/* Personalized Ads */}
@@ -137,7 +147,10 @@ export default function PrivacySecurityScreen({ onClose }: Readonly<PrivacySecur
               </Text>
             </View>
           </View>
-          <Toggle checked={personalizedAds} onChange={setPersonalizedAds} />
+          <Toggle
+            checked={privacy.personalizedAds}
+            onChange={(v) => dispatch(setPrivacy({ personalizedAds: v }))}
+          />
         </View>
 
         {/* ── Your Data section ────────────────────────────── */}

@@ -3,24 +3,21 @@
 
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { dataSource } from '@/services/dataSource.service';
-import { Message } from '@/types/api';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchMessageById, markMessageAsRead, rateMessage as rateMessageThunk, toggleMessageFavorite } from '@/store/slices/messagesSlice';
 import { Icon, Layout, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ImageBackground, ScrollView, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function MessageDetailScreen() {
   const { messageId } = useLocalSearchParams<{ messageId: string }>();
-  const router = useRouter();
   const { t, language } = useLanguage();
-  const { colorScheme } = useTheme();
+  const dispatch = useAppDispatch();
   const isRTL = language === 'ar';
-  const isDark = colorScheme === 'dark';
 
-  const [message, setMessage] = useState<Message | null>(null);
+  const message = useAppSelector((state) => state.messages.currentMessage);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
@@ -31,20 +28,15 @@ export default function MessageDetailScreen() {
 
   const loadMessage = async () => {
     if (!messageId) return;
-
     setLoading(true);
     try {
-      // For now, get all messages and filter
-      const response = await dataSource.getMessages();
-      if (response.success && response.data) {
-        const msg = response.data.results.find(m => m.id === parseInt(messageId));
-        if (msg) {
-          setMessage(msg);
-          setIsFavorited(msg.is_favorited || false);
-          setRating(msg.user_rating || null);
-          // Mark as read
-          await dataSource.rateMessage(msg.id, msg.user_rating || 0);
-        }
+      const id = Number.parseInt(messageId, 10);
+      const result = await dispatch(fetchMessageById(id));
+      if (fetchMessageById.fulfilled.match(result)) {
+        const msg = result.payload;
+        setIsFavorited(msg.is_favorited || false);
+        setRating(msg.user_rating || null);
+        dispatch(markMessageAsRead(id));
       }
     } catch (error) {
       console.error('Failed to load message:', error);
@@ -55,24 +47,21 @@ export default function MessageDetailScreen() {
 
   const handleToggleFavorite = async () => {
     if (!message) return;
-
+    const newValue = !isFavorited;
+    setIsFavorited(newValue);
     try {
-      // Toggle favorite
-      setIsFavorited(!isFavorited);
-      // In a real app, this would call the API
-      // await dataSource.toggleMessageFavorite(message.id);
+      await dispatch(toggleMessageFavorite(message.id));
     } catch (error) {
       console.error('Failed to toggle favorite:', error);
-      setIsFavorited(!isFavorited); // Revert on error
+      setIsFavorited(!newValue);
     }
   };
 
   const handleRate = async (newRating: number) => {
     if (!message) return;
-
+    setRating(newRating);
     try {
-      setRating(newRating);
-      await dataSource.rateMessage(message.id, newRating);
+      await dispatch(rateMessageThunk({ messageId: message.id, rating: newRating }));
     } catch (error) {
       console.error('Failed to rate message:', error);
     }
@@ -113,8 +102,6 @@ export default function MessageDetailScreen() {
       </Layout>
     );
   }
-
-  const categoryColor = getCategoryColor(message.scope_name || '');
 
   return (
     <Layout style={styles.container} level="1">

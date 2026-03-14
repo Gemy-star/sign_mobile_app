@@ -318,7 +318,10 @@ class ApiClient {
   // ============================================================================
 
   private validateResponse<T>(response: ApiResponse<T>): T {
-    if (!response.success) {
+    // Only treat as error when the backend explicitly signals failure.
+    // Some endpoints return a plain payload (no success/data wrapper), so
+    // we must not reject a response just because `success` is absent.
+    if (response.success === false) {
       const errorCode = response.error?.code || ERROR_CODES.UNKNOWN_ERROR;
       const errorMessage = response.error?.message || getErrorMessage(errorCode, this.currentLanguage);
 
@@ -330,7 +333,9 @@ class ApiClient {
       );
     }
 
-    return response.data as T;
+    // If the backend wraps data in { success: true, data: ... }, unwrap it.
+    // Otherwise return the whole response body as-is.
+    return (response.data !== undefined ? response.data : response) as T;
   }
 
   // ============================================================================

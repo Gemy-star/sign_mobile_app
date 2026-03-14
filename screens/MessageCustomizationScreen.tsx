@@ -3,18 +3,22 @@
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppStyles } from '@/hooks/useAppStyles';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setPreferences } from '@/store/slices/profileSlice';
 import { MessageFrequency, MessageTone } from '@/types/motivation';
 import { Icon } from '@ui-kitten/components';
 import React, { useState } from 'react';
-import { ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 export default function MessageCustomizationScreen() {
   const { styles, colors, palette, spacing } = useAppStyles();
   const { t, isRTL } = useLanguage();
+  const dispatch = useAppDispatch();
+  const savedNotifications = useAppSelector((state) => state.profile.preferences.notifications);
 
   const [selectedTone, setSelectedTone] = useState<MessageTone>('encouraging');
   const [selectedFrequency, setSelectedFrequency] = useState<MessageFrequency>('daily');
-  const [enableNotifications, setEnableNotifications] = useState(true);
+  const [enableNotifications, setEnableNotifications] = useState(savedNotifications);
 
   const tones: Array<{ id: MessageTone; icon: string; color: string }> = [
     { id: 'encouraging', icon: 'smiling-face-outline', color: palette.success },
@@ -193,7 +197,13 @@ export default function MessageCustomizationScreen() {
         </View>
 
         {/* Action Buttons */}
-        <TouchableOpacity style={[styles.button, styles.buttonPrimary, styles.mb2]}>
+        <TouchableOpacity
+          style={[styles.button, styles.buttonPrimary, styles.mb2]}
+          onPress={() => {
+            dispatch(setPreferences({ notifications: enableNotifications }));
+            Alert.alert(t('common.success') || 'Saved', t('common.changesSaved') || 'Your preferences have been saved.');
+          }}
+        >
           <Text style={styles.buttonText}>{t('common.save')}</Text>
         </TouchableOpacity>
 

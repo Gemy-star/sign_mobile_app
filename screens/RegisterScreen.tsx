@@ -2,7 +2,8 @@
 // User Registration Screen - matches LoginScreen design
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { dataSource } from '@/services/dataSource.service';
+import { useAppDispatch } from '@/store/hooks';
+import { registerThunk } from '@/store/slices/authSlice';
 import { RegisterRequest } from '@/types/api';
 import { Icon, Input, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,7 @@ import {
 
 export default function RegisterScreen({ onBackToLogin }: { readonly onBackToLogin?: () => void }) {
   const { t, isRTL } = useLanguage();
+  const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState<RegisterRequest>({
     username: '',
@@ -61,11 +63,14 @@ export default function RegisterScreen({ onBackToLogin }: { readonly onBackToLog
     setIsLoading(true);
     setErrors({});
     try {
-      const response = await dataSource.register(formData);
-      if (response.success) {
+      const result = await dispatch(registerThunk(formData));
+      if (registerThunk.fulfilled.match(result)) {
         router.replace('/(tabs)');
       } else {
-        setErrors({ general: response.error || t('errors.registration_failed') || 'Registration failed.' });
+        const message = typeof result.payload === 'string'
+          ? result.payload
+          : t('errors.registration_failed') || 'Registration failed.';
+        setErrors({ general: message });
       }
     } catch {
       setErrors({ general: t('errors.registration_failed') || 'Registration failed.' });

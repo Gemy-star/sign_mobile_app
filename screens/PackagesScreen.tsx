@@ -2,8 +2,10 @@
 // Packages (Subscription Plans) Screen with Free Trial and Payment Handling
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { dataSource } from '@/services/dataSource.service';
-import { Package, Scope } from '@/types/api';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchPackages } from '@/store/slices/packagesSlice';
+import { fetchScopes } from '@/store/slices/scopesSlice';
+import { Package } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { Button, Card, Icon, Layout, Spinner, Text, useTheme } from '@ui-kitten/components';
 import { router } from 'expo-router';
@@ -20,6 +22,8 @@ import {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
 
+const SmallSpinner = () => <Spinner size="small" status="control" />;
+
 interface PackagesScreenProps {
   onComplete?: () => void;
 }
@@ -28,68 +32,26 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
   const theme = useTheme();
+  const dispatch = useAppDispatch();
 
-  const [packages, setPackages] = useState<Package[]>([]);
+  const { packages, isLoading: packagesLoading } = useAppSelector((state) => state.packages);
+  const { scopes, isLoading: scopesLoading } = useAppSelector((state) => state.scopes);
+
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [scopes, setScopes] = useState<Scope[]>([]);
   const [selectedScopes, setSelectedScopes] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
+  const loading = packagesLoading || scopesLoading;
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState<'select-package' | 'select-scopes' | 'payment'>('select-package');
 
   useEffect(() => {
-    loadPackages();
-    loadScopes();
-  }, []);
-
-  const loadPackages = async () => {
-    try {
-      setLoading(true);
-      const response = await dataSource.getPackages();
-
-      if (response.success && response.data) {
-        // Sort packages by display_order
-        const sortedPackages = [...response.data].sort((a, b) =>
-          (a.display_order || 0) - (b.display_order || 0)
-        );
-        setPackages(sortedPackages);
-        logger.info('Packages loaded successfully', { count: sortedPackages.length });
-      } else {
-        logger.warn('Failed to load packages', { error: response.error });
-        Alert.alert(t('common.error'), response.error || t('packages.loadError'));
-      }
-    } catch (error) {
-      logger.error('Load packages error', error as Error);
-      Alert.alert(t('common.error'), t('packages.loadError'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadScopes = async () => {
-    try {
-      const response = await dataSource.getScopes();
-
-      if (response.success && response.data) {
-        setScopes(response.data.filter(s => s.is_active));
-        logger.info('Scopes loaded successfully', { count: response.data.length });
-      }
-    } catch (error) {
-      logger.error('Load scopes error', error as Error);
-    }
-  };
+    dispatch(fetchPackages());
+    dispatch(fetchScopes());
+  }, [dispatch]);
 
   const handleSelectPackage = (pkg: Package) => {
     setSelectedPackage(pkg);
     setSelectedScopes([]);
-
-    // If it's a free trial (price = 0), go to scope selection
-    if (parseFloat(pkg.price) === 0) {
-      setStep('select-scopes');
-    } else {
-      // For paid packages, also go to scope selection
-      setStep('select-scopes');
-    }
+    setStep('select-scopes');
   };
 
   const handleToggleScope = (scopeId: number) => {
@@ -120,7 +82,7 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
     }
 
     // Check if it's a free trial
-    if (parseFloat(selectedPackage.price) === 0) {
+    if (Number.parseFloat(selectedPackage.price) === 0) {
       handleStartFreeTrial();
     } else {
       setStep('payment');
@@ -137,12 +99,12 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
         scopes: selectedScopes
       });
 
-      const response = await dataSource.createSubscription({
+      const result = await dispatch(createSubscription({
         package_id: selectedPackage.id,
         selected_scope_ids: selectedScopes,
-      });
+      }));
 
-      if (response.success) {
+      if (createSubscription.fulfilled.match(result)) {
         logger.info('Free trial started successfully');
         Alert.alert(
           t('packages.freeTrialSuccess'),
@@ -151,11 +113,9 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
             {
               text: t('common.done'),
               onPress: () => {
-                // Call onComplete callback if provided (for app flow)
                 if (onComplete) {
                   onComplete();
                 } else {
-                  // Otherwise just navigate to main app
                   router.replace('/(tabs)');
                 }
               }
@@ -163,8 +123,9 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
           ]
         );
       } else {
-        logger.warn('Failed to start free trial', { error: response.error });
-        Alert.alert(t('common.error'), response.error || t('packages.subscriptionError'));
+        const errMsg = result.payload as string || t('packages.subscriptionError');
+        logger.warn('Failed to start free trial', { error: errMsg });
+        Alert.alert(t('common.error'), errMsg);
       }
     } catch (error) {
       logger.error('Start free trial error', error as Error);
@@ -184,18 +145,12 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
         scopes: selectedScopes
       });
 
-      // In a real app, this would redirect to a payment gateway
-      // For now, we'll simulate a successful payment
-      const response = await dataSource.createSubscription({
+      const result = await dispatch(createSubscription({
         package_id: selectedPackage.id,
         selected_scope_ids: selectedScopes,
-        // In production, you would add:
-        // customer_email: user.email,
-        // redirect_url: 'myapp://payment-success',
-        // post_url: 'myapp://payment-webhook',
-      });
+      }));
 
-      if (response.success) {
+      if (createSubscription.fulfilled.match(result)) {
         logger.info('Subscription created successfully');
         Alert.alert(
           t('packages.paymentSuccess'),
@@ -204,11 +159,9 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
             {
               text: t('common.done'),
               onPress: () => {
-                // Call onComplete callback if provided (for app flow)
                 if (onComplete) {
                   onComplete();
                 } else {
-                  // Otherwise just navigate to main app
                   router.replace('/(tabs)');
                 }
               }
@@ -216,8 +169,9 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
           ]
         );
       } else {
-        logger.warn('Failed to create subscription', { error: response.error });
-        Alert.alert(t('common.error'), response.error || t('packages.paymentError'));
+        const errMsg = result.payload as string || t('packages.paymentError');
+        logger.warn('Failed to create subscription', { error: errMsg });
+        Alert.alert(t('common.error'), errMsg);
       }
     } catch (error) {
       logger.error('Payment error', error as Error);
@@ -228,12 +182,8 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
   };
 
   const renderPackageCard = (pkg: Package) => {
-    const isFree = parseFloat(pkg.price) === 0;
+    const isFree = Number.parseFloat(pkg.price) === 0;
     const isSelected = selectedPackage?.id === pkg.id;
-
-    const CheckIcon = (props: any) => (
-      <Icon {...props} name="checkmark-circle-2" />
-    );
 
     return (
       <Card
@@ -315,7 +265,7 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
       </Text>
 
       <View style={styles.scopesGrid}>
-        {scopes.map((scope) => {
+        {scopes.filter((s) => s.is_active).map((scope) => {
           const isSelected = selectedScopes.includes(scope.id);
           const isDisabled = !isSelected && selectedScopes.length >= (selectedPackage?.max_scopes || 0);
 
@@ -366,9 +316,9 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
           style={styles.button}
           onPress={handleContinue}
           disabled={processing || selectedScopes.length === 0}
-          accessoryLeft={processing ? (props) => <Spinner size="small" status="control" /> : undefined}
+          accessoryLeft={processing ? SmallSpinner : undefined}
         >
-          {!processing && (parseFloat(selectedPackage?.price || '0') === 0
+          {!processing && (Number.parseFloat(selectedPackage?.price || '0') === 0
             ? t('packages.startFreeTrial')
             : t('packages.continueToPayment'))}
         </Button>
@@ -423,7 +373,7 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
           style={styles.button}
           onPress={handlePayment}
           disabled={processing}
-          accessoryLeft={processing ? (props) => <Spinner size="small" status="control" /> : undefined}
+          accessoryLeft={processing ? SmallSpinner : undefined}
         >
           {!processing && t('packages.pay')}
         </Button>
