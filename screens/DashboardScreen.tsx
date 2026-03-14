@@ -8,12 +8,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchMessages } from '@/store/slices/messagesSlice';
-import { fetchScopes } from '@/store/slices/scopesSlice';
+import { fetchScopes, setSelectedScopes } from '@/store/slices/scopesSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Scope } from '@/types/api';
 import { Icon, Spinner, Text } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function DashboardScreen() {
@@ -23,6 +24,7 @@ export default function DashboardScreen() {
   const { messages, isLoading: messagesLoading } = useAppSelector((state) => state.messages);
   const { scopes, selectedScopes, isLoading: scopesLoading } = useAppSelector((state) => state.scopes);
   const [activeScope, setActiveScope] = useState<number | null>(null); // null = All
+  const loadedFromStorage = useRef(false);
 
   const isRTL = language === 'ar';
   const isDark = colorScheme === 'dark';
@@ -47,6 +49,40 @@ export default function DashboardScreen() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // After API scopes load, hydrate Redux selectedScopes from AsyncStorage if empty
+  useEffect(() => {
+    if (scopes.length === 0 || selectedScopes.length > 0 || loadedFromStorage.current) return;
+    loadedFromStorage.current = true;
+
+    const hydrateScopes = async () => {
+      // Numeric IDs saved by the legacy TopicSelectionScreen
+      const storedTopics = await AsyncStorage.getItem('@sign_sa_selected_topics');
+      if (storedTopics) {
+        try {
+          const parsed: number[] = JSON.parse(storedTopics);
+          if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'number') {
+            dispatch(setSelectedScopes(parsed));
+            return;
+          }
+        } catch (_) {}
+      }
+
+      // String category IDs saved by OnboardingScreen
+      const storedCategories = await AsyncStorage.getItem('@sign_sa_onboarding_scopes');
+      if (storedCategories) {
+        try {
+          const cats: string[] = JSON.parse(storedCategories);
+          if (cats.length > 0) {
+            const matched = scopes.filter((s) => cats.includes(s.category)).map((s) => s.id);
+            if (matched.length > 0) dispatch(setSelectedScopes(matched));
+          }
+        } catch (_) {}
+      }
+    };
+
+    hydrateScopes();
+  }, [scopes, selectedScopes, dispatch]);
 
   const loadData = useCallback(() => {
     dispatch(fetchMessages({ filters: { date_from: todayISO, date_to: todayISO } }));

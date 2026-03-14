@@ -2,13 +2,10 @@ import { customTheme } from '@/constants/theme';
 import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { useAuthActions, useAuthState } from '@/hooks/useAuth';
-import AllSetScreen from '@/screens/AllSetScreen';
-import FindingTopicsScreen from '@/screens/FindingTopicsScreen';
 import LoginScreen from '@/screens/LoginScreen';
 import OnboardingScreen from '@/screens/OnboardingScreen';
 import PackagesScreen from '@/screens/PackagesScreen';
 import RegisterScreen from '@/screens/RegisterScreen';
-import TopicSelectionScreen from '@/screens/TopicSelectionScreen';
 import WelcomeMotivationScreen from '@/screens/WelcomeMotivationScreen';
 import { apiClient } from '@/services/api.client';
 import { dataSource } from '@/services/dataSource.service';
@@ -43,9 +40,7 @@ const AppContent = () => {
   const { checkAuth } = useAuthActions();
   const { colorScheme } = useTheme();
   const { language } = useLanguage();
-  const [showTopicSelection, setShowTopicSelection] = useState<boolean | null>(null);
-  const [showFindingTopics, setShowFindingTopics] = useState(false);
-  const [showAllSet, setShowAllSet] = useState(false);
+  const [showScopeOnboarding, setShowScopeOnboarding] = useState<boolean | null>(null);
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
   const [showPackages, setShowPackages] = useState<boolean | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
@@ -81,14 +76,14 @@ const AppContent = () => {
 
   useEffect(() => {
     const checkOnboarding = async () => {
-      if (!isLoading && isAuthenticated && showTopicSelection === null) {
+      if (!isLoading && isAuthenticated && showScopeOnboarding === null) {
         const topicsSelected = await AsyncStorage.getItem('@sign_sa_topics_selected');
 
         if (topicsSelected === 'true') {
           setShowWelcome(true);
           checkSubscription();
         } else {
-          setShowTopicSelection(true);
+          setShowScopeOnboarding(true);
         }
       }
     };
@@ -151,45 +146,23 @@ const AppContent = () => {
   if (!isAuthenticated) {
     return (
       <LoginScreen
-        onLoginSuccess={() => setShowTopicSelection(true)}
+        onLoginSuccess={() => setShowScopeOnboarding(true)}
         onNavigateToRegister={() => setShowRegister(true)}
       />
     );
   }
 
-  // Show topic selection first
-  if (showTopicSelection === true) {
+  // Show scope selection onboarding for logged-in users who haven't chosen scopes
+  if (showScopeOnboarding === true) {
     return (
-      <TopicSelectionScreen
-        onComplete={(topics) => {
-          AsyncStorage.setItem('@sign_sa_topics_selected', 'true');
-          AsyncStorage.setItem('@sign_sa_selected_topics', JSON.stringify(topics));
-          setShowTopicSelection(false);
-          setShowFindingTopics(true);
-        }}
-      />
-    );
-  }
-
-  // Show finding topics loading screen
-  if (showFindingTopics) {
-    return (
-      <FindingTopicsScreen
-        onComplete={() => {
-          setShowFindingTopics(false);
-          setShowAllSet(true);
-        }}
-      />
-    );
-  }
-
-  // Show all set screen
-  if (showAllSet) {
-    return (
-      <AllSetScreen
-        onComplete={() => {
-          setShowAllSet(false);
-          setShowWelcome(true);
+      <OnboardingScreen
+        skipToScopes={true}
+        onFinish={async (scopes) => {
+          await AsyncStorage.setItem('@sign_sa_topics_selected', 'true');
+          if (scopes.length > 0) {
+            await AsyncStorage.setItem('@sign_sa_onboarding_scopes', JSON.stringify(scopes));
+          }
+          setShowScopeOnboarding(false);
         }}
       />
     );

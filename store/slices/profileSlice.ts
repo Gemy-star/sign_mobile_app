@@ -1,7 +1,9 @@
 // store/slices/profileSlice.ts
 // Redux slice for profile/preferences state
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { profileApi } from '@/services/api';
+import { User } from '@/types/api';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface UserStats {
   goals: number;
@@ -13,6 +15,7 @@ interface UserPreferences {
   darkMode: boolean;
   language: 'en' | 'ar';
   notifications: boolean;
+  notificationTime: string; // "HH:MM" 24-hour format
 }
 
 interface SecuritySettings {
@@ -26,14 +29,17 @@ interface PrivacySettings {
 }
 
 interface ProfileState {
+  user: User | null;
   stats: UserStats;
   preferences: UserPreferences;
   security: SecuritySettings;
   privacy: PrivacySettings;
   isLoading: boolean;
+  error: string | null;
 }
 
 const initialState: ProfileState = {
+  user: null,
   stats: {
     goals: 0,
     messages: 0,
@@ -43,6 +49,7 @@ const initialState: ProfileState = {
     darkMode: false,
     language: 'en',
     notifications: true,
+    notificationTime: '09:00',
   },
   security: {
     twoFactorAuth: false,
@@ -53,7 +60,49 @@ const initialState: ProfileState = {
     personalizedAds: false,
   },
   isLoading: false,
+  error: null,
 };
+
+// ============================================================================
+// Async Thunks
+// ============================================================================
+
+export const fetchProfile = createAsyncThunk<User, void, { rejectValue: string }>(
+  'profile/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await profileApi.getProfile();
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to load profile');
+    }
+  }
+);
+
+export const updateProfile = createAsyncThunk<User, Partial<User>, { rejectValue: string }>(
+  'profile/update',
+  async (data, { rejectWithValue }) => {
+    try {
+      return await profileApi.updateProfile(data);
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to update profile');
+    }
+  }
+);
+
+export const changePassword = createAsyncThunk<
+  { message: string },
+  { old_password: string; new_password: string },
+  { rejectValue: string }
+>(
+  'profile/changePassword',
+  async (data, { rejectWithValue }) => {
+    try {
+      return await profileApi.changePassword(data);
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to change password');
+    }
+  }
+);
 
 const profileSlice = createSlice({
   name: 'profile',
@@ -74,9 +123,47 @@ const profileSlice = createSlice({
     setProfileLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
-    resetProfile: (state) => {
+    resetProfile: () => {
       return initialState;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(fetchProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? 'Unknown error';
+      })
+      .addCase(updateProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? 'Unknown error';
+      })
+      .addCase(changePassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload ?? 'Unknown error';
+      });
   },
 });
 

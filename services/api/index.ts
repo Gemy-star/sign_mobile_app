@@ -8,6 +8,7 @@ export { default as goalsApi } from './goals.api';
 export { default as messagesApi } from './messages.api';
 export { default as packagesApi } from './packages.api';
 export { default as paymentsApi } from './payments.api';
+export { default as profileApi } from './profile.api';
 export { default as scopesApi } from './scopes.api';
 export { default as subscriptionsApi } from './subscriptions.api';
 

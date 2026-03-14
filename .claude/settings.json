@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(ls -la \"c:\\\\WORK\\\\sign_mobile_app\\\\app\\\\\\(tabs\\)\")",
+      "Bash(npx expo:*)"
+    ]
+  }
+}

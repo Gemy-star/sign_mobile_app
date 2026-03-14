@@ -10,6 +10,12 @@ import HelpSupportScreen from '@/screens/HelpSupportScreen';
 import PackagesScreen from '@/screens/PackagesScreen';
 import PrivacySecurityScreen from '@/screens/PrivacySecurityScreen';
 import TopicSelectionScreen from '@/screens/TopicSelectionScreen';
+import {
+  cancelAllNotifications,
+  requestNotificationPermissions,
+  scheduleDailyNotification,
+  setupAndroidChannel,
+} from '@/services/notification.service';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout as logoutAction } from '@/store/slices/authSlice';
 import { setPreferences } from '@/store/slices/profileSlice';
@@ -18,7 +24,7 @@ import { Scope } from '@/types/api';
 import { Button, Icon, Layout, Spinner, Text, Toggle } from '@ui-kitten/components';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
   const dispatch = useAppDispatch();
@@ -29,6 +35,13 @@ export default function ProfileScreen() {
   const { activeSubscription, isLoading: subLoading } = useAppSelector((state) => state.subscriptions);
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(preferences.notifications);
+  const [notificationTime, setNotificationTime] = useState(preferences.notificationTime ?? '09:00');
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempHour, setTempHour] = useState(() => parseInt(preferences.notificationTime?.split(':')[0] ?? '9', 10));
+  const [tempMinute, setTempMinute] = useState(() => {
+    const m = parseInt(preferences.notificationTime?.split(':')[1] ?? '0', 10);
+    return Math.round(m / 5) * 5; // round to nearest 5
+  });
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showPrivacySecurity, setShowPrivacySecurity] = useState(false);
   const [showHelpSupport, setShowHelpSupport] = useState(false);
@@ -50,6 +63,7 @@ export default function ProfileScreen() {
     if (!activeSubscription) {
       dispatch(fetchActiveSubscription());
     }
+    setupAndroidChannel();
   }, []);
 
   const handleLogout = () => {
@@ -63,9 +77,46 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleToggleNotifications = (value: boolean) => {
+  const handleToggleNotifications = async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) {
+        Alert.alert(t('profile.notifications'), t('profile.notificationPermissionDenied'));
+        return;
+      }
+      const [h, m] = notificationTime.split(':').map(Number);
+      await scheduleDailyNotification(
+        h,
+        m,
+        language === 'ar' ? 'تذكيرك اليومي' : 'Daily Reminder',
+        language === 'ar'
+          ? 'رسالتك التحفيزية اليومية جاهزة. افتح التطبيق لقراءتها.'
+          : 'Your daily motivational message is ready. Open the app to read it.',
+      );
+    } else {
+      await cancelAllNotifications();
+    }
     setNotificationsEnabled(value);
     dispatch(setPreferences({ notifications: value }));
+  };
+
+  const handleSaveNotificationTime = async () => {
+    const hh = String(tempHour).padStart(2, '0');
+    const mm = String(tempMinute).padStart(2, '0');
+    const time = `${hh}:${mm}`;
+    setNotificationTime(time);
+    setShowTimePicker(false);
+    dispatch(setPreferences({ notificationTime: time }));
+    if (notificationsEnabled) {
+      await scheduleDailyNotification(
+        tempHour,
+        tempMinute,
+        language === 'ar' ? 'تذكيرك اليومي' : 'Daily Reminder',
+        language === 'ar'
+          ? 'رسالتك التحفيزية اليومية جاهزة. افتح التطبيق لقراءتها.'
+          : 'Your daily motivational message is ready. Open the app to read it.',
+      );
+    }
   };
 
   const handleScopesSelected = async (selectedTopics: string[]) => {
@@ -340,6 +391,23 @@ export default function ProfileScreen() {
             label={t('profile.notifications')}
             right={<Toggle checked={notificationsEnabled} onChange={handleToggleNotifications} />}
           />
+          {notificationsEnabled && (
+            <SettingRow
+              icon="clock-outline"
+              label={t('profile.notificationTime')}
+              onPress={() => {
+                const [h, m] = notificationTime.split(':').map(Number);
+                setTempHour(h);
+                setTempMinute(Math.round(m / 5) * 5);
+                setShowTimePicker(true);
+              }}
+              right={
+                <View style={[styles.timeBadge, { backgroundColor: isDark ? '#2A2A2A' : '#F0EDE8' }]}>
+                  <Text style={[styles.timeBadgeText, { color: gold }]}>{notificationTime}</Text>
+                </View>
+              }
+            />
+          )}
         </View>
 
         {/* ── Account ────────────────────────────────────────────────────── */}
@@ -416,9 +484,115 @@ export default function ProfileScreen() {
           onComplete={handleScopesSelected}
         />
       </Modal>
+
+      {/* ── Time Picker Modal ───────────────────────────────────────────────── */}
+      <Modal visible={showTimePicker} transparent animationType="fade" onRequestClose={() => setShowTimePicker(false)}>
+        <View style={styles.timePickerOverlay}>
+          <View style={[styles.timePickerCard, { backgroundColor: cardBg }]}>
+            <Text style={[styles.timePickerTitle, { color: textColor }, isRTL && styles.textRTL]}>
+              {t('profile.notificationTime')}
+            </Text>
+            <Text style={[styles.timePickerDesc, { color: subTextColor }, isRTL && styles.textRTL]}>
+              {t('profile.notificationTimeDesc')}
+            </Text>
+
+            <View style={styles.timePickerColumns}>
+              {/* Hours */}
+              <View style={styles.timePickerColumn}>
+                <Text style={[styles.timePickerColLabel, { color: subTextColor }]}>
+                  {language === 'ar' ? 'ساعة' : 'Hour'}
+                </Text>
+                <FlatList
+                  data={HOURS}
+                  keyExtractor={(item) => `h-${item}`}
+                  style={styles.timeList}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => {
+                    const selected = item === tempHour;
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.timeListItem,
+                          selected && { backgroundColor: gold, borderRadius: 10 },
+                        ]}
+                        onPress={() => setTempHour(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.timeListItemText, { color: selected ? '#FFF' : textColor }]}>
+                          {String(item).padStart(2, '0')}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              </View>
+
+              <Text style={[styles.timePickerColon, { color: gold }]}>:</Text>
+
+              {/* Minutes */}
+              <View style={styles.timePickerColumn}>
+                <Text style={[styles.timePickerColLabel, { color: subTextColor }]}>
+                  {language === 'ar' ? 'دقيقة' : 'Min'}
+                </Text>
+                <FlatList
+                  data={MINUTES}
+                  keyExtractor={(item) => `m-${item}`}
+                  style={styles.timeList}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => {
+                    const selected = item === tempMinute;
+                    return (
+                      <TouchableOpacity
+                        style={[
+                          styles.timeListItem,
+                          selected && { backgroundColor: gold, borderRadius: 10 },
+                        ]}
+                        onPress={() => setTempMinute(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.timeListItemText, { color: selected ? '#FFF' : textColor }]}>
+                          {String(item).padStart(2, '0')}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }}
+                />
+              </View>
+            </View>
+
+            <View style={[styles.timePickerPreview, { borderColor: dividerColor }]}>
+              <Text style={[styles.timePickerPreviewText, { color: gold }]}>
+                {String(tempHour).padStart(2, '0')}:{String(tempMinute).padStart(2, '0')}
+              </Text>
+            </View>
+
+            <View style={[styles.timePickerActions, isRTL && styles.rowReverse]}>
+              <TouchableOpacity
+                style={[styles.timePickerBtn, styles.timePickerBtnCancel, { borderColor: dividerColor }]}
+                onPress={() => setShowTimePicker(false)}
+              >
+                <Text style={{ color: subTextColor, fontFamily: FontFamily.arabicMedium }}>
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.timePickerBtn, { backgroundColor: gold }]}
+                onPress={handleSaveNotificationTime}
+              >
+                <Text style={{ color: '#FFF', fontFamily: FontFamily.arabicBold }}>
+                  {language === 'ar' ? 'حفظ' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Layout>
   );
 }
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -710,4 +884,100 @@ const styles = StyleSheet.create({
   },
 
   bottomSpacer: { height: 60 },
+
+  // Notification time badge
+  timeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  timeBadgeText: {
+    fontSize: 14,
+    fontFamily: FontFamily.arabicSemiBold,
+  },
+
+  // Time picker modal
+  timePickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  timePickerCard: {
+    width: '100%',
+    borderRadius: 20,
+    padding: 24,
+    gap: 16,
+  },
+  timePickerTitle: {
+    fontSize: 18,
+    fontFamily: FontFamily.arabicBold,
+  },
+  timePickerDesc: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabic,
+    marginTop: -8,
+  },
+  timePickerColumns: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  timePickerColumn: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  timePickerColLabel: {
+    fontSize: 11,
+    fontFamily: FontFamily.arabicSemiBold,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  timeList: {
+    height: 180,
+    width: '100%',
+  },
+  timeListItem: {
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  timeListItemText: {
+    fontSize: 20,
+    fontFamily: FontFamily.arabicMedium,
+  },
+  timePickerColon: {
+    fontSize: 28,
+    fontFamily: FontFamily.arabicBold,
+    paddingTop: 32,
+  },
+  timePickerPreview: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  timePickerPreviewText: {
+    fontSize: 36,
+    fontFamily: FontFamily.arabicBold,
+    letterSpacing: 2,
+  },
+  timePickerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  rowReverse: {
+    flexDirection: 'row-reverse',
+  },
+  timePickerBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  timePickerBtnCancel: {
+    borderWidth: 1,
+  },
 });

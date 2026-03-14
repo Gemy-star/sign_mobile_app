@@ -221,11 +221,13 @@ const ScopePickerSlide = ({ item, selectedScopes, onToggleScope }: ScopePickerSl
 
 interface OnboardingScreenProps {
   readonly onFinish: (selectedScopes: string[]) => void;
+  readonly skipToScopes?: boolean;
 }
 
-export default function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
+export default function OnboardingScreen({ onFinish, skipToScopes = false }: OnboardingScreenProps) {
   const { t, isRTL } = useLanguage();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const initialIndex = skipToScopes ? SLIDES.length - 1 : 0;
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [scopeError, setScopeError] = useState(false);
   const flatRef = useRef<FlatList<AnySlide>>(null);
@@ -304,6 +306,9 @@ export default function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
         onViewableItemsChanged={onViewRef.current}
         viewabilityConfig={viewConfigRef.current}
         scrollEventThrottle={16}
+        initialScrollIndex={initialIndex}
+        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+        scrollEnabled={!skipToScopes}
       />
 
       <View style={styles.controls}>
@@ -323,7 +328,7 @@ export default function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
           {isLast ? t('onboarding.getStarted') : t('common.next')}
         </Button>
 
-        {!isLast && (
+        {!isLast && !skipToScopes && (
           <TouchableOpacity onPress={finish} style={styles.skipBtn}>
             <Text category="c1" style={[styles.skipText, isRTL && styles.textRTL]}>
               {t('onboarding.skip')}
