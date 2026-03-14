@@ -1,5 +1,5 @@
 // screens/AllSetScreen.tsx
-// Final onboarding screen before entering the app - Modern Design
+// Final onboarding screen before entering the app - Dark Brown Design
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -95,96 +95,95 @@ export default function AllSetScreen({ onComplete }: AllSetScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#FAF8F5', '#F5F1ED', '#FAF8F5']}
-        style={styles.gradient}
+        colors={['rgba(49,30,19,0.85)', 'rgba(83,50,29,0.90)', 'rgba(49,30,19,0.85)']}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
       >
+        {/* Animated Success Checkmark */}
         <Animated.View
           style={[
-            styles.content,
+            styles.checkmarkContainer,
             {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
+              transform: [{ scale: checkScale }],
             },
           ]}
         >
-          {/* Animated Success Checkmark */}
-          <Animated.View
-            style={[
-              styles.checkmarkContainer,
-              {
-                transform: [{ scale: checkScale }],
-              },
-            ]}
+          <LinearGradient
+            colors={['#48bb78', '#38a169']}
+            style={styles.checkmark}
           >
-            <LinearGradient
-              colors={['#48bb78', '#38a169']}
-              style={styles.checkmark}
-            >
-              <Text style={styles.checkmarkText}>✓</Text>
-            </LinearGradient>
-          </Animated.View>
-
-          {/* Title */}
-          <Text style={[styles.title, { fontFamily: getFontFamily('bold') }]}>
-            {isRTL ? 'تم الإعداد! 🎉' : 'All set! 🎉'}
-          </Text>
-
-          {/* Subtitle */}
-          <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }]}>
-            {isRTL ? 'كل شيء جاهز! يمكنك البدء الآن' : 'Everything is ready! You can start now'}
-          </Text>
-
-          {/* Preview Cards */}
-          <View style={styles.previewContainer}>
-            {SAMPLE_IMAGES.map((image, index) => (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.previewCard,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{
-                      translateY: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [30, 0],
-                      }),
-                    }],
-                  },
-                ]}
-              >
-                <Image
-                  source={{ uri: image }}
-                  style={styles.previewImage}
-                  defaultSource={require('@/assets/images/logo.png')}
-                />
-                <LinearGradient
-                  colors={['transparent', 'rgba(49, 30, 19, 0.6)']}
-                  style={styles.cardOverlay}
-                />
-              </Animated.View>
-            ))}
-          </View>
-
-          {/* Get Started Button */}
-          <TouchableOpacity
-            onPress={handleGetStarted}
-            style={styles.buttonContainer}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={['#C96F4A', '#936036']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.button}
-            >
-              <Text style={[styles.buttonText, { fontFamily: getFontFamily('bold') }]}>
-                {isRTL ? 'ابدأ الآن' : 'Get Started'}
-              </Text>
-              <Text style={styles.buttonIcon}>{isRTL ? '←' : '→'}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            <Text style={styles.checkmarkText}>✓</Text>
+          </LinearGradient>
         </Animated.View>
-      </LinearGradient>
+
+        {/* Title */}
+        <Text style={[styles.title, { fontFamily: getFontFamily('bold') }]}>
+          {isRTL ? 'تم الإعداد! 🎉' : 'All set! 🎉'}
+        </Text>
+
+        {/* Subtitle */}
+        <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }]}>
+          {isRTL ? 'كل شيء جاهز! يمكنك البدء الآن' : 'Everything is ready! You can start now'}
+        </Text>
+
+        {/* Preview Cards */}
+        <View style={styles.previewContainer}>
+          {SAMPLE_IMAGES.map((image, index) => (
+            <Animated.View
+              key={index}
+              style={[
+                styles.previewCard,
+                {
+                  opacity: fadeAnim,
+                  transform: [{
+                    translateY: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [30, 0],
+                    }),
+                  }],
+                },
+              ]}
+            >
+              <Image
+                source={{ uri: image }}
+                style={styles.previewImage}
+                defaultSource={require('@/assets/images/logo.png')}
+              />
+              <LinearGradient
+                colors={['transparent', 'rgba(49, 30, 19, 0.6)']}
+                style={styles.cardOverlay}
+              />
+            </Animated.View>
+          ))}
+        </View>
+
+        {/* Get Started Button */}
+        <TouchableOpacity
+          onPress={handleGetStarted}
+          style={styles.buttonContainer}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#C96F4A', '#936036', '#C96F4A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.button}
+          >
+            <Text style={[styles.buttonText, { fontFamily: getFontFamily('bold') }]}>
+              {isRTL ? 'ابدأ الآن' : 'Get Started'}
+            </Text>
+            <Text style={styles.buttonIcon}>{isRTL ? '←' : '→'}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -192,10 +191,7 @@ export default function AllSetScreen({ onComplete }: AllSetScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: '#53321D',
   },
   content: {
     flex: 1,
@@ -225,13 +221,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    color: '#311E13',
+    color: '#FAF8F5',
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
-    color: '#936036',
+    color: '#E8CE80',
     marginBottom: 48,
     textAlign: 'center',
     lineHeight: 26,
@@ -247,17 +243,19 @@ const styles = StyleSheet.create({
     height: CARD_WIDTH * 1.4,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(49, 30, 19, 0.60)',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.18)',
     shadowColor: '#311E13',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 6,
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#D5CCC3',
+    backgroundColor: 'rgba(49, 30, 19, 0.40)',
   },
   cardOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -276,13 +274,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    height: 54,
     paddingHorizontal: 32,
     gap: 12,
   },
   buttonText: {
     fontSize: 20,
     color: '#FAF8F5',
+    fontWeight: 'bold',
   },
   buttonIcon: {
     fontSize: 24,

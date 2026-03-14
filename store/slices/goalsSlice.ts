@@ -1,13 +1,14 @@
-// store/slices/goalsSlice.ts
+﻿// store/slices/goalsSlice.ts
 // Redux slice for goals data from API
 
-import { dataSource } from '@/services/dataSource.service';
-import { Goal, GoalFilters, PaginationParams } from '@/types/api';
+import { goalsApi } from '@/services/api';
+import { CreateGoalRequest, Goal, GoalFilters, PaginationParams, UpdateGoalRequest } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface GoalsState {
   goals: Goal[];
+  activeGoals: Goal[];
   currentGoal: Goal | null;
   totalCount: number;
   currentPage: number;
@@ -20,6 +21,7 @@ interface GoalsState {
 
 const initialState: GoalsState = {
   goals: [],
+  activeGoals: [],
   currentGoal: null,
   totalCount: 0,
   currentPage: 1,
@@ -30,40 +32,77 @@ const initialState: GoalsState = {
   lastFetched: null,
 };
 
-// Async Thunks for API calls
+// ============================================================================
+// Async Thunks
+// ============================================================================
 
 export const fetchGoals = createAsyncThunk(
   'goals/fetchGoals',
-  async (params: { pagination?: PaginationParams; filters?: GoalFilters }, { rejectWithValue }) => {
+  async (params: { pagination?: PaginationParams; filters?: GoalFilters } | undefined, { rejectWithValue }) => {
+    params = params ?? {};
     try {
       logger.reduxAction('goals/fetchGoals', params);
-      const response = await dataSource.getGoals(params.filters, params.pagination);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to fetch goals', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to fetch goals');
+      const goals = await goalsApi.getAll(params.filters as any);
+      return { results: goals, count: goals.length };
     } catch (error) {
       logger.error('fetchGoals error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch goals');
+    }
+  }
+);
+
+export const fetchActiveGoals = createAsyncThunk(
+  'goals/fetchActiveGoals',
+  async (_, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('goals/fetchActiveGoals');
+      const goals = await goalsApi.getActive();
+      return goals;
+    } catch (error) {
+      logger.error('fetchActiveGoals error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch active goals');
+    }
+  }
+);
+
+export const fetchGoalById = createAsyncThunk(
+  'goals/fetchGoalById',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('goals/fetchGoalById', { id });
+      const goal = await goalsApi.getById(id);
+      return goal;
+    } catch (error) {
+      logger.error('fetchGoalById error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch goal');
     }
   }
 );
 
 export const createGoal = createAsyncThunk(
   'goals/createGoal',
-  async (goalData: any, { rejectWithValue }) => {
+  async (goalData: CreateGoalRequest, { rejectWithValue }) => {
     try {
       logger.reduxAction('goals/createGoal', { goalData });
-      const response = await dataSource.createGoal(goalData);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to create goal', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to create goal');
+      const goal = await goalsApi.create(goalData);
+      return goal;
     } catch (error) {
       logger.error('createGoal error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to create goal');
+    }
+  }
+);
+
+export const updateGoal = createAsyncThunk(
+  'goals/updateGoal',
+  async ({ id, data }: { id: number; data: UpdateGoalRequest }, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('goals/updateGoal', { id, data });
+      const goal = await goalsApi.update(id, data);
+      return goal;
+    } catch (error) {
+      logger.error('updateGoal error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to update goal');
     }
   }
 );
@@ -73,15 +112,11 @@ export const updateGoalProgress = createAsyncThunk(
   async ({ goalId, progress }: { goalId: number; progress: number }, { rejectWithValue }) => {
     try {
       logger.reduxAction('goals/updateProgress', { goalId, progress });
-      const response = await dataSource.updateGoalProgress(goalId, progress);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to update progress', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to update progress');
+      const goal = await goalsApi.updateProgress(goalId, progress);
+      return goal;
     } catch (error) {
       logger.error('updateGoalProgress error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to update progress');
     }
   }
 );
@@ -91,15 +126,11 @@ export const completeGoal = createAsyncThunk(
   async (goalId: number, { rejectWithValue }) => {
     try {
       logger.reduxAction('goals/completeGoal', { goalId });
-      const response = await dataSource.completeGoal(goalId);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to complete goal', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to complete goal');
+      const goal = await goalsApi.complete(goalId);
+      return goal;
     } catch (error) {
       logger.error('completeGoal error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to complete goal');
     }
   }
 );
@@ -109,18 +140,18 @@ export const deleteGoal = createAsyncThunk(
   async (goalId: number, { rejectWithValue }) => {
     try {
       logger.reduxAction('goals/deleteGoal', { goalId });
-      const response = await dataSource.deleteGoal(goalId);
-      if (response.success) {
-        return goalId;
-      }
-      logger.warn('Failed to delete goal', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to delete goal');
+      await goalsApi.delete(goalId);
+      return goalId;
     } catch (error) {
       logger.error('deleteGoal error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to delete goal');
     }
   }
 );
+
+// ============================================================================
+// Slice
+// ============================================================================
 
 const goalsSlice = createSlice({
   name: 'goals',
@@ -153,12 +184,39 @@ const goalsSlice = createSlice({
         state.isLoading = false;
         state.goals = action.payload.results || [];
         state.totalCount = action.payload.count || 0;
-        // Calculate page from pagination
-        const pageSize = state.pageSize || 20;
-        state.currentPage = Math.ceil((action.payload.results?.length || 0) / pageSize);
         state.lastFetched = Date.now();
       })
       .addCase(fetchGoals.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Fetch Active Goals
+    builder
+      .addCase(fetchActiveGoals.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchActiveGoals.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.activeGoals = action.payload;
+      })
+      .addCase(fetchActiveGoals.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Fetch Goal by ID
+    builder
+      .addCase(fetchGoalById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchGoalById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentGoal = action.payload;
+      })
+      .addCase(fetchGoalById.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });
@@ -179,6 +237,14 @@ const goalsSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    // Update Goal
+    builder
+      .addCase(updateGoal.fulfilled, (state, action) => {
+        const index = state.goals.findIndex((g) => g.id === action.payload.id);
+        if (index !== -1) state.goals[index] = action.payload;
+        if (state.currentGoal?.id === action.payload.id) state.currentGoal = action.payload;
+      });
+
     // Update Goal Progress
     builder
       .addCase(updateGoalProgress.fulfilled, (state, action) => {
@@ -186,6 +252,9 @@ const goalsSlice = createSlice({
         if (goal) {
           goal.progress_percentage = action.payload.progress_percentage;
           goal.updated_at = action.payload.updated_at;
+        }
+        if (state.currentGoal?.id === action.payload.id) {
+          state.currentGoal = action.payload;
         }
       });
 
@@ -195,7 +264,12 @@ const goalsSlice = createSlice({
         const goal = state.goals.find((g) => g.id === action.payload.id);
         if (goal) {
           goal.status = 'completed';
+          goal.progress_percentage = 100;
           goal.updated_at = action.payload.updated_at;
+          goal.completed_at = action.payload.completed_at;
+        }
+        if (state.currentGoal?.id === action.payload.id) {
+          state.currentGoal = action.payload;
         }
       });
 
@@ -203,7 +277,9 @@ const goalsSlice = createSlice({
     builder
       .addCase(deleteGoal.fulfilled, (state, action) => {
         state.goals = state.goals.filter((g) => g.id !== action.payload);
-        state.totalCount -= 1;
+        state.activeGoals = state.activeGoals.filter((g) => g.id !== action.payload);
+        state.totalCount = Math.max(0, state.totalCount - 1);
+        if (state.currentGoal?.id === action.payload) state.currentGoal = null;
       });
   },
 });

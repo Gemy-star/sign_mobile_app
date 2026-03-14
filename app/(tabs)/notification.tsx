@@ -1,26 +1,21 @@
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, Icon, Layout, Text } from '@ui-kitten/components';
+import { Icon, Text } from '@ui-kitten/components';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+// ---------------------------------------------------------------------------
+// Static data types
+// ---------------------------------------------------------------------------
 type Notification = {
   id: string;
-  title: {
-    en: string;
-    ar: string;
-  };
-  message: {
-    en: string;
-    ar: string;
-  };
+  title: { en: string; ar: string };
+  message: { en: string; ar: string };
 };
 
 type Section = {
-  title: {
-    en: string;
-    ar: string;
-  };
+  title: { en: string; ar: string };
   data: Notification[];
 };
 
@@ -31,8 +26,11 @@ const sections: Section[] = [
       {
         id: '1',
         title: { en: 'New Achievement!', ar: 'إنجاز جديد!' },
-        message: { en: 'You completed your 7-day streak!', ar: 'لقد أكملت سلسلة 7 أيام!' }
-      }
+        message: {
+          en: 'You completed your 7-day streak!',
+          ar: 'لقد أكملت سلسلة 7 أيام!',
+        },
+      },
     ],
   },
   {
@@ -41,67 +39,147 @@ const sections: Section[] = [
       {
         id: '2',
         title: { en: 'Daily Message', ar: 'رسالة يومية' },
-        message: { en: 'Your personalized message is ready', ar: 'رسالتك الشخصية جاهزة' }
+        message: {
+          en: 'Your personalized message is ready',
+          ar: 'رسالتك الشخصية جاهزة',
+        },
       },
       {
         id: '3',
         title: { en: 'Goal Reminder', ar: 'تذكير الأهداف' },
-        message: { en: 'Don\'t forget to set your goals for today', ar: 'لا تنسَ تحديد أهدافك لهذا اليوم' }
+        message: {
+          en: "Don't forget to set your goals for today",
+          ar: 'لا تنسَ تحديد أهدافك لهذا اليوم',
+        },
       },
     ],
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Gradient constant
+// ---------------------------------------------------------------------------
+const GRADIENT: [string, string, string] = [
+  'rgba(49,30,19,0.85)',
+  'rgba(83,50,29,0.90)',
+  'rgba(49,30,19,0.85)',
+];
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 export default function NotificationsScreen() {
   const { t, language } = useLanguage();
   const isRTL = language === 'ar';
 
-  const localizedSections = sections.map(section => ({
+  const localizedSections = sections.map((section) => ({
     title: language === 'ar' ? section.title.ar : section.title.en,
-    data: section.data.map(item => ({
+    data: section.data.map((item) => ({
       id: item.id,
       title: language === 'ar' ? item.title.ar : item.title.en,
       message: language === 'ar' ? item.message.ar : item.message.en,
-    }))
+    })),
   }));
 
   return (
-    <Layout style={styles.container} level="1">
+    <View style={styles.root}>
+      <LinearGradient colors={GRADIENT} style={StyleSheet.absoluteFillObject} />
+
       <AppHeader title={t('notifications.title')} showUserInfo={false} />
-      <ScrollView contentContainerStyle={styles.content}>
+
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {localizedSections.map((section, index) => (
           <View key={`${section.title}-${index}`} style={styles.section}>
-            <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+            {/* Section title */}
+            <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>
               {section.title}
             </Text>
+
+            {/* Notification rows */}
             {section.data.map((item) => (
-              <Card key={item.id} style={styles.notificationCard}>
-                <View style={styles.notificationHeader}>
-                  <Icon name="bell-outline" style={styles.iconStyle} fill="#6366f1" />
-                  <Text category="s1" style={[styles.notificationTitle, isRTL && styles.textRTL]}>
+              <View key={item.id} style={styles.notificationCard}>
+                <View style={[styles.notificationHeader, isRTL && styles.notificationHeaderRTL]}>
+                  <Icon
+                    name="bell-outline"
+                    style={styles.bellIcon}
+                    fill="#E8CE80"
+                  />
+                  <Text style={[styles.notificationTitle, isRTL && styles.textRTL]}>
                     {item.title}
                   </Text>
                 </View>
-                <Text category="p2" appearance="hint" style={[isRTL && styles.textRTL]}>
+                <Text style={[styles.notificationMessage, isRTL && styles.textRTL]}>
                   {item.message}
                 </Text>
-              </Card>
+              </View>
             ))}
           </View>
         ))}
       </ScrollView>
-    </Layout>
+    </View>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 16, paddingBottom: 100 },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontFamily: 'IBMPlexSansArabic-Bold', marginBottom: 12 },
-  notificationCard: { marginBottom: 12, borderRadius: 12 },
-  notificationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  notificationTitle: { fontFamily: 'IBMPlexSansArabic-Bold', flex: 1 },
-  iconStyle: { width: 20, height: 20 },
-  textRTL: { textAlign: 'right' },
+  root: {
+    flex: 1,
+    backgroundColor: '#53321D',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  section: {
+    marginBottom: 28,
+  },
+  sectionTitle: {
+    color: '#E8CE80',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  notificationCard: {
+    backgroundColor: 'rgba(49,30,19,0.60)',
+    borderWidth: 1,
+    borderColor: 'rgba(250,248,245,0.18)',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  notificationHeaderRTL: {
+    flexDirection: 'row-reverse',
+  },
+  bellIcon: {
+    width: 20,
+    height: 20,
+  },
+  notificationTitle: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 14,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  notificationMessage: {
+    color: 'rgba(250,248,245,0.55)',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  textRTL: {
+    textAlign: 'right',
+  },
 });

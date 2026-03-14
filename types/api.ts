@@ -8,13 +8,16 @@
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
-  error?: ApiError;
+  error?: string;
+  message?: string;
 }
 
 export interface ApiError {
-  code: string;
-  message: string;
-  details?: Record<string, any>;
+  detail?: string;
+  error?: string;
+  message?: string;
+  status?: number;
+  [key: string]: any;
 }
 
 export interface PaginationMeta {
@@ -27,8 +30,10 @@ export interface PaginationMeta {
 }
 
 export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
   results: T[];
-  pagination: PaginationMeta;
 }
 
 export interface PaginationParams {
@@ -51,11 +56,52 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  password_confirm: string;
   first_name?: string;
   last_name?: string;
+  role?: UserRole;
   mobile_phone?: string;
   country?: string;
   date_of_birth?: string; // YYYY-MM-DD
+  start_trial?: boolean;
+}
+
+export interface LoginResponse {
+  message: string;
+  token: {
+    refresh: string;
+    access: string;
+    user: {
+      id: number;
+      username: string;
+      email: string;
+      role: UserRole;
+      scopes: string[];
+      permissions: string[];
+      has_active_trial: boolean;
+      trial_remaining_days: number;
+      is_verified: boolean;
+    };
+  };
+  user_info: {
+    id: number;
+    username: string;
+    email: string;
+    role: UserRole;
+    full_name: string;
+    has_active_trial: boolean;
+    trial_remaining_days: number;
+    scopes: string[];
+    permissions: string[];
+  };
+}
+
+export interface RegisterResponse {
+  user: User;
+  tokens: {
+    refresh: string;
+    access: string;
+  };
 }
 
 export interface TokenResponse {
@@ -89,8 +135,8 @@ export interface User {
   trial_started_at?: string | null;
   trial_expires_at?: string | null;
   has_used_trial: boolean;
-  has_active_trial: string;
-  trial_remaining_days: string;
+  has_active_trial: boolean;
+  trial_remaining_days: number;
   is_active?: boolean;
   date_joined: string;
 }
@@ -122,10 +168,14 @@ export type ScopeCategoryType =
   | 'lifestyle';
 
 export interface ScopeCategory {
-  category: ScopeCategoryType;
-  name: string;
-  name_ar: string;
-  count: number;
+  value: ScopeCategoryType;
+  label: string;
+}
+
+export interface CheckAccessRequest {
+  scopes?: string[];
+  permissions?: string[];
+  feature?: string;
 }
 
 // ============================================================================
@@ -161,14 +211,8 @@ export interface PackageFeature {
 }
 
 export interface PackageComparison {
-  packages: Package[];
-  features: ComparisonFeature[];
-}
-
-export interface ComparisonFeature {
-  name: string;
-  name_ar: string;
-  values: { [packageId: number]: boolean | string | number };
+  selected_package: Package;
+  all_packages: Package[];
 }
 
 // ============================================================================
@@ -230,8 +274,15 @@ export interface CreateSubscriptionRequest {
   post_url?: string;
 }
 
+export interface CreateSubscriptionResponse {
+  subscription_id: number;
+  payment_url: string;
+  charge_id: string;
+  status: string;
+}
+
 export interface UpdateScopesRequest {
-  selected_scope_ids: number[];
+  scope_ids: number[];
 }
 
 // ============================================================================
@@ -309,18 +360,16 @@ export interface Message {
 }
 
 export type MessageType =
-  | 'motivational'
-  | 'supportive'
-  | 'challenging'
-  | 'reminder';
-
-export type MessageTone = MessageType; // Alias for compatibility
+  | 'daily'
+  | 'goal_specific'
+  | 'scope_based'
+  | 'custom';
 
 export interface CreateMessageRequest {
-  scope_id: number;
+  scope_id?: number;
   goal_id?: number;
-  tone: MessageTone;
-  scheduled_for?: string;
+  message_type: MessageType;
+  custom_prompt?: string;
 }
 
 export interface RateMessageRequest {
@@ -352,18 +401,32 @@ export interface PaymentResponse {
   status: PaymentStatus;
 }
 
-export type PaymentStatus = 'pending' | 'authorized' | 'captured' | 'failed' | 'cancelled';
+export type PaymentStatus = 'pending' | 'authorized' | 'CAPTURED' | 'captured' | 'failed' | 'cancelled';
 
 export interface PaymentVerification {
   charge_id: string;
-  status: PaymentStatus;
-  subscription?: Subscription;
-  message: string;
+  status: string;
+  details: Record<string, any>;
 }
 
 export interface WebhookPayload {
   event: string;
   data: any;
+}
+
+// ============================================================================
+// Admin Types
+// ============================================================================
+
+export interface AdminUser extends User {
+  is_active: boolean;
+  active_subscription_count: number;
+}
+
+export interface AdminTrialRequest {
+  user_id: number;
+  action: 'start' | 'extend' | 'cancel';
+  days?: number;
 }
 
 // ============================================================================
@@ -395,44 +458,18 @@ export interface GoalProgress {
 }
 
 // ============================================================================
-// Generic API Response Types
-// ============================================================================
-
-export interface ApiResponse<T> {
-  data: T;
-  success: boolean;
-  error?: string;
-  message?: string;
-}
-
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
-}
-
-export interface ApiError {
-  detail?: string;
-  error?: string;
-  message?: string;
-  status?: number;
-}
-
-// ============================================================================
 // Filter & Query Types
 // ============================================================================
 
 export interface MessageFilters {
   scope_id?: number;
   goal_id?: number;
-  tone?: MessageTone;
-  is_favorite?: boolean;
+  message_type?: MessageType;
+  is_favorited?: boolean;
   is_read?: boolean;
   date_from?: string;
   date_to?: string;
   search?: string;
-  language?: string; // 'en' or 'ar'
 }
 
 export interface GoalFilters {

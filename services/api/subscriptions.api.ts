@@ -3,6 +3,7 @@
 
 import {
     CreateSubscriptionRequest,
+    CreateSubscriptionResponse,
     SubscriptionDetail,
     SubscriptionList,
     UpdateScopesRequest
@@ -31,35 +32,43 @@ export const subscriptionsApi = {
   },
 
   /**
-   * Get current active subscription
-   * GET /api/subscriptions/current/
+   * Get active subscription
+   * GET /api/subscriptions/active/
    */
-  getCurrent: async (): Promise<SubscriptionDetail> => {
-    return apiClient.get<SubscriptionDetail>('/subscriptions/current/');
+  getActive: async (): Promise<SubscriptionDetail> => {
+    return apiClient.get<SubscriptionDetail>('/subscriptions/active/');
   },
 
   /**
-   * Create new subscription
+   * Create new subscription (initiates Tap payment)
    * POST /api/subscriptions/
    */
-  create: async (data: CreateSubscriptionRequest): Promise<{
-    subscription: SubscriptionDetail;
-    payment_url?: string;
-    message: string;
-  }> => {
-    return apiClient.post<{
-      subscription: SubscriptionDetail;
-      payment_url?: string;
-      message: string;
-    }>('/subscriptions/', data);
+  create: async (data: CreateSubscriptionRequest): Promise<CreateSubscriptionResponse> => {
+    return apiClient.post<CreateSubscriptionResponse>('/subscriptions/', data);
   },
 
   /**
-   * Update selected scopes
-   * PATCH /api/subscriptions/{id}/update-scopes/
+   * Full update of a subscription
+   * PUT /api/subscriptions/{id}/
    */
-  updateScopes: async (id: number, data: UpdateScopesRequest): Promise<SubscriptionDetail> => {
-    return apiClient.patch<SubscriptionDetail>(`/subscriptions/${id}/update-scopes/`, data);
+  put: async (id: number, data: Partial<SubscriptionDetail>): Promise<SubscriptionDetail> => {
+    return apiClient.put<SubscriptionDetail>(`/subscriptions/${id}/`, data);
+  },
+
+  /**
+   * Partial update of a subscription
+   * PATCH /api/subscriptions/{id}/
+   */
+  patch: async (id: number, data: Partial<SubscriptionDetail>): Promise<SubscriptionDetail> => {
+    return apiClient.patch<SubscriptionDetail>(`/subscriptions/${id}/`, data);
+  },
+
+  /**
+   * Delete a subscription
+   * DELETE /api/subscriptions/{id}/
+   */
+  delete: async (id: number): Promise<void> => {
+    return apiClient.delete<void>(`/subscriptions/${id}/`);
   },
 
   /**
@@ -71,27 +80,11 @@ export const subscriptionsApi = {
   },
 
   /**
-   * Renew subscription
-   * POST /api/subscriptions/{id}/renew/
+   * Update selected scopes
+   * PATCH /api/subscriptions/{id}/update_scopes/
    */
-  renew: async (id: number): Promise<{
-    subscription: SubscriptionDetail;
-    payment_url?: string;
-    message: string;
-  }> => {
-    return apiClient.post<{
-      subscription: SubscriptionDetail;
-      payment_url?: string;
-      message: string;
-    }>(`/subscriptions/${id}/renew/`);
-  },
-
-  /**
-   * Get subscription history
-   * GET /api/subscriptions/history/
-   */
-  getHistory: async (): Promise<SubscriptionList[]> => {
-    return apiClient.get<SubscriptionList[]>('/subscriptions/history/');
+  updateScopes: async (id: number, data: UpdateScopesRequest): Promise<SubscriptionDetail> => {
+    return apiClient.patch<SubscriptionDetail>(`/subscriptions/${id}/update_scopes/`, data);
   },
 };
 

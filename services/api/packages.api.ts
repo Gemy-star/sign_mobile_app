@@ -42,19 +42,11 @@ export const packagesApi = {
   },
 
   /**
-   * Compare packages
-   * GET /api/packages/compare/
+   * Get package comparison
+   * GET /api/packages/{id}/comparison/
    */
-  compare: async (): Promise<PackageComparison> => {
-    return apiClient.get<PackageComparison>('/packages/compare/');
-  },
-
-  /**
-   * Get recommended package for user
-   * GET /api/packages/recommended/
-   */
-  getRecommended: async (): Promise<Package> => {
-    return apiClient.get<Package>('/packages/recommended/');
+  getComparison: async (id: number): Promise<PackageComparison> => {
+    return apiClient.get<PackageComparison>(`/packages/${id}/comparison/`);
   },
 };
 

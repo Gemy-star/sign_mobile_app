@@ -5,14 +5,17 @@ import { useAuthActions, useAuthState } from '@/hooks/useAuth';
 import AllSetScreen from '@/screens/AllSetScreen';
 import FindingTopicsScreen from '@/screens/FindingTopicsScreen';
 import LoginScreen from '@/screens/LoginScreen';
+import OnboardingScreen from '@/screens/OnboardingScreen';
 import PackagesScreen from '@/screens/PackagesScreen';
+import RegisterScreen from '@/screens/RegisterScreen';
 import TopicSelectionScreen from '@/screens/TopicSelectionScreen';
 import WelcomeMotivationScreen from '@/screens/WelcomeMotivationScreen';
 import { apiClient } from '@/services/api.client';
 import { dataSource } from '@/services/dataSource.service';
 import { store } from '@/store';
 import { logger } from '@/utils/logger';
-import * as eva from '@eva-design/eva';
+import { dark as evaDark, light as evaLight, mapping } from '@eva-design/eva';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApplicationProvider, IconRegistry, Layout, Spinner, Text } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { useFonts } from 'expo-font';
@@ -33,6 +36,8 @@ const AuthenticatedLayout = () => {
   );
 };
 
+const ONBOARDING_KEY = '@sign_sa_onboarding_complete';
+
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuthState();
   const { checkAuth } = useAuthActions();
@@ -44,6 +49,8 @@ const AppContent = () => {
   const [showWelcome, setShowWelcome] = useState<boolean | null>(null);
   const [showPackages, setShowPackages] = useState<boolean | null>(null);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState<boolean | null>(null);
+  const [showRegister, setShowRegister] = useState(false);
 
   const isDark = colorScheme === 'dark';
 
@@ -51,6 +58,21 @@ const AppContent = () => {
   useEffect(() => {
     apiClient.setLanguage(language);
   }, [language]);
+
+  // Check whether first-launch onboarding has been seen
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_KEY).then((val) => {
+      setOnboardingDone(val === 'true');
+    });
+  }, []);
+
+  const handleOnboardingFinish = async (selectedScopes: string[]) => {
+    await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+    if (selectedScopes.length > 0) {
+      await AsyncStorage.setItem('@sign_sa_onboarding_scopes', JSON.stringify(selectedScopes));
+    }
+    setOnboardingDone(true);
+  };
 
   useEffect(() => {
     // Check if user is already logged in on mount
@@ -60,16 +82,13 @@ const AppContent = () => {
   useEffect(() => {
     const checkOnboarding = async () => {
       if (!isLoading && isAuthenticated && showTopicSelection === null) {
-        // Check if user has completed topic selection
-        // For now, always show it on first login
-        // In production, you'd check localStorage or user preferences
-        const hasCompletedTopicSelection = false; // await AsyncStorage.getItem('topicsSelected');
+        const topicsSelected = await AsyncStorage.getItem('@sign_sa_topics_selected');
 
-        if (!hasCompletedTopicSelection) {
-          setShowTopicSelection(true);
-        } else {
+        if (topicsSelected === 'true') {
           setShowWelcome(true);
           checkSubscription();
+        } else {
+          setShowTopicSelection(true);
         }
       }
     };
@@ -97,8 +116,8 @@ const AppContent = () => {
     checkOnboarding();
   }, [isLoading, isAuthenticated]);
 
-  // Show loader while checking auth
-  if (isLoading) {
+  // Show loader while checking auth or onboarding flag
+  if (isLoading || onboardingDone === null) {
     return (
       <Layout style={styles.loaderContainer} level="1">
         <View style={styles.logoContainer}>
@@ -116,13 +135,24 @@ const AppContent = () => {
     );
   }
 
+  // Show onboarding for first-time users (before login)
+  if (!onboardingDone) {
+    return <OnboardingScreen onFinish={handleOnboardingFinish} />;
+  }
+
+  // Show register screen
+  if (!isAuthenticated && showRegister) {
+    return (
+      <RegisterScreen onBackToLogin={() => setShowRegister(false)} />
+    );
+  }
+
   // Show login if not authenticated
   if (!isAuthenticated) {
     return (
       <LoginScreen
-        onLoginSuccess={() => {
-          setShowTopicSelection(true);
-        }}
+        onLoginSuccess={() => setShowTopicSelection(true)}
+        onNavigateToRegister={() => setShowRegister(true)}
       />
     );
   }
@@ -132,9 +162,8 @@ const AppContent = () => {
     return (
       <TopicSelectionScreen
         onComplete={(topics) => {
-          // Save topics to user preferences
-          // await AsyncStorage.setItem('topicsSelected', 'true');
-          // await AsyncStorage.setItem('selectedTopics', JSON.stringify(topics));
+          AsyncStorage.setItem('@sign_sa_topics_selected', 'true');
+          AsyncStorage.setItem('@sign_sa_selected_topics', JSON.stringify(topics));
           setShowTopicSelection(false);
           setShowFindingTopics(true);
         }}
@@ -209,14 +238,13 @@ const ThemedApp = () => {
   const { colorScheme } = useTheme();
 
   // Merge Eva theme with custom theme based on current theme mode
-  const theme = colorScheme === 'dark'
-    ? { ...eva.dark, ...customTheme.dark }
-    : { ...eva.light, ...customTheme.light };
+  const evaTheme = colorScheme === 'dark' ? evaDark : evaLight;
+  const theme = { ...evaTheme, ...(colorScheme === 'dark' ? customTheme.dark : customTheme.light) };
 
   return (
     <>
       <IconRegistry icons={EvaIconsPack} />
-      <ApplicationProvider {...eva} theme={theme}>
+      <ApplicationProvider mapping={mapping} theme={theme}>
         <View style={styles.appContainer}>
           <AppContent />
         </View>

@@ -2,6 +2,7 @@
 // Screen to display all motivational messages
 
 import { MessageCard } from '@/components/dashboard/MessageCard';
+import ModernHeader from '@/components/ModernHeader';
 import { FontFamily } from '@/constants/Typography';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,6 +12,7 @@ import { Button, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/component
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AllMessagesScreen() {
   const dispatch = useAppDispatch();
@@ -97,6 +99,7 @@ export default function AllMessagesScreen() {
             onChangeText={setSearchQuery}
             accessoryLeft={renderSearchIcon}
             style={styles.searchInput}
+            textStyle={isRTL ? { textAlign: 'right' } : undefined}
           />
         </View>
 
@@ -202,7 +205,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryButton: {
-    marginRight: 8,
+    // spacing handled by the gap in categoriesContainer
   },
   scrollContent: {
     padding: 16,

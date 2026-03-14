@@ -1,16 +1,24 @@
 // services/api/scopes.api.ts
 // Scopes API Service
 
-import { Scope, ScopeCategory } from '@/types/api';
+import { CheckAccessRequest, Scope, ScopeCategory } from '@/types/api';
 import { apiClient } from '../api.client';
 
 // ============================================================================
 // Scopes Endpoints
+//
+// Permission model (mirrors backend):
+//   AllowAny    → list, retrieve, categories
+//   IsAuthenticated → create, update, partial_update, destroy
 // ============================================================================
 
 export const scopesApi = {
+  // --------------------------------------------------------------------------
+  // AllowAny — no token required
+  // --------------------------------------------------------------------------
+
   /**
-   * Get all available scopes
+   * List all available scopes
    * GET /api/scopes/
    */
   getAll: async (params?: {
@@ -21,7 +29,7 @@ export const scopesApi = {
   },
 
   /**
-   * Get scope by ID
+   * Retrieve a single scope by ID
    * GET /api/scopes/{id}/
    */
   getById: async (id: number): Promise<Scope> => {
@@ -29,47 +37,55 @@ export const scopesApi = {
   },
 
   /**
-   * Get scopes by category
-   * GET /api/scopes/by-category/
+   * List all scope categories
+   * GET /api/scopes/categories/
    */
-  getByCategory: async (): Promise<ScopeCategory[]> => {
-    return apiClient.get<ScopeCategory[]>('/scopes/by-category/');
+  getCategories: async (): Promise<ScopeCategory[]> => {
+    return apiClient.get<ScopeCategory[]>('/scopes/categories/');
+  },
+
+  // --------------------------------------------------------------------------
+  // IsAuthenticated — valid JWT required
+  // --------------------------------------------------------------------------
+
+  /**
+   * Create a new scope
+   * POST /api/scopes/
+   */
+  create: async (data: Partial<Scope>): Promise<Scope> => {
+    return apiClient.post<Scope>('/scopes/', data);
   },
 
   /**
-   * Get user's selected scopes
-   * GET /api/scopes/my-scopes/
+   * Full update of a scope
+   * PUT /api/scopes/{id}/
    */
-  getMyScopes: async (): Promise<Scope[]> => {
-    return apiClient.get<Scope[]>('/scopes/my-scopes/');
+  update: async (id: number, data: Partial<Scope>): Promise<Scope> => {
+    return apiClient.put<Scope>(`/scopes/${id}/`, data);
   },
 
   /**
-   * Validate scope access
-   * POST /api/scopes/validate-access/
+   * Partial update of a scope
+   * PATCH /api/scopes/{id}/
    */
-  validateAccess: async (scopeId: number): Promise<{
-    has_access: boolean;
-    message: string;
-  }> => {
-    return apiClient.post<{
-      has_access: boolean;
-      message: string;
-    }>('/scopes/validate-access/', { scope_id: scopeId });
+  partialUpdate: async (id: number, data: Partial<Scope>): Promise<Scope> => {
+    return apiClient.patch<Scope>(`/scopes/${id}/`, data);
   },
 
   /**
-   * Get scope statistics
-   * GET /api/scopes/{id}/stats/
+   * Delete a scope
+   * DELETE /api/scopes/{id}/
    */
-  getStats: async (id: number): Promise<{
-    total_goals: number;
-    completed_goals: number;
-    active_goals: number;
-    total_messages: number;
-    completion_rate: number;
-  }> => {
-    return apiClient.get(`/scopes/${id}/stats/`);
+  destroy: async (id: number): Promise<void> => {
+    return apiClient.delete<void>(`/scopes/${id}/`);
+  },
+
+  /**
+   * Check user access to scopes/permissions/features
+   * POST /api/scopes/check-access/
+   */
+  checkAccess: async (data: CheckAccessRequest): Promise<any> => {
+    return apiClient.post<any>('/scopes/check-access/', data);
   },
 };
 

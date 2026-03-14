@@ -1,11 +1,13 @@
 // services/api/index.ts
 // Central API Export
 
+export { default as adminApi } from './admin.api';
 export { default as authApi } from './auth.api';
 export { default as dashboardApi } from './dashboard.api';
 export { default as goalsApi } from './goals.api';
 export { default as messagesApi } from './messages.api';
 export { default as packagesApi } from './packages.api';
+export { default as paymentsApi } from './payments.api';
 export { default as scopesApi } from './scopes.api';
 export { default as subscriptionsApi } from './subscriptions.api';
 

@@ -85,6 +85,12 @@ export const useAuthActions = () => {
 
   const checkAuth = useCallback(async (): Promise<User | null> => {
     try {
+      // Bail out early if there is no stored token — avoids an unnecessary
+      // 401 console error on every cold start when the user is not logged in.
+      const storedToken = await (await import('@react-native-async-storage/async-storage')).default
+        .getItem('@sign_sa_access_token');
+      if (!storedToken) return null;
+
       const profileResponse = await dataSource.getProfile();
 
       if (profileResponse.success && profileResponse.data) {

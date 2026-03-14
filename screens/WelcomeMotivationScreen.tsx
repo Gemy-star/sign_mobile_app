@@ -1,12 +1,22 @@
 // screens/WelcomeMotivationScreen.tsx
-// Onboarding screen for the motivation app
+// Onboarding screen for the motivation app - Dark Brown Design
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Button, Card, Icon, Layout, Text } from '@ui-kitten/components';
+import { Icon } from '@ui-kitten/components';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, View } from 'react-native';
+import {
+    Dimensions,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 interface WelcomeMotivationScreenProps {
   onGetStarted?: () => void;
@@ -37,9 +47,11 @@ export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivat
   ];
 
   return (
-    <Layout style={styles.container} level="1">
-      <View style={styles.headerBackground} />
-
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['rgba(49,30,19,0.85)', 'rgba(83,50,29,0.90)', 'rgba(49,30,19,0.85)']}
+        style={StyleSheet.absoluteFillObject}
+      />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -54,75 +66,70 @@ export default function WelcomeMotivationScreen({ onGetStarted }: WelcomeMotivat
             />
           </View>
 
-          <Text category="h1" style={styles.appName}>
+          <Text style={styles.appName}>
             {t('motivation.appName')}
           </Text>
 
-          <Text category="s1" appearance="hint" style={styles.tagline}>
+          <Text style={styles.tagline}>
             {t('motivation.tagline')}
           </Text>
         </View>
 
         {/* Features Cards */}
         <View style={styles.featuresSection}>
-          {features.map((feature, index) => {
-            return (
-              <Card
-                key={index}
-                style={styles.featureCard}
-              >
-                <View style={[styles.featureContent, isRTL && styles.featureContentRTL]}>
-                  <View style={[styles.iconContainer, { backgroundColor: `${feature.color}15` }]}>
-                    <Icon name={feature.icon} width={24} height={24} fill={feature.color} />
-                  </View>
-                  <View style={styles.featureText}>
-                    <Text category="s1" style={[styles.featureTitle, isRTL && styles.textRTL]}>
-                      {feature.title}
-                    </Text>
-                    <Text category="p2" appearance="hint" style={isRTL && styles.textRTL}>
-                      {feature.description}
-                    </Text>
-                  </View>
+          {features.map((feature, index) => (
+            <View key={index} style={styles.featureCard}>
+              <View style={[styles.featureContent, isRTL && styles.featureContentRTL]}>
+                <View style={[styles.iconContainer, { borderColor: `${feature.color}60` }]}>
+                  <Icon name={feature.icon} width={24} height={24} fill={feature.color} />
                 </View>
-              </Card>
-            );
-          })}
+                <View style={styles.featureText}>
+                  <Text style={[styles.featureTitle, isRTL && styles.textRTL]}>
+                    {feature.title}
+                  </Text>
+                  <Text style={[styles.featureDescription, isRTL && styles.textRTL]}>
+                    {feature.description}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ))}
         </View>
 
         {/* Bottom CTA */}
         <View style={styles.ctaSection}>
-          <Button
-            size="large"
+          <TouchableOpacity
             onPress={onGetStarted}
-            accessoryRight={(props) => (
+            style={styles.buttonContainer}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#C96F4A', '#936036', '#C96F4A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                {t('motivation.getStarted')}
+              </Text>
               <Icon
-                {...props}
                 name={isRTL ? 'arrow-back-outline' : 'arrow-forward-outline'}
                 width={20}
                 height={20}
+                fill="#FAF8F5"
               />
-            )}
-            style={styles.startButton}
-          >
-            {t('motivation.getStarted')}
-          </Button>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </ScrollView>
-    </Layout>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: height * 0.5,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#53321D',
   },
   scrollContent: {
     flexGrow: 1,
@@ -137,32 +144,36 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(49, 30, 19, 0.60)',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#311E13',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   logoImage: {
     width: 80,
     height: 80,
   },
   appName: {
-    color: '#000000',
+    color: '#FAF8F5',
     fontSize: 32,
     marginBottom: 8,
     textAlign: 'center',
     fontFamily: 'IBMPlexSansArabic-Bold',
   },
   tagline: {
-    color: '#718096',
+    color: '#E8CE80',
     textAlign: 'center',
     marginBottom: 32,
     fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 16,
+    lineHeight: 24,
   },
   featuresSection: {
     flex: 1,
@@ -170,7 +181,11 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     marginBottom: 12,
-    borderRadius: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(49, 30, 19, 0.60)',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.18)',
+    padding: 24,
   },
   featureContent: {
     flexDirection: 'row',
@@ -183,6 +198,9 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(232, 206, 128, 0.35)',
+    backgroundColor: 'rgba(232, 206, 128, 0.08)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -191,8 +209,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureTitle: {
-    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 15,
+    color: '#E8CE80',
     marginBottom: 4,
+  },
+  featureDescription: {
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 13,
+    color: 'rgba(250, 248, 245, 0.6)',
+    lineHeight: 20,
   },
   textRTL: {
     textAlign: 'right',
@@ -201,8 +227,27 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 24,
   },
-  startButton: {
-    borderRadius: 12,
-    paddingVertical: 4,
+  buttonContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#C96F4A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 54,
+    paddingHorizontal: 32,
+    gap: 10,
+  },
+  buttonText: {
+    fontSize: 18,
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontWeight: 'bold',
   },
 });

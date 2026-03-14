@@ -1,6 +1,7 @@
 // screens/PackagesScreen.tsx
 // Packages (Subscription Plans) Screen with Free Trial and Payment Handling
 
+import { useLanguage } from '@/contexts/LanguageContext';
 import { dataSource } from '@/services/dataSource.service';
 import { Package, Scope } from '@/types/api';
 import { logger } from '@/utils/logger';
@@ -25,6 +26,7 @@ interface PackagesScreenProps {
 
 export default function PackagesScreen({ onComplete }: PackagesScreenProps = {}) {
   const { t } = useTranslation();
+  const { isRTL } = useLanguage();
   const theme = useTheme();
 
   const [packages, setPackages] = useState<Package[]>([]);
@@ -245,7 +247,7 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
         disabled={processing}
       >
         {pkg.is_featured && (
-          <View style={[styles.badge, { backgroundColor: theme['color-primary-500'] }]}>
+          <View style={[styles.badge, { backgroundColor: theme['color-primary-500'] }, isRTL ? { left: 20 } : { right: 20 }]}>
             <Text category="c1" style={styles.badgeText}>{t('packages.popular')}</Text>
           </View>
         )}
@@ -347,7 +349,7 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
         })}
       </View>
 
-      <View style={styles.actionButtons}>
+      <View style={[styles.actionButtons, isRTL && { flexDirection: 'row-reverse' }]}>
         <Button
           style={styles.button}
           appearance="outline"
@@ -383,19 +385,19 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
       <Card style={styles.summaryCard}>
         <Text category="h6">{t('packages.orderSummary')}</Text>
 
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, isRTL && { flexDirection: 'row-reverse' }]}>
           <Text appearance="hint">{t('packages.package')}</Text>
           <Text>{selectedPackage?.name}</Text>
         </View>
 
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, isRTL && { flexDirection: 'row-reverse' }]}>
           <Text appearance="hint">{t('packages.selectedScopes')}</Text>
           <Text>{selectedScopes.length} {t('packages.scopes')}</Text>
         </View>
 
         <View style={styles.summaryDivider} />
 
-        <View style={styles.summaryRow}>
+        <View style={[styles.summaryRow, isRTL && { flexDirection: 'row-reverse' }]}>
           <Text category="h6">{t('packages.total')}</Text>
           <Text category="h6" style={{ color: theme['color-primary-500'] }}>
             {selectedPackage?.price} {t('packages.currency')}
@@ -407,7 +409,7 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
         {t('packages.paymentNote')}
       </Text>
 
-      <View style={styles.actionButtons}>
+      <View style={[styles.actionButtons, isRTL && { flexDirection: 'row-reverse' }]}>
         <Button
           style={styles.button}
           appearance="outline"
@@ -471,9 +473,10 @@ const PackageFeature: React.FC<{
   enabled?: boolean;
 }> = ({ icon, text, enabled = true }) => {
   const theme = useTheme();
+  const { isRTL } = useLanguage();
 
   return (
-    <View style={styles.featureRow}>
+    <View style={[styles.featureRow, isRTL && { flexDirection: 'row-reverse' }]}>
       <Icon
         name={icon}
         style={styles.featureIcon}
@@ -530,7 +533,6 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     top: -8,
-    right: 20,
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,

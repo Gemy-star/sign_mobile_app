@@ -10,7 +10,7 @@ import { ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 export default function MessageCustomizationScreen() {
   const { styles, colors, palette, spacing } = useAppStyles();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const [selectedTone, setSelectedTone] = useState<MessageTone>('encouraging');
   const [selectedFrequency, setSelectedFrequency] = useState<MessageFrequency>('daily');
@@ -102,7 +102,7 @@ export default function MessageCustomizationScreen() {
                       width={16}
                       height={16}
                       fill={tone.color}
-                      style={{ position: 'absolute', top: spacing.xs, right: spacing.xs }}
+                      style={[{ position: 'absolute', top: spacing.xs }, isRTL ? { left: spacing.xs } : { right: spacing.xs }]}
                     />
                   )}
                 </TouchableOpacity>

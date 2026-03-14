@@ -3,8 +3,8 @@
 
 import {
     CreateMessageRequest,
-    DailyMessage,
-    Message
+    Message,
+    MessageFilters
 } from '@/types/api';
 import { apiClient } from '../api.client';
 
@@ -17,13 +17,7 @@ export const messagesApi = {
    * Get all user messages
    * GET /api/messages/
    */
-  getAll: async (params?: {
-    scope?: number;
-    goal?: number;
-    message_type?: string;
-    is_read?: boolean;
-    is_favorited?: boolean;
-  }): Promise<Message[]> => {
+  getAll: async (params?: MessageFilters): Promise<Message[]> => {
     return apiClient.get<Message[]>('/messages/', { params });
   },
 
@@ -44,27 +38,19 @@ export const messagesApi = {
   },
 
   /**
-   * Mark message as read
-   * POST /api/messages/{id}/mark-read/
+   * Full update of a message
+   * PUT /api/messages/{id}/
    */
-  markAsRead: async (id: number): Promise<Message> => {
-    return apiClient.post<Message>(`/messages/${id}/mark-read/`);
+  put: async (id: number, data: Partial<Message>): Promise<Message> => {
+    return apiClient.put<Message>(`/messages/${id}/`, data);
   },
 
   /**
-   * Toggle favorite status
-   * POST /api/messages/{id}/toggle-favorite/
+   * Partial update of a message
+   * PATCH /api/messages/{id}/
    */
-  toggleFavorite: async (id: number): Promise<Message> => {
-    return apiClient.post<Message>(`/messages/${id}/toggle-favorite/`);
-  },
-
-  /**
-   * Rate message
-   * POST /api/messages/{id}/rate/
-   */
-  rate: async (id: number, rating: number): Promise<Message> => {
-    return apiClient.post<Message>(`/messages/${id}/rate/`, { rating });
+  patch: async (id: number, data: Partial<Message>): Promise<Message> => {
+    return apiClient.patch<Message>(`/messages/${id}/`, data);
   },
 
   /**
@@ -76,11 +62,35 @@ export const messagesApi = {
   },
 
   /**
-   * Get unread messages
-   * GET /api/messages/unread/
+   * Mark message as read
+   * POST /api/messages/{id}/mark_read/
    */
-  getUnread: async (): Promise<Message[]> => {
-    return apiClient.get<Message[]>('/messages/unread/');
+  markAsRead: async (id: number): Promise<Message> => {
+    return apiClient.post<Message>(`/messages/${id}/mark_read/`);
+  },
+
+  /**
+   * Rate message (1-5 stars)
+   * POST /api/messages/{id}/rate/
+   */
+  rate: async (id: number, rating: number): Promise<Message> => {
+    return apiClient.post<Message>(`/messages/${id}/rate/`, { rating });
+  },
+
+  /**
+   * Toggle favorite status
+   * POST /api/messages/{id}/toggle_favorite/
+   */
+  toggleFavorite: async (id: number): Promise<Message> => {
+    return apiClient.post<Message>(`/messages/${id}/toggle_favorite/`);
+  },
+
+  /**
+   * Get today's daily message (auto-generates if not exists)
+   * GET /api/messages/daily/
+   */
+  getDaily: async (): Promise<Message> => {
+    return apiClient.get<Message>('/messages/daily/');
   },
 
   /**
@@ -89,38 +99,6 @@ export const messagesApi = {
    */
   getFavorites: async (): Promise<Message[]> => {
     return apiClient.get<Message[]>('/messages/favorites/');
-  },
-
-  /**
-   * Get messages by scope
-   * GET /api/messages/by-scope/{scope_id}/
-   */
-  getByScope: async (scopeId: number): Promise<Message[]> => {
-    return apiClient.get<Message[]>(`/messages/by-scope/${scopeId}/`);
-  },
-
-  /**
-   * Get messages by goal
-   * GET /api/messages/by-goal/{goal_id}/
-   */
-  getByGoal: async (goalId: number): Promise<Message[]> => {
-    return apiClient.get<Message[]>(`/messages/by-goal/${goalId}/`);
-  },
-
-  /**
-   * Get daily messages
-   * GET /api/messages/daily/
-   */
-  getDaily: async (): Promise<DailyMessage[]> => {
-    return apiClient.get<DailyMessage[]>('/messages/daily/');
-  },
-
-  /**
-   * Get today's messages
-   * GET /api/messages/today/
-   */
-  getToday: async (): Promise<Message[]> => {
-    return apiClient.get<Message[]>('/messages/today/');
   },
 };
 

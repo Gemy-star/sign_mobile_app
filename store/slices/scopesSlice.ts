@@ -1,14 +1,15 @@
-// store/slices/scopesSlice.ts
+﻿// store/slices/scopesSlice.ts
 // Redux slice for scopes/categories data from API
 
-import { dataSource } from '@/services/dataSource.service';
-import { Scope, ScopeCategory } from '@/types/api';
+import { scopesApi } from '@/services/api';
+import { CheckAccessRequest, Scope, ScopeCategory } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ScopesState {
   scopes: Scope[];
   categories: ScopeCategory[];
+  currentScope: Scope | null;
   selectedScopes: number[];
   isLoading: boolean;
   error: string | null;
@@ -18,28 +19,41 @@ interface ScopesState {
 const initialState: ScopesState = {
   scopes: [],
   categories: [],
+  currentScope: null,
   selectedScopes: [],
   isLoading: false,
   error: null,
   lastFetched: null,
 };
 
-// Async Thunks for API calls
+// ============================================================================
+// Async Thunks
+// ============================================================================
 
 export const fetchScopes = createAsyncThunk(
   'scopes/fetchScopes',
-  async (_, { rejectWithValue }) => {
+  async (category?: string, { rejectWithValue }: any = {}) => {
     try {
-      logger.reduxAction('scopes/fetchScopes');
-      const response = await dataSource.getScopes();
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to fetch scopes', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to fetch scopes');
+      logger.reduxAction('scopes/fetchScopes', { category });
+      const scopes = await scopesApi.getAll(category ? { category } : undefined);
+      return scopes;
     } catch (error) {
       logger.error('fetchScopes error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch scopes');
+    }
+  }
+);
+
+export const fetchScopeById = createAsyncThunk(
+  'scopes/fetchScopeById',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('scopes/fetchScopeById', { id });
+      const scope = await scopesApi.getById(id);
+      return scope;
+    } catch (error) {
+      logger.error('fetchScopeById error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch scope');
     }
   }
 );
@@ -49,15 +63,25 @@ export const fetchScopeCategories = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       logger.reduxAction('scopes/fetchCategories');
-      const response = await dataSource.getScopeCategories();
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to fetch scope categories', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to fetch scope categories');
+      const categories = await scopesApi.getCategories();
+      return categories;
     } catch (error) {
       logger.error('fetchScopeCategories error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch categories');
+    }
+  }
+);
+
+export const checkScopeAccess = createAsyncThunk(
+  'scopes/checkAccess',
+  async (data: CheckAccessRequest, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('scopes/checkAccess', data);
+      const result = await scopesApi.checkAccess(data);
+      return result;
+    } catch (error) {
+      logger.error('checkScopeAccess error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to check access');
     }
   }
 );
@@ -66,19 +90,20 @@ export const updateUserScopes = createAsyncThunk(
   'scopes/updateUserScopes',
   async ({ subscriptionId, scopeIds }: { subscriptionId: number; scopeIds: number[] }, { rejectWithValue }) => {
     try {
+      const { subscriptionsApi } = await import('@/services/api');
       logger.reduxAction('scopes/updateUserScopes', { subscriptionId, scopeIds });
-      const response = await dataSource.updateSubscriptionScopes(subscriptionId, { selected_scope_ids: scopeIds });
-      if (response.success) {
-        return scopeIds;
-      }
-      logger.warn('Failed to update scopes', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to update scopes');
+      await subscriptionsApi.updateScopes(subscriptionId, { scope_ids: scopeIds });
+      return scopeIds;
     } catch (error) {
       logger.error('updateUserScopes error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to update scopes');
     }
   }
 );
+
+// ============================================================================
+// Slice
+// ============================================================================
 
 const scopesSlice = createSlice({
   name: 'scopes',
@@ -112,6 +137,21 @@ const scopesSlice = createSlice({
         state.lastFetched = Date.now();
       })
       .addCase(fetchScopes.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Fetch Scope by ID
+    builder
+      .addCase(fetchScopeById.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchScopeById.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentScope = action.payload;
+      })
+      .addCase(fetchScopeById.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

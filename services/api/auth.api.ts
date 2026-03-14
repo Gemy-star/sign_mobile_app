@@ -2,11 +2,12 @@
 // Authentication API Service
 
 import {
-    LoginRequest,
-    RegisterRequest,
-    TokenRefreshRequest,
-    TokenResponse,
-    User,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  TokenRefreshRequest,
+  User,
 } from '@/types/api';
 import { apiClient } from '../api.client';
 
@@ -19,8 +20,8 @@ export const authApi = {
    * Register a new user
    * POST /api/auth/register/
    */
-  register: async (data: RegisterRequest): Promise<TokenResponse> => {
-    return apiClient.post<TokenResponse>('/auth/register/', data);
+  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
+    return apiClient.post<RegisterResponse>('/auth/register/', data);
   },
 
   /**
@@ -28,16 +29,16 @@ export const authApi = {
    * POST /api/auth/login/
    * Returns JWT with user scopes
    */
-  login: async (credentials: LoginRequest): Promise<TokenResponse> => {
-    return apiClient.post<TokenResponse>('/auth/login/', credentials);
+  login: async (credentials: LoginRequest): Promise<LoginResponse> => {
+    return apiClient.post<LoginResponse>('/auth/login/', credentials);
   },
 
   /**
    * Refresh access token
-   * POST /api/auth/token/refresh/
+   * POST /api/auth/refresh/
    */
   refreshToken: async (data: TokenRefreshRequest): Promise<{ access: string }> => {
-    return apiClient.post<{ access: string }>('/auth/token/refresh/', data);
+    return apiClient.post<{ access: string }>('/auth/refresh/', data);
   },
 
   /**

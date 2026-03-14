@@ -8,8 +8,11 @@ import authReducer from './slices/authSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import goalsReducer from './slices/goalsSlice';
 import messagesReducer from './slices/messagesSlice';
+import packagesReducer from './slices/packagesSlice';
+import paymentsReducer from './slices/paymentsSlice';
 import profileReducer from './slices/profileSlice';
 import scopesReducer from './slices/scopesSlice';
+import subscriptionsReducer from './slices/subscriptionsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -21,7 +24,9 @@ export const store = configureStore({
     goals: goalsReducer,
     dashboard: dashboardReducer,
     scopes: scopesReducer,
-    // Theme and Language moved to Context API (lightweight UI preferences)
+    packages: packagesReducer,
+    subscriptions: subscriptionsReducer,
+    payments: paymentsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

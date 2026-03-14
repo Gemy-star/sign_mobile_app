@@ -12,16 +12,20 @@ const getEnvBool = (key: string, fallback: boolean): boolean => {
   return value === 'true' || value === '1';
 };
 
+// Set to true to point all API calls at the local dev server (localhost:9898).
+// Set to false to use the production server (sign-sa.net).
+const USE_LOCAL_ENV = true;
+
 export const API_CONFIG = {
   // Toggle between mock data and real API
   // Set via EXPO_PUBLIC_USE_MOCK_DATA in .env file
-  USE_MOCK_DATA: getEnvBool('EXPO_PUBLIC_USE_MOCK_DATA', true),
+  USE_MOCK_DATA: getEnvBool('EXPO_PUBLIC_USE_MOCK_DATA', false),
 
   // API Base URLs
-  // Set via EXPO_PUBLIC_API_BASE_URL in .env file
+  // Set via EXPO_PUBLIC_API_BASE_URL in .env file, or controlled by USE_LOCAL_ENV above.
   BASE_URL: getEnvVar(
     'EXPO_PUBLIC_API_BASE_URL',
-    __DEV__ ? 'http://127.0.0.1:6400' : 'https://sign-sa.net'
+    USE_LOCAL_ENV ? 'http://10.0.2.2:9898' : 'https://sign-sa.net'
   ),
 
   // API Version

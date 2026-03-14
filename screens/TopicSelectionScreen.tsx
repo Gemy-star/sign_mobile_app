@@ -203,15 +203,15 @@ export default function TopicSelectionScreen({ onComplete }: TopicSelectionScree
         colors={['#FAF8F5', '#F5F1ED']}
         style={styles.header}
       >
-        <View style={styles.headerContent}>
-          <View style={styles.headerTextContainer}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.title, { fontFamily: getFontFamily('bold') }]}>
+        <View style={[styles.headerContent, isRTL && { flexDirection: 'row-reverse' }]}>
+          <View style={[styles.headerTextContainer, isRTL ? { marginLeft: 16 } : { marginRight: 16 }]}>
+            <View style={[styles.titleRow, isRTL && { flexDirection: 'row-reverse' }]}>
+              <Text style={[styles.title, { fontFamily: getFontFamily('bold') }, isRTL && { textAlign: 'right', marginRight: 0, marginLeft: 8 }]}>
                 {isRTL ? 'مرحباً' : 'Welcome'}
               </Text>
               <Text style={styles.emojiWave}>👋</Text>
             </View>
-            <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }]}>
+            <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }, isRTL && { textAlign: 'right' }]}>
               {isRTL ? 'اختر 3 مواضيع أو أكثر' : 'Pick 3 or more topics'}
             </Text>
             {selectedTopics.length > 0 && (
@@ -292,7 +292,7 @@ export default function TopicSelectionScreen({ onComplete }: TopicSelectionScree
                   </Text>
                 </LinearGradient>
                 {isSelected && (
-                  <View style={styles.checkmarkContainer}>
+                  <View style={[styles.checkmarkContainer, isRTL ? { left: 12 } : { right: 12 }]}>
                     <LinearGradient
                       colors={['#C96F4A', '#936036']}
                       style={styles.checkmark}
@@ -347,7 +347,6 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: {
     flex: 1,
-    marginRight: 16,
   },
   titleRow: {
     flexDirection: 'row',
@@ -469,7 +468,7 @@ const styles = StyleSheet.create({
   checkmarkContainer: {
     position: 'absolute',
     top: 12,
-    right: 12,
+    // right/left applied dynamically based on isRTL
   },
   checkmark: {
     width: 32,

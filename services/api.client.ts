@@ -109,7 +109,9 @@ class ApiClient {
         const status = error.response.status;
 
         // Handle 401 Unauthorized - Token expired
-        if (status === 401 && !originalRequest._retry) {
+        // Skip refresh for login/register/token endpoints — no token exists for those yet
+        const isLoginEndpoint = /\/auth\/(login|register|token|refresh|verify)/.test(originalRequest.url ?? '');
+        if (status === 401 && !originalRequest._retry && !isLoginEndpoint) {
           if (this.isRefreshing) {
             // Wait for token refresh to complete
             return new Promise((resolve) => {

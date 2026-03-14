@@ -1,32 +1,26 @@
 // screens/RegisterScreen.tsx
-// User Registration Screen with Form Validation
+// User Registration Screen - matches LoginScreen design
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { dataSource } from '@/services/dataSource.service';
 import { RegisterRequest } from '@/types/api';
-import { Button, Card, Icon, Input, Layout, Spinner, Text } from '@ui-kitten/components';
+import { Icon, Input, Spinner, Text } from '@ui-kitten/components';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
-const isTablet = width > 600;
+export default function RegisterScreen({ onBackToLogin }: { readonly onBackToLogin?: () => void }) {
+  const { t, isRTL } = useLanguage();
 
-export default function RegisterScreen() {
-  const { colors, colorScheme } = useTheme();
-  const { t, language, isRTL } = useLanguage();
-  const isDark = colorScheme === 'dark';
-
-  // Form state
   const [formData, setFormData] = useState<RegisterRequest>({
     username: '',
     email: '',
@@ -34,370 +28,449 @@ export default function RegisterScreen() {
     first_name: '',
     last_name: '',
   });
-
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [secureTextEntry, setSecureTextEntry] = useState(true);
-  const [secureConfirmEntry, setSecureConfirmEntry] = useState(true);
-
-  // UI state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ============================================================================
-  // Validation
-  // ============================================================================
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    // Username validation
-    if (!formData.username.trim()) {
-      newErrors.username = t('validation.username_required') || 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = t('validation.username_min_length') || 'Username must be at least 3 characters';
-    } else if (!/^[\w.@+-]+$/.test(formData.username)) {
-      newErrors.username = t('validation.username_invalid') || 'Username can only contain letters, numbers, and @/./+/-/_';
-    }
-
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = t('validation.email_required') || 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = t('validation.email_invalid') || 'Invalid email format';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = t('validation.password_required') || 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = t('validation.password_min_length') || 'Password must be at least 8 characters';
-    }
-
-    // Confirm password validation
-    if (!confirmPassword) {
-      newErrors.confirmPassword = t('validation.confirm_password_required') || 'Please confirm your password';
-    } else if (confirmPassword !== formData.password) {
-      newErrors.confirmPassword = t('validation.passwords_dont_match') || 'Passwords do not match';
-    }
-
-    // First name validation
-    if (!formData.first_name?.trim()) {
-      newErrors.first_name = t('validation.first_name_required') || 'First name is required';
-    }
-
-    // Last name validation
-    if (!formData.last_name?.trim()) {
-      newErrors.last_name = t('validation.last_name_required') || 'Last name is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // ============================================================================
-  // Form Handlers
-  // ============================================================================
-
   const handleInputChange = (field: keyof RegisterRequest, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
-    }
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const validateForm = (): boolean => {
+    const e: Record<string, string> = {};
+    if (!formData.username.trim()) e.username = t('validation.username_required') || 'Username is required';
+    else if (formData.username.length < 3) e.username = t('validation.username_min_length') || 'Min 3 characters';
+    else if (!/^[\w.@+-]+$/.test(formData.username)) e.username = t('validation.username_invalid') || 'Invalid characters';
+    if (!formData.email.trim()) e.email = t('validation.email_required') || 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) e.email = t('validation.email_invalid') || 'Invalid email';
+    if (!formData.first_name?.trim()) e.first_name = t('validation.first_name_required') || 'First name is required';
+    if (!formData.last_name?.trim()) e.last_name = t('validation.last_name_required') || 'Last name is required';
+    if (!formData.password) e.password = t('validation.password_required') || 'Password is required';
+    else if (formData.password.length < 8) e.password = t('validation.password_min_length') || 'Min 8 characters';
+    if (!confirmPassword) e.confirmPassword = t('validation.confirm_password_required') || 'Please confirm password';
+    else if (confirmPassword !== formData.password) e.confirmPassword = t('validation.passwords_dont_match') || "Passwords don't match";
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleRegister = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsLoading(true);
     setErrors({});
-
     try {
       const response = await dataSource.register(formData);
-
       if (response.success) {
-        console.log('Registration successful:', response.data);
-        // Navigate to login or main app
         router.replace('/(tabs)');
       } else {
-        setErrors({
-          general: response.error || t('errors.registration_failed') || 'Registration failed. Please try again.',
-        });
+        setErrors({ general: response.error || t('errors.registration_failed') || 'Registration failed.' });
       }
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      setErrors({
-        general: t('errors.registration_failed') || 'Registration failed. Please try again.',
-      });
+    } catch {
+      setErrors({ general: t('errors.registration_failed') || 'Registration failed.' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ============================================================================
-  // UI Renderers
-  // ============================================================================
-
-  const renderIcon = (props: any, name: string) => (
-    <Icon {...props} name={name} />
+  const Field = ({
+    label,
+    icon,
+    value,
+    onChangeText,
+    placeholder,
+    secure,
+    toggleSecure,
+    keyboardType,
+    errorKey,
+    autoCapitalize = 'none',
+  }: {
+    label: string;
+    icon: string;
+    value: string;
+    onChangeText: (v: string) => void;
+    placeholder: string;
+    secure?: boolean;
+    toggleSecure?: () => void;
+    keyboardType?: any;
+    errorKey: string;
+    autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  }) => (
+    <View style={styles.inputWrapper}>
+      <Text style={[styles.inputLabel, isRTL && { textAlign: 'right' }]}>{label}</Text>
+      <View style={[styles.inputContainer, errors[errorKey] ? styles.inputError : null, isRTL && { flexDirection: 'row-reverse' }]}>
+        <Icon name={icon} style={[styles.inputIcon, isRTL && { marginRight: 0, marginLeft: 10 }]} fill="#FAF8F5" />
+        <Input
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="rgba(250, 248, 245, 0.45)"
+          secureTextEntry={secure}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={false}
+          keyboardType={keyboardType}
+          disabled={isLoading}
+          style={styles.input}
+          textStyle={[styles.inputText, isRTL && { textAlign: 'right' }]}
+        />
+        {toggleSecure && (
+          <TouchableOpacity onPress={toggleSecure} style={[styles.eyeIcon, isRTL && { marginLeft: 0, marginRight: 6 }]}>
+            <Icon
+              name={secure ? 'eye-off-outline' : 'eye-outline'}
+              style={styles.inputIcon}
+              fill="#FAF8F5"
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+      {errors[errorKey] ? (
+        <Text style={[styles.fieldError, isRTL && { marginLeft: 0, marginRight: 4, textAlign: 'right' }]}>{errors[errorKey]}</Text>
+      ) : null}
+    </View>
   );
-
-  const renderPasswordIcon = (props: any, secure: boolean, toggle: () => void) => (
-    <TouchableOpacity onPress={toggle}>
-      <Icon {...props} name={secure ? 'eye-off' : 'eye'} />
-    </TouchableOpacity>
-  );
-
-  const textColor = isDark ? '#F8F8F8' : '#0F0F0F';
-  const cardBg = isDark ? '#2E2E2E' : '#FFFFFF';
 
   return (
-    <Layout style={[styles.container, { backgroundColor: isDark ? '#0F0F0F' : '#F8F8F8' }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
+    <View style={styles.backgroundContainer}>
+      <View style={styles.backgroundImage} />
+      <LinearGradient
+        colors={['rgba(49, 30, 19, 0.85)', 'rgba(83, 50, 29, 0.9)', 'rgba(49, 30, 19, 0.85)']}
+        style={styles.overlay}
+      />
+
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text
-              style={[
-                styles.title,
-                { color: textColor, textAlign: isRTL ? 'right' : 'left' },
-              ]}
-            >
-              {t('auth.create_account') || 'Create Account'}
-            </Text>
-            <Text
-              style={[
-                styles.subtitle,
-                { color: isDark ? '#B8B8B8' : '#666666', textAlign: isRTL ? 'right' : 'left' },
-              ]}
-            >
-              {t('auth.join_sign_sa') || 'Join Sign SA for your personal development journey'}
+          {/* Logo */}
+          <View style={styles.headerSection}>
+            <View style={styles.logoWrapper}>
+              <Image
+                source={require('@/assets/images/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.appName}>{t('auth.create_account')}</Text>
+            <Text style={styles.tagline}>
+              {t('auth.join_sign_sa') || 'Join AIAY for your personal development journey'}
             </Text>
           </View>
 
-          {/* Registration Form */}
-          <Card
-            style={[
-              styles.formCard,
-              {
-                backgroundColor: cardBg,
-                elevation: 3,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-              },
-            ]}
-          >
-            {/* General Error */}
-            {errors.general && (
-              <View style={styles.errorContainer}>
-                <Icon name="alert-circle" fill="#FF3D71" style={styles.errorIcon} />
-                <Text style={styles.errorText}>{errors.general}</Text>
-              </View>
-            )}
+          {/* Glass card */}
+          <View style={styles.glassCard}>
+            <View style={styles.cardContent}>
+              {/* General error */}
+              {errors.general ? (
+                <View style={[styles.errorContainer, isRTL && { flexDirection: 'row-reverse', borderLeftWidth: 0, borderRightWidth: 4, borderRightColor: '#EF4444' }]}>
+                  <Icon name="alert-circle-outline" style={styles.errorIcon} fill="#EF4444" />
+                  <Text style={[styles.errorText, isRTL && { textAlign: 'right' }]}>{errors.general}</Text>
+                </View>
+              ) : null}
 
-            {/* Username */}
-            <Input
-              label={t('auth.username') || 'Username'}
-              placeholder={t('auth.username_placeholder') || 'Enter username'}
-              value={formData.username}
-              onChangeText={(value) => handleInputChange('username', value)}
-              accessoryLeft={(props) => renderIcon(props, 'person-outline')}
-              status={errors.username ? 'danger' : 'basic'}
-              caption={errors.username}
-              autoCapitalize="none"
-              style={styles.input}
-            />
+              <Field
+                label={t('auth.first_name')}
+                icon="person-outline"
+                value={formData.first_name ?? ''}
+                onChangeText={(v) => handleInputChange('first_name', v)}
+                placeholder={t('auth.first_name_placeholder')}
+                errorKey="first_name"
+                autoCapitalize="words"
+              />
+              <Field
+                label={t('auth.last_name')}
+                icon="person-outline"
+                value={formData.last_name ?? ''}
+                onChangeText={(v) => handleInputChange('last_name', v)}
+                placeholder={t('auth.last_name_placeholder')}
+                errorKey="last_name"
+                autoCapitalize="words"
+              />
+              <Field
+                label={t('auth.username')}
+                icon="at-outline"
+                value={formData.username}
+                onChangeText={(v) => handleInputChange('username', v)}
+                placeholder={t('auth.username_placeholder')}
+                errorKey="username"
+              />
+              <Field
+                label={t('auth.email')}
+                icon="email-outline"
+                value={formData.email}
+                onChangeText={(v) => handleInputChange('email', v)}
+                placeholder={t('auth.email_placeholder')}
+                keyboardType="email-address"
+                errorKey="email"
+              />
+              <Field
+                label={t('auth.password')}
+                icon="lock-outline"
+                value={formData.password}
+                onChangeText={(v) => handleInputChange('password', v)}
+                placeholder={t('auth.password_placeholder')}
+                secure={showPassword ? false : true}
+                toggleSecure={() => setShowPassword(!showPassword)}
+                errorKey="password"
+              />
+              <Field
+                label={t('auth.confirm_password')}
+                icon="lock-outline"
+                value={confirmPassword}
+                onChangeText={(v) => {
+                  setConfirmPassword(v);
+                  if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: '' }));
+                }}
+                placeholder={t('auth.confirm_password_placeholder')}
+                secure={showConfirm ? false : true}
+                toggleSecure={() => setShowConfirm(!showConfirm)}
+                errorKey="confirmPassword"
+              />
 
-            {/* Email */}
-            <Input
-              label={t('auth.email') || 'Email'}
-              placeholder={t('auth.email_placeholder') || 'Enter email'}
-              value={formData.email}
-              onChangeText={(value) => handleInputChange('email', value)}
-              accessoryLeft={(props) => renderIcon(props, 'email-outline')}
-              status={errors.email ? 'danger' : 'basic'}
-              caption={errors.email}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={styles.input}
-            />
-
-            {/* First Name */}
-            <Input
-              label={t('auth.first_name') || 'First Name'}
-              placeholder={t('auth.first_name_placeholder') || 'Enter first name'}
-              value={formData.first_name}
-              onChangeText={(value) => handleInputChange('first_name', value)}
-              accessoryLeft={(props) => renderIcon(props, 'person')}
-              status={errors.first_name ? 'danger' : 'basic'}
-              caption={errors.first_name}
-              style={styles.input}
-            />
-
-            {/* Last Name */}
-            <Input
-              label={t('auth.last_name') || 'Last Name'}
-              placeholder={t('auth.last_name_placeholder') || 'Enter last name'}
-              value={formData.last_name}
-              onChangeText={(value) => handleInputChange('last_name', value)}
-              accessoryLeft={(props) => renderIcon(props, 'person')}
-              status={errors.last_name ? 'danger' : 'basic'}
-              caption={errors.last_name}
-              style={styles.input}
-            />
-
-            {/* Password */}
-            <Input
-              label={t('auth.password') || 'Password'}
-              placeholder={t('auth.password_placeholder') || 'Enter password'}
-              value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
-              accessoryLeft={(props) => renderIcon(props, 'lock-outline')}
-              accessoryRight={(props) =>
-                renderPasswordIcon(props, secureTextEntry, () =>
-                  setSecureTextEntry(!secureTextEntry)
-                )
-              }
-              secureTextEntry={secureTextEntry}
-              status={errors.password ? 'danger' : 'basic'}
-              caption={errors.password}
-              autoCapitalize="none"
-              style={styles.input}
-            />
-
-            {/* Confirm Password */}
-            <Input
-              label={t('auth.confirm_password') || 'Confirm Password'}
-              placeholder={t('auth.confirm_password_placeholder') || 'Re-enter password'}
-              value={confirmPassword}
-              onChangeText={(value) => {
-                setConfirmPassword(value);
-                if (errors.confirmPassword) {
-                  setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-                }
-              }}
-              accessoryLeft={(props) => renderIcon(props, 'lock-outline')}
-              accessoryRight={(props) =>
-                renderPasswordIcon(props, secureConfirmEntry, () =>
-                  setSecureConfirmEntry(!secureConfirmEntry)
-                )
-              }
-              secureTextEntry={secureConfirmEntry}
-              status={errors.confirmPassword ? 'danger' : 'basic'}
-              caption={errors.confirmPassword}
-              autoCapitalize="none"
-              style={styles.input}
-            />
-
-            {/* Register Button */}
-            <Button
-              style={styles.registerButton}
-              status="primary"
-              onPress={handleRegister}
-              disabled={isLoading}
-              accessoryLeft={isLoading ? () => <Spinner size="small" status="control" /> : undefined}
-            >
-              {isLoading ? t('auth.creating_account') || 'Creating Account...' : t('auth.register') || 'Register'}
-            </Button>
-
-            {/* Login Link */}
-            <View style={styles.loginContainer}>
-              <Text style={[styles.loginText, { color: isDark ? '#B8B8B8' : '#666666' }]}>
-                {t('auth.already_have_account') || 'Already have an account?'}{' '}
-              </Text>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={[styles.loginLink, { color: colors.primary }]}>
-                  {t('auth.login') || 'Login'}
-                </Text>
+              {/* Register button */}
+              <TouchableOpacity
+                onPress={handleRegister}
+                disabled={isLoading}
+                style={[styles.registerButton, isLoading && styles.buttonDisabled]}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={['#C96F4A', '#936036', '#C96F4A']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  {isLoading ? (
+                    <Spinner size="small" status="control" />
+                  ) : (
+                    <Text style={styles.buttonText}>{t('auth.register')}</Text>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
             </View>
-          </Card>
+          </View>
+
+          {/* Back to login */}
+          <View style={[styles.loginContainer, isRTL && { flexDirection: 'row-reverse' }]}>
+            <Text style={styles.loginText}>{t('auth.already_have_account')}{' '}</Text>
+            <TouchableOpacity onPress={() => { if (onBackToLogin) { onBackToLogin(); } else { router.back(); } }}>
+              <Text style={styles.loginLink}>{t('auth.login')}</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </Layout>
+    </View>
   );
 }
 
-// ============================================================================
-// Styles
-// ============================================================================
-
 const styles = StyleSheet.create({
-  container: {
+  backgroundContainer: {
     flex: 1,
+    position: 'relative',
   },
-  keyboardView: {
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#53321D',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  container: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: isTablet ? 32 : 20,
     justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  header: {
-    marginBottom: isTablet ? 32 : 24,
+
+  // Header
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  title: {
-    fontSize: isTablet ? 32 : 28,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: isTablet ? 16 : 14,
-    lineHeight: 22,
-  },
-  formCard: {
-    borderRadius: isTablet ? 20 : 16,
-    padding: isTablet ? 28 : 20,
+  logoWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(250, 248, 245, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 20,
+    borderWidth: 3,
+    borderColor: 'rgba(232, 206, 128, 0.3)',
+    shadowColor: '#C96F4A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
   },
+  logo: {
+    width: 65,
+    height: 65,
+  },
+  appName: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 30,
+    marginBottom: 8,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  tagline: {
+    color: '#E8CE80',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.9,
+    paddingHorizontal: 20,
+  },
+
+  // Glass card
+  glassCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.2)',
+    backgroundColor: 'rgba(49, 30, 19, 0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 15,
+  },
+  cardContent: {
+    padding: 24,
+    backgroundColor: 'rgba(49, 30, 19, 0.3)',
+  },
+
+  // Error banner
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFE5E5',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#EF4444',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 10,
   },
   errorIcon: {
     width: 20,
     height: 20,
-    marginRight: 8,
   },
   errorText: {
-    color: '#FF3D71',
-    fontSize: 13,
     flex: 1,
+    color: '#FCA5A5',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 13,
+  },
+
+  // Inputs
+  inputWrapper: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    color: '#E8CE80',
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    fontSize: 13,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(250, 248, 245, 0.1)',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'rgba(232, 206, 128, 0.3)',
+    paddingHorizontal: 14,
+    height: 52,
+  },
+  inputError: {
+    borderColor: 'rgba(239, 68, 68, 0.7)',
+  },
+  inputIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
   },
   input: {
-    marginBottom: 16,
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    paddingHorizontal: 0,
   },
+  inputText: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 15,
+  },
+  eyeIcon: {
+    padding: 6,
+    marginLeft: 6,
+  },
+  fieldError: {
+    color: '#FCA5A5',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+
+  // Register button
   registerButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
     marginTop: 8,
-    marginBottom: 16,
-    borderRadius: 12,
+    shadowColor: '#C96F4A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  loginContainer: {
-    flexDirection: 'row',
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonGradient: {
+    height: 54,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  buttonText: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 17,
+    letterSpacing: 0.5,
+  },
+
+  // Footer
+  loginContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 28,
   },
   loginText: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Regular',
     fontSize: 14,
+    opacity: 0.8,
   },
   loginLink: {
+    color: '#E8CE80',
+    fontFamily: 'IBMPlexSansArabic-Bold',
     fontSize: 14,
-    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

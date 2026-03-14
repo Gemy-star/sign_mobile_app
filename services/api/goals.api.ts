@@ -63,7 +63,7 @@ export const goalsApi = {
    * PATCH /api/goals/{id}/update-progress/
    */
   updateProgress: async (id: number, progress_percentage: number): Promise<Goal> => {
-    return apiClient.patch<Goal>(`/goals/${id}/update-progress/`, {
+    return apiClient.patch<Goal>(`/goals/${id}/update_progress/`, {
       progress_percentage
     });
   },

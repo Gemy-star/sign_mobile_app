@@ -1,17 +1,32 @@
 // screens/HelpSupportScreen.tsx
-// Help & Support Screen with UI Kitten
+// Help & Support Screen - Dark Brown Visual Style
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { Card, Icon, Input, Layout, Text } from '@ui-kitten/components';
+import { Icon, Input, Text } from '@ui-kitten/components';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface HelpSupportScreenProps {
-  onClose: () => void;
+  readonly onClose: () => void;
 }
 
-const FAQ_DATA = [
+interface FaqItem {
+  id: string;
+  question: { en: string; ar: string };
+  answer: { en: string; ar: string };
+}
+
+interface FaqRowProps {
+  readonly faq: FaqItem;
+  readonly isExpanded: boolean;
+  readonly isLast: boolean;
+  readonly language: string;
+  readonly isRTL: boolean;
+  readonly onToggle: (id: string) => void;
+}
+
+const FAQ_DATA: FaqItem[] = [
   {
     id: '1',
     question: { en: 'How do I reset my password?', ar: 'كيف أقوم بإعادة تعيين كلمة المرور؟' },
@@ -39,15 +54,37 @@ const FAQ_DATA = [
   },
 ];
 
-export default function HelpSupportScreen({ onClose }: HelpSupportScreenProps) {
+// Extracted outside parent to avoid S6478 (component definition inside parent)
+function FaqRow({ faq, isExpanded, isLast, language, isRTL, onToggle }: FaqRowProps) {
+  return (
+    <View style={[styles.faqRow, !isLast && styles.faqRowBorder]}>
+      <TouchableOpacity onPress={() => onToggle(faq.id)} activeOpacity={0.75}>
+        <View style={[styles.faqHeader, isRTL && styles.faqHeaderRTL]}>
+          <Text style={[styles.questionText, isRTL && styles.textRTL]}>
+            {language === 'ar' ? faq.question.ar : faq.question.en}
+          </Text>
+          <Icon
+            name={isExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+            style={styles.chevronIcon}
+            fill="rgba(250,248,245,0.5)"
+          />
+        </View>
+      </TouchableOpacity>
+      {isExpanded && (
+        <Text style={[styles.answerText, isRTL && styles.textRTL]}>
+          {language === 'ar' ? faq.answer.ar : faq.answer.en}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+export default function HelpSupportScreen({ onClose }: Readonly<HelpSupportScreenProps>) {
   const { t, language } = useLanguage();
-  const { colorScheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const isRTL = language === 'ar';
-  const isDark = colorScheme === 'dark';
-  const textColor = isDark ? '#FFFFFF' : '#000000';
 
   const filteredFAQs = FAQ_DATA.filter(faq => {
     const question = language === 'ar' ? faq.question.ar : faq.question.en;
@@ -61,12 +98,12 @@ export default function HelpSupportScreen({ onClose }: HelpSupportScreenProps) {
   const handleContactSupport = () => {
     const email = 'support@motivateapp.com';
     const subject = 'Support Request';
-    Linking.openURL(`mailto:${email}?subject=${subject}`);
+    void Linking.openURL(`mailto:${email}?subject=${subject}`);
   };
 
   const handleWhatsAppSupport = () => {
     const phoneNumber = '+966500000000'; // Replace with actual number
-    Linking.openURL(`whatsapp://send?phone=${phoneNumber}`);
+    void Linking.openURL(`whatsapp://send?phone=${phoneNumber}`);
   };
 
   const handleCallSupport = () => {
@@ -75,141 +112,161 @@ export default function HelpSupportScreen({ onClose }: HelpSupportScreenProps) {
       t('help.phoneNumber') || 'Phone: +966 50 000 0000',
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t('common.call') || 'Call', onPress: () => Linking.openURL('tel:+966500000000') },
+        { text: t('common.call') || 'Call', onPress: () => { void Linking.openURL('tel:+966500000000'); } },
       ]
     );
   };
 
   return (
-    <Layout style={styles.container} level="1">
+    <View style={styles.root}>
+      {/* Background */}
+      <View style={styles.backgroundFill} />
+      <LinearGradient
+        colors={['rgba(49,30,19,0.85)', 'rgba(83,50,29,0.90)', 'rgba(49,30,19,0.85)']}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Header */}
       <View style={[styles.header, isRTL && styles.headerRTL]}>
-        <TouchableOpacity onPress={onClose}>
+        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <Icon
             name={isRTL ? 'arrow-forward-outline' : 'arrow-back-outline'}
             style={styles.backIcon}
-            fill={textColor}
+            fill="#FAF8F5"
           />
         </TouchableOpacity>
-        <Text category="h5" style={[styles.title, { color: textColor }]}>
+        <Text style={styles.headerTitle}>
           {t('profile.helpSupport')}
         </Text>
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Search */}
-        <Input
-          placeholder={t('help.searchFAQ') || 'Search frequently asked questions...'}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          accessoryLeft={(props) => <Icon name="search-outline" {...props} />}
-          style={styles.searchInput}
-          textStyle={isRTL ? styles.inputTextRTL : undefined}
-        />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Search bar */}
+        <View style={[styles.searchContainer, isRTL && styles.searchContainerRTL]}>
+          <Icon name="search-outline" style={styles.searchIcon} fill="#FAF8F5" />
+          <Input
+            placeholder={t('help.searchFAQ') || 'Search frequently asked questions...'}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={styles.searchInput}
+            textStyle={[styles.inputText, isRTL && styles.textRTL]}
+            placeholderTextColor="rgba(250,248,245,0.5)"
+          />
+        </View>
 
-        {/* FAQs */}
-        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+        {/* FAQ section label */}
+        <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>
           {t('help.faq') || 'Frequently Asked Questions'}
         </Text>
 
-        {filteredFAQs.map((faq) => (
-          <Card key={faq.id} style={styles.faqCard}>
-            <TouchableOpacity onPress={() => toggleExpanded(faq.id)}>
-              <View style={[styles.faqHeader, isRTL && styles.faqHeaderRTL]}>
-                <Text category="s1" style={[styles.question, { color: textColor }, isRTL && styles.textRTL]}>
-                  {language === 'ar' ? faq.question.ar : faq.question.en}
-                </Text>
-                <Icon
-                  name={expandedId === faq.id ? 'chevron-up-outline' : 'chevron-down-outline'}
-                  style={styles.chevronIcon}
-                  fill={textColor}
-                />
-              </View>
-            </TouchableOpacity>
-            {expandedId === faq.id && (
-              <Text category="p2" appearance="hint" style={[styles.answer, isRTL && styles.textRTL]}>
-                {language === 'ar' ? faq.answer.ar : faq.answer.en}
-              </Text>
-            )}
-          </Card>
-        ))}
+        {/* FAQ rows inside a glass panel */}
+        <View style={styles.panel}>
+          {filteredFAQs.map((faq, index) => (
+            <FaqRow
+              key={faq.id}
+              faq={faq}
+              isExpanded={expandedId === faq.id}
+              isLast={index === filteredFAQs.length - 1}
+              language={language}
+              isRTL={isRTL}
+              onToggle={toggleExpanded}
+            />
+          ))}
+        </View>
 
-        {/* Contact Section */}
-        <Text category="h6" style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+        {/* Contact section label */}
+        <Text style={[styles.sectionLabel, isRTL && styles.textRTL]}>
           {t('help.contactUs') || 'Contact Us'}
         </Text>
 
-        <TouchableOpacity onPress={handleContactSupport}>
-          <Card style={styles.contactCard}>
-            <View style={[styles.contactRow, isRTL && styles.contactRowRTL]}>
-              <View style={[styles.contactLeft, isRTL && styles.contactLeftRTL]}>
-                <Icon name="email-outline" style={styles.contactIcon} fill="#6366f1" />
-                <View>
-                  <Text category="s1" style={styles.contactText}>
-                    {t('help.emailSupport') || 'Email Support'}
-                  </Text>
-                  <Text category="c1" appearance="hint" style={[isRTL && styles.textRTL]}>
-                    support@motivateapp.com
-                  </Text>
-                </View>
+        {/* Email */}
+        <TouchableOpacity onPress={handleContactSupport} activeOpacity={0.75}>
+          <View style={[styles.contactRow, isRTL && styles.contactRowRTL]}>
+            <View style={[styles.contactLeft, isRTL && styles.contactLeftRTL]}>
+              <View style={styles.iconBox}>
+                <Icon name="email-outline" style={styles.contactIcon} fill="#FAF8F5" />
               </View>
-              <Icon name="chevron-right-outline" style={styles.iconStyle} />
+              <View style={styles.contactTextGroup}>
+                <Text style={[styles.contactTitle, isRTL && styles.textRTL]}>
+                  {t('help.emailSupport') || 'Email Support'}
+                </Text>
+                <Text style={[styles.contactSubtitle, isRTL && styles.textRTL]}>
+                  support@motivateapp.com
+                </Text>
+              </View>
             </View>
-          </Card>
+            <Icon name="chevron-right-outline" style={styles.chevronIcon} fill="rgba(250,248,245,0.5)" />
+          </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleWhatsAppSupport}>
-          <Card style={styles.contactCard}>
-            <View style={[styles.contactRow, isRTL && styles.contactRowRTL]}>
-              <View style={[styles.contactLeft, isRTL && styles.contactLeftRTL]}>
-                <Icon name="message-circle-outline" style={styles.contactIcon} fill="#25D366" />
-                <View>
-                  <Text category="s1" style={styles.contactText}>
-                    {t('help.whatsappSupport') || 'WhatsApp Support'}
-                  </Text>
-                  <Text category="c1" appearance="hint" style={[isRTL && styles.textRTL]}>
-                    +966 50 000 0000
-                  </Text>
-                </View>
+        {/* WhatsApp */}
+        <TouchableOpacity onPress={handleWhatsAppSupport} activeOpacity={0.75}>
+          <View style={[styles.contactRow, isRTL && styles.contactRowRTL]}>
+            <View style={[styles.contactLeft, isRTL && styles.contactLeftRTL]}>
+              <View style={styles.iconBox}>
+                <Icon name="message-circle-outline" style={styles.contactIcon} fill="#FAF8F5" />
               </View>
-              <Icon name="chevron-right-outline" style={styles.iconStyle} />
+              <View style={styles.contactTextGroup}>
+                <Text style={[styles.contactTitle, isRTL && styles.textRTL]}>
+                  {t('help.whatsappSupport') || 'WhatsApp Support'}
+                </Text>
+                <Text style={[styles.contactSubtitle, isRTL && styles.textRTL]}>
+                  +966 50 000 0000
+                </Text>
+              </View>
             </View>
-          </Card>
+            <Icon name="chevron-right-outline" style={styles.chevronIcon} fill="rgba(250,248,245,0.5)" />
+          </View>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={handleCallSupport}>
-          <Card style={styles.contactCard}>
-            <View style={[styles.contactRow, isRTL && styles.contactRowRTL]}>
-              <View style={[styles.contactLeft, isRTL && styles.contactLeftRTL]}>
-                <Icon name="phone-outline" style={styles.contactIcon} fill="#10b981" />
-                <View>
-                  <Text category="s1" style={styles.contactText}>
-                    {t('help.phoneSupport') || 'Phone Support'}
-                  </Text>
-                  <Text category="c1" appearance="hint" style={[isRTL && styles.textRTL]}>
-                    {t('help.callUs') || 'Call us anytime'}
-                  </Text>
-                </View>
+        {/* Phone */}
+        <TouchableOpacity onPress={handleCallSupport} activeOpacity={0.75}>
+          <View style={[styles.contactRow, isRTL && styles.contactRowRTL]}>
+            <View style={[styles.contactLeft, isRTL && styles.contactLeftRTL]}>
+              <View style={styles.iconBox}>
+                <Icon name="phone-outline" style={styles.contactIcon} fill="#FAF8F5" />
               </View>
-              <Icon name="chevron-right-outline" style={styles.iconStyle} />
+              <View style={styles.contactTextGroup}>
+                <Text style={[styles.contactTitle, isRTL && styles.textRTL]}>
+                  {t('help.phoneSupport') || 'Phone Support'}
+                </Text>
+                <Text style={[styles.contactSubtitle, isRTL && styles.textRTL]}>
+                  {t('help.callUs') || 'Call us anytime'}
+                </Text>
+              </View>
             </View>
-          </Card>
+            <Icon name="chevron-right-outline" style={styles.chevronIcon} fill="rgba(250,248,245,0.5)" />
+          </View>
         </TouchableOpacity>
       </ScrollView>
-    </Layout>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    backgroundColor: '#53321D',
   },
+  backgroundFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#53321D',
+  },
+  // ── Header ──────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
+    backgroundColor: 'rgba(49,30,19,0.8)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(250,248,245,0.1)',
   },
   headerRTL: {
     flexDirection: 'row-reverse',
@@ -218,33 +275,77 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  title: {
+  headerTitle: {
+    color: '#FAF8F5',
     fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 18,
   },
   placeholder: {
     width: 24,
   },
+  // ── Scroll content ───────────────────────────────────────
   content: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 100,
   },
+  // ── Search bar ───────────────────────────────────────────
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(250,248,245,0.1)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(232,206,128,0.3)',
+    paddingHorizontal: 14,
+    height: 52,
+    marginBottom: 28,
+  },
+  searchContainerRTL: {
+    flexDirection: 'row-reverse',
+  },
+  searchIcon: {
+    width: 22,
+    height: 22,
+    marginRight: 10,
+  },
   searchInput: {
-    marginBottom: 24,
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    paddingHorizontal: 0,
   },
-  inputTextRTL: {
-    textAlign: 'right',
+  inputText: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 15,
   },
-  sectionTitle: {
-    fontFamily: 'IBMPlexSansArabic-Bold',
-    marginTop: 8,
+  // ── Section label ────────────────────────────────────────
+  sectionLabel: {
+    color: '#E8CE80',
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginBottom: 12,
+    marginTop: 4,
   },
-  textRTL: {
-    textAlign: 'right',
+  // ── FAQ glass panel ──────────────────────────────────────
+  panel: {
+    backgroundColor: 'rgba(49,30,19,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(250,248,245,0.18)',
+    borderRadius: 16,
+    marginBottom: 28,
+    overflow: 'hidden',
   },
-  faqCard: {
-    borderRadius: 12,
-    marginBottom: 8,
+  faqRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(49,30,19,0.5)',
+  },
+  faqRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(250,248,245,0.08)',
   },
   faqHeader: {
     flexDirection: 'row',
@@ -255,28 +356,38 @@ const styles = StyleSheet.create({
   faqHeaderRTL: {
     flexDirection: 'row-reverse',
   },
-  question: {
+  questionText: {
     flex: 1,
-    fontFamily: 'IBMPlexSansArabic-Medium',
-  },
-  answer: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    fontSize: 14,
+    lineHeight: 20,
   },
   chevronIcon: {
     width: 20,
     height: 20,
   },
-  contactCard: {
-    borderRadius: 12,
-    marginBottom: 8,
+  answerText: {
+    color: 'rgba(250,248,245,0.6)',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(250,248,245,0.08)',
   },
+  // ── Contact rows ─────────────────────────────────────────
   contactRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(49,30,19,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(250,248,245,0.18)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
   },
   contactRowRTL: {
     flexDirection: 'row-reverse',
@@ -284,22 +395,40 @@ const styles = StyleSheet.create({
   contactLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
     flex: 1,
   },
   contactLeftRTL: {
     flexDirection: 'row-reverse',
   },
-  contactText: {
-    fontFamily: 'IBMPlexSansArabic-Regular',
-    marginBottom: 4,
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(250,248,245,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   contactIcon: {
-    width: 24,
-    height: 24,
+    width: 18,
+    height: 18,
   },
-  iconStyle: {
-    width: 20,
-    height: 20,
+  contactTextGroup: {
+    flex: 1,
+  },
+  contactTitle: {
+    color: '#FAF8F5',
+    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  contactSubtitle: {
+    color: 'rgba(250,248,245,0.6)',
+    fontFamily: 'IBMPlexSansArabic-Regular',
+    fontSize: 12,
+  },
+  // ── RTL helpers ──────────────────────────────────────────
+  textRTL: {
+    textAlign: 'right',
   },
 });

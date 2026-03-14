@@ -1,5 +1,5 @@
 // screens/FindingTopicsScreen.tsx
-// Loading screen after topic selection - Modern Design
+// Loading screen after topic selection - Dark Brown Design
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -76,90 +76,91 @@ export default function FindingTopicsScreen({ onComplete }: FindingTopicsScreenP
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#FAF8F5', '#F5F1ED', '#FAF8F5']}
-        style={styles.gradient}
+        colors={['rgba(49,30,19,0.85)', 'rgba(83,50,29,0.90)', 'rgba(49,30,19,0.85)']}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <Animated.View
+        style={[
+          styles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
       >
-        <Animated.View
-          style={[
-            styles.content,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
-            },
-          ]}
-        >
-          {/* Animated Icon */}
-          <View style={styles.iconContainer}>
-            <LinearGradient
-              colors={['#C96F4A', '#936036']}
-              style={styles.iconGradient}
-            >
-              <Text style={styles.iconEmoji}>🔍</Text>
-            </LinearGradient>
-          </View>
+        {/* Animated Icon */}
+        <View style={styles.iconContainer}>
+          <LinearGradient
+            colors={['#C96F4A', '#936036', '#C96F4A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.iconGradient}
+          >
+            <Text style={styles.iconEmoji}>🔍</Text>
+          </LinearGradient>
+        </View>
 
-          {/* Title */}
-          <Text style={[styles.title, { fontFamily: getFontFamily('bold') }]}>
-            {isRTL ? 'جارٍ البحث...' : 'Finding messages...'}
-          </Text>
+        {/* Title */}
+        <Text style={[styles.title, { fontFamily: getFontFamily('bold') }]}>
+          {isRTL ? 'جارٍ البحث...' : 'Finding messages...'}
+        </Text>
 
-          {/* Subtitle */}
-          <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }]}>
-            {isRTL ? 'نختار أفضل الرسائل لك' : 'We\'re selecting the best messages for you'}
-          </Text>
+        {/* Subtitle */}
+        <Text style={[styles.subtitle, { fontFamily: getFontFamily('regular') }]}>
+          {isRTL ? 'نختار أفضل الرسائل لك' : 'We\'re selecting the best messages for you'}
+        </Text>
 
-          {/* Preview Cards */}
-          <View style={styles.previewContainer}>
-            {SAMPLE_IMAGES.map((image, index) => (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.previewCard,
-                  {
-                    opacity: fadeAnim,
-                    transform: [{
-                      translateY: fadeAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [20, 0],
-                      }),
-                    }],
-                  },
-                ]}
-              >
-                <Image
-                  source={{ uri: image }}
-                  style={styles.previewImage}
-                  defaultSource={require('@/assets/images/logo.png')}
-                />
-                <LinearGradient
-                  colors={['transparent', 'rgba(49, 30, 19, 0.6)']}
-                  style={styles.cardOverlay}
-                />
-              </Animated.View>
-            ))}
-          </View>
-
-          {/* Loading Indicator */}
-          <View style={styles.loaderContainer}>
-            <View style={styles.progressBar}>
-              <Animated.View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: fadeAnim.interpolate({
+        {/* Preview Cards */}
+        <View style={styles.previewContainer}>
+          {SAMPLE_IMAGES.map((image, index) => (
+            <Animated.View
+              key={index}
+              style={[
+                styles.previewCard,
+                {
+                  opacity: fadeAnim,
+                  transform: [{
+                    translateY: fadeAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: ['0%', '80%'],
+                      outputRange: [20, 0],
                     }),
-                  },
-                ]}
+                  }],
+                },
+              ]}
+            >
+              <Image
+                source={{ uri: image }}
+                style={styles.previewImage}
+                defaultSource={require('@/assets/images/logo.png')}
               />
-            </View>
-            <Text style={[styles.loadingText, { fontFamily: getFontFamily('semibold') }]}>
-              {isRTL ? 'جارٍ التحميل...' : 'Loading...'}
-            </Text>
+              <LinearGradient
+                colors={['transparent', 'rgba(49, 30, 19, 0.6)']}
+                style={styles.cardOverlay}
+              />
+            </Animated.View>
+          ))}
+        </View>
+
+        {/* Loading Indicator */}
+        <View style={styles.loaderContainer}>
+          <View style={styles.progressBar}>
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  width: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '80%'],
+                  }),
+                },
+              ]}
+            />
           </View>
-        </Animated.View>
-      </LinearGradient>
+          <Text style={[styles.loadingText, { fontFamily: getFontFamily('semibold') }]}>
+            {isRTL ? 'جارٍ التحميل...' : 'Loading...'}
+          </Text>
+        </View>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -167,10 +168,7 @@ export default function FindingTopicsScreen({ onComplete }: FindingTopicsScreenP
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: '#53321D',
   },
   content: {
     flex: 1,
@@ -198,13 +196,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    color: '#311E13',
+    color: '#FAF8F5',
     marginBottom: 12,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
-    color: '#936036',
+    color: '#E8CE80',
     marginBottom: 48,
     textAlign: 'center',
     lineHeight: 26,
@@ -220,17 +218,19 @@ const styles = StyleSheet.create({
     height: CARD_WIDTH * 1.4,
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(49, 30, 19, 0.60)',
+    borderWidth: 1,
+    borderColor: 'rgba(250, 248, 245, 0.18)',
     shadowColor: '#311E13',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 6,
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#D5CCC3',
+    backgroundColor: 'rgba(49, 30, 19, 0.40)',
   },
   cardOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   progressBar: {
     width: '100%',
     height: 6,
-    backgroundColor: 'rgba(213, 204, 195, 0.3)',
+    backgroundColor: 'rgba(250, 248, 245, 0.15)',
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 16,
@@ -254,6 +254,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#936036',
+    color: 'rgba(250, 248, 245, 0.6)',
   },
 });

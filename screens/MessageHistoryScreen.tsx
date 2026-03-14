@@ -10,7 +10,7 @@ import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 
 export default function MessageHistoryScreen() {
   const { styles, colors, palette, spacing } = useAppStyles();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'favorites'>('all');
@@ -104,7 +104,7 @@ export default function MessageHistoryScreen() {
 
           {/* Search Bar */}
           <View style={[styles.input, styles.rowCenter, styles.mb2]}>
-            <Icon name="search-outline" width={20} height={20} fill={colors.textSecondary} style={{ marginRight: spacing.sm }} />
+            <Icon name="search-outline" width={20} height={20} fill={colors.textSecondary} style={isRTL ? { marginLeft: spacing.sm } : { marginRight: spacing.sm }} />
             <TextInput
               style={[styles.bodyText, { flex: 1, padding: 0 }]}
               placeholder={t('motivation.searchMessages')}
@@ -173,10 +173,9 @@ export default function MessageHistoryScreen() {
                 style={[
                   styles.card,
                   styles.mb2,
-                  {
-                    borderLeftWidth: 4,
-                    borderLeftColor: getCategoryColor(message.category),
-                  },
+                  isRTL
+                    ? { borderRightWidth: 4, borderRightColor: getCategoryColor(message.category) }
+                    : { borderLeftWidth: 4, borderLeftColor: getCategoryColor(message.category) },
                 ]}
               >
                 {/* Message Header */}
@@ -204,7 +203,7 @@ export default function MessageHistoryScreen() {
                 <View style={[styles.rowBetween, { alignItems: 'center' }]}>
                   <View style={styles.rowCenter}>
                     <Icon name="clock-outline" width={14} height={14} fill={colors.textSecondary} />
-                    <Text style={[styles.caption, { marginLeft: spacing.xs }]}>
+                    <Text style={[styles.caption, isRTL ? { marginRight: spacing.xs } : { marginLeft: spacing.xs }]}>
                       {getTimeAgo(message.timestamp)}
                     </Text>
                   </View>
@@ -227,7 +226,7 @@ export default function MessageHistoryScreen() {
         {filteredMessages.length > 0 && (
           <View style={[styles.card, styles.mt3, { backgroundColor: `${palette.info}10` }]}>
             <View style={styles.rowCenter}>
-              <Icon name="checkmark-circle-outline" width={20} height={20} fill={palette.info} style={{ marginRight: spacing.sm }} />
+              <Icon name="checkmark-circle-outline" width={20} height={20} fill={palette.info} style={isRTL ? { marginLeft: spacing.sm } : { marginRight: spacing.sm }} />
               <Text style={[styles.smallText, { color: palette.info }]}>
                 {filteredMessages.length} messages found
               </Text>

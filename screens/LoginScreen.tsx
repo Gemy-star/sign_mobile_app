@@ -17,8 +17,8 @@ import {
     View
 } from 'react-native';
 
-export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSuccess?: () => void }) {
-  const { t } = useLanguage();
+export default function LoginScreen({ onLoginSuccess, onNavigateToRegister }: { readonly onLoginSuccess?: () => void; readonly onNavigateToRegister?: () => void }) {
+  const { t, isRTL } = useLanguage();
   const { login } = useAuthActions();
 
   const [username, setUsername] = useState('');
@@ -43,12 +43,15 @@ export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSucces
       setLoading(true);
       setError(null);
 
+      // Normalise identifier: lowercase so backend lookup is case-insensitive
+      const identifier = username.trim().toLowerCase();
+
       // Add timeout wrapper
       const timeoutPromise = new Promise<boolean>((_, reject) =>
         setTimeout(() => reject(new Error('Login timeout')), 15000)
       );
 
-      const loginPromise = login({ username: username.trim(), password: password.trim() });
+      const loginPromise = login({ username: identifier, password: password.trim() });
 
       const success = await Promise.race([loginPromise, timeoutPromise]);
 
@@ -119,30 +122,31 @@ export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSucces
             <View style={styles.cardContent}>
               {/* Error Message */}
               {error && (
-                <View style={styles.errorContainer}>
+                <View style={[styles.errorContainer, isRTL && styles.errorContainerRTL]}>
                   <Icon name="alert-circle-outline" style={styles.errorIcon} fill="#EF4444" />
-                  <Text category="s2" style={styles.errorText}>{error}</Text>
+                  <Text category="s2" style={[styles.errorText, isRTL && { textAlign: 'right' }]}>{error}</Text>
                 </View>
               )}
 
               {/* Login Form */}
               <View style={styles.formContainer}>
-                {/* Username Input */}
+                {/* Username / Email Input */}
                 <View style={styles.inputWrapper}>
-                  <Text category="label" style={styles.inputLabel}>
-                    {t('auth.username')}
+                  <Text category="label" style={[styles.inputLabel, isRTL && { textAlign: 'right' }]}>
+                    {t('auth.usernameOrEmail')}
                   </Text>
-                  <View style={styles.inputContainer}>
-                    <Icon name="person-outline" style={styles.inputIcon} fill="#FAF8F5" />
+                  <View style={[styles.inputContainer, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <Icon name="person-outline" style={[styles.inputIcon, isRTL && { marginRight: 0, marginLeft: 12 }]} fill="#FAF8F5" />
                     <Input
-                      placeholder={t('auth.usernamePlaceholder')}
+                      placeholder={t('auth.usernameOrEmailPlaceholder')}
                       value={username}
                       onChangeText={setUsername}
                       autoCapitalize="none"
                       autoCorrect={false}
+                      keyboardType="email-address"
                       disabled={loading}
                       style={styles.input}
-                      textStyle={styles.inputText}
+                      textStyle={[styles.inputText, isRTL && { textAlign: 'right' }]}
                       placeholderTextColor="rgba(250, 248, 245, 0.5)"
                     />
                   </View>
@@ -150,11 +154,11 @@ export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSucces
 
                 {/* Password Input */}
                 <View style={styles.inputWrapper}>
-                  <Text category="label" style={styles.inputLabel}>
+                  <Text category="label" style={[styles.inputLabel, isRTL && { textAlign: 'right' }]}>
                     {t('auth.password')}
                   </Text>
-                  <View style={styles.inputContainer}>
-                    <Icon name="lock-outline" style={styles.inputIcon} fill="#FAF8F5" />
+                  <View style={[styles.inputContainer, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <Icon name="lock-outline" style={[styles.inputIcon, isRTL && { marginRight: 0, marginLeft: 12 }]} fill="#FAF8F5" />
                     <Input
                       placeholder={t('auth.passwordPlaceholder')}
                       value={password}
@@ -164,12 +168,12 @@ export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSucces
                       autoCorrect={false}
                       disabled={loading}
                       style={styles.input}
-                      textStyle={styles.inputText}
+                      textStyle={[styles.inputText, isRTL && { textAlign: 'right' }]}
                       placeholderTextColor="rgba(250, 248, 245, 0.5)"
                     />
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}
-                      style={styles.eyeIcon}
+                      style={[styles.eyeIcon, isRTL && { marginLeft: 0, marginRight: 8 }]}
                     >
                       <Icon
                         name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -181,7 +185,7 @@ export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSucces
                 </View>
 
                 {/* Forgot Password */}
-                <TouchableOpacity style={styles.forgotPassword}>
+                <TouchableOpacity style={[styles.forgotPassword, isRTL && { alignSelf: 'flex-start' }]}>
                   <Text category="s2" style={styles.forgotPasswordText}>
                     {t('auth.forgotPassword')}
                   </Text>
@@ -210,27 +214,16 @@ export default function LoginScreen({ onLoginSuccess }: { readonly onLoginSucces
                   </LinearGradient>
                 </TouchableOpacity>
 
-                {/* Demo Login Button */}
-                <TouchableOpacity
-                  onPress={handleDemoLogin}
-                  disabled={loading}
-                  style={styles.demoButton}
-                  activeOpacity={0.8}
-                >
-                  <Text category="s1" style={styles.demoButtonText}>
-                    {t('auth.tryDemo')}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </View>
 
           {/* Register Link */}
-          <View style={styles.registerContainer}>
+          <View style={[styles.registerContainer, isRTL && { flexDirection: 'row-reverse' }]}>
             <Text category="s1" style={styles.registerText}>
               {t('auth.noAccount')}{' '}
             </Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
+            <TouchableOpacity onPress={() => { if (onNavigateToRegister) { onNavigateToRegister(); } else { router.push('/register'); } }}>
               <Text category="s1" style={styles.signUpText}>
                 {t('auth.signUp')}
               </Text>
@@ -334,6 +327,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 20,
     gap: 10,
+  },
+  errorContainerRTL: {
+    flexDirection: 'row-reverse',
+    borderLeftWidth: 0,
+    borderLeftColor: 'transparent',
+    borderRightWidth: 4,
+    borderRightColor: '#EF4444',
   },
   errorIcon: {
     width: 20,

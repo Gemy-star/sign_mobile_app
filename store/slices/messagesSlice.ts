@@ -1,15 +1,16 @@
-// store/slices/messagesSlice.ts
+﻿// store/slices/messagesSlice.ts
 // Redux slice for messages data from API
 
-import { dataSource } from '@/services/dataSource.service';
-import { Message, MessageFilters, PaginationParams } from '@/types/api';
+import { messagesApi } from '@/services/api';
+import { CreateMessageRequest, Message, MessageFilters, PaginationParams } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface MessagesState {
   messages: Message[];
+  favoriteMessages: Message[];
   currentMessage: Message | null;
-  dailyMessage: any | null;
+  dailyMessage: Message | null;
   totalCount: number;
   currentPage: number;
   pageSize: number;
@@ -21,6 +22,7 @@ interface MessagesState {
 
 const initialState: MessagesState = {
   messages: [],
+  favoriteMessages: [],
   currentMessage: null,
   dailyMessage: null,
   totalCount: 0,
@@ -32,22 +34,21 @@ const initialState: MessagesState = {
   lastFetched: null,
 };
 
-// Async Thunks for API calls
+// ============================================================================
+// Async Thunks
+// ============================================================================
 
 export const fetchMessages = createAsyncThunk(
   'messages/fetchMessages',
-  async (params: { pagination?: PaginationParams; filters?: MessageFilters }, { rejectWithValue }) => {
+  async (params: { pagination?: PaginationParams; filters?: MessageFilters } | undefined, { rejectWithValue }) => {
+    params = params ?? {};
     try {
       logger.reduxAction('messages/fetchMessages', params);
-      const response = await dataSource.getMessages(params.filters, params.pagination);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to fetch messages', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to fetch messages');
+      const messages = await messagesApi.getAll(params.filters);
+      return { results: messages, count: messages.length };
     } catch (error) {
       logger.error('fetchMessages error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch messages');
     }
   }
 );
@@ -57,33 +58,67 @@ export const fetchDailyMessage = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       logger.reduxAction('messages/fetchDailyMessage');
-      const response = await dataSource.getDailyMessages();
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to fetch daily message', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to fetch daily message');
+      const message = await messagesApi.getDaily();
+      return message;
     } catch (error) {
       logger.error('fetchDailyMessage error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch daily message');
+    }
+  }
+);
+
+export const fetchFavoriteMessages = createAsyncThunk(
+  'messages/fetchFavorites',
+  async (_, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('messages/fetchFavorites');
+      const messages = await messagesApi.getFavorites();
+      return messages;
+    } catch (error) {
+      logger.error('fetchFavoriteMessages error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch favorites');
+    }
+  }
+);
+
+export const fetchMessageById = createAsyncThunk(
+  'messages/fetchMessageById',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('messages/fetchMessageById', { id });
+      const message = await messagesApi.getById(id);
+      return message;
+    } catch (error) {
+      logger.error('fetchMessageById error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch message');
     }
   }
 );
 
 export const createMessage = createAsyncThunk(
   'messages/createMessage',
-  async (messageData: any, { rejectWithValue }) => {
+  async (messageData: CreateMessageRequest, { rejectWithValue }) => {
     try {
       logger.reduxAction('messages/createMessage', { messageData });
-      const response = await dataSource.createMessage(messageData);
-      if (response.success && response.data) {
-        return response.data;
-      }
-      logger.warn('Failed to create message', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to create message');
+      const message = await messagesApi.create(messageData);
+      return message;
     } catch (error) {
       logger.error('createMessage error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to create message');
+    }
+  }
+);
+
+export const markMessageAsRead = createAsyncThunk(
+  'messages/markAsRead',
+  async (messageId: number, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('messages/markAsRead', { messageId });
+      const message = await messagesApi.markAsRead(messageId);
+      return message;
+    } catch (error) {
+      logger.error('markMessageAsRead error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to mark as read');
     }
   }
 );
@@ -93,18 +128,46 @@ export const rateMessage = createAsyncThunk(
   async ({ messageId, rating }: { messageId: number; rating: number }, { rejectWithValue }) => {
     try {
       logger.reduxAction('messages/rateMessage', { messageId, rating });
-      const response = await dataSource.rateMessage(messageId, rating);
-      if (response.success) {
-        return { messageId, rating };
-      }
-      logger.warn('Failed to rate message', { error: response.error });
-      return rejectWithValue(response.error || 'Failed to rate message');
+      const message = await messagesApi.rate(messageId, rating);
+      return message;
     } catch (error) {
       logger.error('rateMessage error', error as Error);
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to rate message');
     }
   }
 );
+
+export const toggleMessageFavorite = createAsyncThunk(
+  'messages/toggleFavorite',
+  async (messageId: number, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('messages/toggleFavorite', { messageId });
+      const message = await messagesApi.toggleFavorite(messageId);
+      return message;
+    } catch (error) {
+      logger.error('toggleMessageFavorite error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to toggle favorite');
+    }
+  }
+);
+
+export const deleteMessage = createAsyncThunk(
+  'messages/deleteMessage',
+  async (messageId: number, { rejectWithValue }) => {
+    try {
+      logger.reduxAction('messages/deleteMessage', { messageId });
+      await messagesApi.delete(messageId);
+      return messageId;
+    } catch (error) {
+      logger.error('deleteMessage error', error as Error);
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to delete message');
+    }
+  }
+);
+
+// ============================================================================
+// Slice
+// ============================================================================
 
 const messagesSlice = createSlice({
   name: 'messages',
@@ -137,9 +200,6 @@ const messagesSlice = createSlice({
         state.isLoading = false;
         state.messages = action.payload.results || [];
         state.totalCount = action.payload.count || 0;
-        // Calculate page from pagination
-        const pageSize = state.pageSize || 20;
-        state.currentPage = Math.ceil((action.payload.results?.length || 0) / pageSize);
         state.lastFetched = Date.now();
       })
       .addCase(fetchMessages.rejected, (state, action) => {
@@ -156,11 +216,31 @@ const messagesSlice = createSlice({
       .addCase(fetchDailyMessage.fulfilled, (state, action) => {
         state.isLoading = false;
         state.dailyMessage = action.payload;
-        state.lastFetched = Date.now();
       })
       .addCase(fetchDailyMessage.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      });
+
+    // Fetch Favorites
+    builder
+      .addCase(fetchFavoriteMessages.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchFavoriteMessages.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.favoriteMessages = action.payload;
+      })
+      .addCase(fetchFavoriteMessages.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Fetch Message by ID
+    builder
+      .addCase(fetchMessageById.fulfilled, (state, action) => {
+        state.currentMessage = action.payload;
       });
 
     // Create Message
@@ -179,13 +259,49 @@ const messagesSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    // Mark as Read
+    builder
+      .addCase(markMessageAsRead.fulfilled, (state, action) => {
+        const msg = state.messages.find((m) => m.id === action.payload.id);
+        if (msg) msg.is_read = true;
+        if (state.currentMessage?.id === action.payload.id) state.currentMessage.is_read = true;
+      });
+
     // Rate Message
     builder
       .addCase(rateMessage.fulfilled, (state, action) => {
-        const message = state.messages.find(m => m.id === action.payload.messageId);
-        if (message) {
-          message.user_rating = action.payload.rating;
+        const msg = state.messages.find((m) => m.id === action.payload.id);
+        if (msg) msg.user_rating = action.payload.user_rating;
+        if (state.currentMessage?.id === action.payload.id) {
+          state.currentMessage.user_rating = action.payload.user_rating;
         }
+      });
+
+    // Toggle Favorite
+    builder
+      .addCase(toggleMessageFavorite.fulfilled, (state, action) => {
+        const msg = state.messages.find((m) => m.id === action.payload.id);
+        if (msg) msg.is_favorited = action.payload.is_favorited;
+        if (state.currentMessage?.id === action.payload.id) {
+          state.currentMessage.is_favorited = action.payload.is_favorited;
+        }
+        // Sync favoriteMessages list
+        if (action.payload.is_favorited) {
+          if (!state.favoriteMessages.some((m) => m.id === action.payload.id)) {
+            state.favoriteMessages.push(action.payload);
+          }
+        } else {
+          state.favoriteMessages = state.favoriteMessages.filter((m) => m.id !== action.payload.id);
+        }
+      });
+
+    // Delete Message
+    builder
+      .addCase(deleteMessage.fulfilled, (state, action) => {
+        state.messages = state.messages.filter((m) => m.id !== action.payload);
+        state.favoriteMessages = state.favoriteMessages.filter((m) => m.id !== action.payload);
+        state.totalCount = Math.max(0, state.totalCount - 1);
+        if (state.currentMessage?.id === action.payload) state.currentMessage = null;
       });
   },
 });

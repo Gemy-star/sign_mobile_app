@@ -37,7 +37,7 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
   const { user } = useAppSelector((state) => state.auth);
   // Use Context for theme and language (UI preferences)
   const { t, language, setLanguage } = useLanguage();
-  const { colors, colorScheme, toggleColorScheme } = useTheme();
+  const { colorScheme, toggleColorScheme } = useTheme();
   const insets = useSafeAreaInsets();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
@@ -46,9 +46,9 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
   const isRTL = language === 'ar';
 
   const isDark = colorScheme === 'dark';
-  const headerBg = isDark ? '#000000' : '#FFFFFF';
-  const textColor = isDark ? '#FFFFFF' : '#000000';
-  const iconColor = isDark ? '#FFFFFF' : '#000000';
+  const headerBg = '#311E13';
+  const textColor = '#FAF8F5';
+  const iconColor = '#FAF8F5';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 10, backgroundColor: headerBg }]}>
@@ -78,7 +78,7 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
         <View style={[styles.rightSection, isRTL && styles.rightSectionRTL]}>
           {/* Language Toggle */}
           <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5' }]}
+            style={[styles.iconButton, { backgroundColor: 'rgba(250, 248, 245, 0.12)' }]}
             onPress={() => setShowLanguageMenu(true)}
           >
             <Icon
@@ -90,7 +90,7 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
 
           {/* Theme Toggle */}
           <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5' }]}
+            style={[styles.iconButton, { backgroundColor: 'rgba(250, 248, 245, 0.12)' }]}
             onPress={toggleColorScheme}
           >
             <Icon
@@ -102,7 +102,7 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
 
           {/* Notifications */}
           <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5' }]}
+            style={[styles.iconButton, { backgroundColor: 'rgba(250, 248, 245, 0.12)' }]}
             onPress={() => setShowNotifications(!showNotifications)}
           >
             <Icon name="bell-outline" style={styles.icon} fill={iconColor} />
@@ -115,7 +115,7 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
 
       {/* Notification Dropdown */}
       {showNotifications && (
-        <View style={[styles.dropdown, isRTL ? { left: 20 } : { right: 20 }, { backgroundColor: headerBg, borderColor: isDark ? '#2D3748' : '#E2E8F0' }]}>
+        <View style={[styles.dropdown, isRTL ? { left: 20 } : { right: 20 }, { backgroundColor: '#311E13', borderColor: 'rgba(250,248,245,0.18)' }]}>
           <View style={[styles.dropdownHeader, isRTL && styles.dropdownHeaderRTL]}>
             <Text category="h6" style={{ color: textColor }}>{t('notifications.title')}</Text>
             <TouchableOpacity onPress={() => setShowNotifications(false)}>
@@ -152,7 +152,7 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
           activeOpacity={1}
           onPress={() => setShowLanguageMenu(false)}
         >
-          <View style={[styles.languageMenu, { backgroundColor: headerBg, borderColor: isDark ? '#2D3748' : '#E2E8F0' }]}>
+          <View style={[styles.languageMenu, { backgroundColor: '#311E13', borderColor: 'rgba(250,248,245,0.18)' }]}>
             <Text category="h6" style={[styles.menuTitle, { color: textColor }]}>
               {t('profile.language')}
             </Text>

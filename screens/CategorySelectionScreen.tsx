@@ -24,7 +24,7 @@ const iconMap: { [key: string]: string } = {
 
 export default function CategorySelectionScreen() {
   const { styles, colors, palette, spacing } = useAppStyles();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const toggleCategory = (categoryId: string) => {
@@ -83,8 +83,8 @@ export default function CategorySelectionScreen() {
                     style={{
                       position: 'absolute',
                       top: spacing.sm,
-                      right: spacing.sm,
                       zIndex: 1,
+                      ...(isRTL ? { left: spacing.sm } : { right: spacing.sm }),
                     }}
                   >
                     <Icon name="checkmark-circle" width={24} height={24} fill={categoryColor} />
