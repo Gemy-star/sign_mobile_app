@@ -1,16 +1,28 @@
 {
   "expo": {
-    "name": "sign_motivational_app",
-    "slug": "sign-motivational-app",
+    "name": "AIAJ_motivational_app",
+    "slug": "AIAJ-motivational-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "android": {
+      "package": "com.aiaj.motivationalapp",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#53321D"
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sign.motivationalapp",
+      "bundleIdentifier": "com.aiaj.motivationalapp",
       "infoPlist": {
         "UIBackgroundModes": ["fetch", "remote-notification"],
         "NSUserNotificationUsageDescription": "We use notifications to send you your daily motivational message at your chosen time."
