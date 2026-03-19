@@ -2,12 +2,12 @@
 // Authentication API Service
 
 import {
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-  RegisterResponse,
-  TokenRefreshRequest,
-  User,
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RegisterResponse,
+    TokenRefreshRequest,
+    User,
 } from '@/types/api';
 import { apiClient } from '../api.client';
 

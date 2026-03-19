@@ -1,5 +1,8 @@
+
 // config/api.config.ts
 // API Configuration and Environment Settings
+
+import { Platform } from 'react-native';
 
 // Helper to get environment variables with fallbacks
 const getEnvVar = (key: string, fallback: string): string => {
@@ -12,9 +15,12 @@ const getEnvBool = (key: string, fallback: boolean): boolean => {
   return value === 'true' || value === '1';
 };
 
-// Set to true to point all API calls at the local dev server (localhost:9898).
+// Set to true to point all API calls at the local dev server (port 9898).
 // Set to false to use the production server (sign-sa.net).
 const USE_LOCAL_ENV = true;
+
+// Android emulator reaches host via 10.0.2.2; iOS simulator uses localhost.
+const LOCAL_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 
 export const API_CONFIG = {
   // Toggle between mock data and real API
@@ -25,7 +31,7 @@ export const API_CONFIG = {
   // Set via EXPO_PUBLIC_API_BASE_URL in .env file, or controlled by USE_LOCAL_ENV above.
   BASE_URL: getEnvVar(
     'EXPO_PUBLIC_API_BASE_URL',
-    USE_LOCAL_ENV ? 'http://10.0.2.2:9898' : 'https://sign-sa.net'
+    USE_LOCAL_ENV ? `http://${LOCAL_HOST}:9898` : 'https://sign-sa.net'
   ),
 
   // API Version
@@ -67,8 +73,8 @@ export const API_CONFIG = {
   ENDPOINTS: {
     // Authentication
     AUTH: {
-      LOGIN: '/auth/token/',
-      REFRESH: '/auth/token/refresh/',
+      LOGIN: '/auth/login/',
+      REFRESH: '/auth/refresh/',
       VERIFY: '/auth/token/verify/',
       REGISTER: '/auth/register/',
       LOGOUT: '/auth/logout/',

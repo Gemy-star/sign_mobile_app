@@ -134,7 +134,7 @@ class ApiClient {
             }
 
             // Refresh the access token
-            const response = await axios.post(`${API_CONFIG.BASE_URL}/api/auth/token/refresh/`, {
+            const response = await axios.post(`${API_CONFIG.BASE_URL}/api/auth/refresh/`, {
               refresh: refreshToken,
             });
 
@@ -233,12 +233,23 @@ class ApiClient {
 
         // Handle other errors
         const responseData: any = error.response.data;
+        // Support both custom { error: { code, message, details } } and
+        // standard DRF { detail: "..." } / field-level { field: ["msg"] } formats.
         const errorCode = responseData?.error?.code || getHttpErrorCode(status);
+        const errorMessage =
+          responseData?.error?.message ||
+          responseData?.detail ||
+          (typeof responseData === 'object' && responseData !== null
+            ? Object.entries(responseData)
+                .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+                .join(' | ')
+            : null) ||
+          getErrorMessage(errorCode, this.currentLanguage);
         const apiError = new ApiError(
-          responseData?.error?.message || getErrorMessage(errorCode, this.currentLanguage),
+          errorMessage,
           errorCode,
           status,
-          responseData?.error?.details
+          responseData?.error?.details ?? responseData
         );
 
         if (API_CONFIG.DEBUG) {
@@ -247,7 +258,7 @@ class ApiClient {
             url: error.config?.url,
             message: apiError.message,
             code: apiError.code,
-            details: apiError.details,
+            rawResponse: responseData,
           });
         }
 

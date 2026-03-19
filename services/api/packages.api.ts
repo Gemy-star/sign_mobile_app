@@ -1,7 +1,7 @@
 // services/api/packages.api.ts
 // Packages API Service
 
-import { Package, PackageComparison } from '@/types/api';
+import { Package, PackageComparison, PaginatedResponse } from '@/types/api';
 import { apiClient } from '../api.client';
 
 // ============================================================================
@@ -14,7 +14,8 @@ export const packagesApi = {
    * GET /api/packages/
    */
   getAll: async (): Promise<Package[]> => {
-    return apiClient.get<Package[]>('/packages/');
+    const response = await apiClient.get<PaginatedResponse<Package> | Package[]>('/packages/');
+    return Array.isArray(response) ? response : response.results;
   },
 
   /**
@@ -38,7 +39,8 @@ export const packagesApi = {
    * GET /api/packages/featured/
    */
   getFeatured: async (): Promise<Package[]> => {
-    return apiClient.get<Package[]>('/packages/featured/');
+    const response = await apiClient.get<PaginatedResponse<Package> | Package[]>('/packages/featured/');
+    return Array.isArray(response) ? response : response.results;
   },
 
   /**

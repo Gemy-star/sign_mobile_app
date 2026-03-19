@@ -36,7 +36,7 @@ Successfully integrated the Sign SA API with comprehensive authentication, user 
 - **Endpoints**:
   - `POST /api/auth/register/` - User registration
   - `POST /api/auth/login/` - User login (returns JWT with scopes)
-  - `POST /api/auth/token/refresh/` - Refresh access token
+  - `POST /api/auth/refresh/` - Refresh access token
   - `POST /api/auth/token/verify/` - Verify token validity
   - `GET /api/auth/profile/` - Get current user profile
   - `PATCH /api/auth/profile/` - Update user profile
@@ -49,9 +49,9 @@ Successfully integrated the Sign SA API with comprehensive authentication, user 
 - **Endpoints**:
   - `GET /api/subscriptions/` - Get all user subscriptions
   - `GET /api/subscriptions/{id}/` - Get subscription details
-  - `GET /api/subscriptions/current/` - Get active subscription
+  - `GET /api/subscriptions/active/` - Get active subscription
   - `POST /api/subscriptions/` - Create subscription (returns payment URL)
-  - `PATCH /api/subscriptions/{id}/update-scopes/` - Update selected scopes
+  - `PATCH /api/subscriptions/{id}/update_scopes/` - Update selected scopes
   - `POST /api/subscriptions/{id}/cancel/` - Cancel subscription
   - `POST /api/subscriptions/{id}/renew/` - Renew subscription
   - `GET /api/subscriptions/history/` - Get subscription history

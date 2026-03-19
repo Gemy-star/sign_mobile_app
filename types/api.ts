@@ -48,7 +48,8 @@ export interface PaginationParams {
 // ============================================================================
 
 export interface LoginRequest {
-  username: string;
+  username?: string;
+  email?: string;
   password: string;
 }
 

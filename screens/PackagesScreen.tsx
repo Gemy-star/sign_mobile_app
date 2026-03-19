@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchPackages } from '@/store/slices/packagesSlice';
 import { fetchScopes } from '@/store/slices/scopesSlice';
+import { createSubscription } from '@/store/slices/subscriptionsSlice';
 import { Package } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { Button, Card, Icon, Layout, Spinner, Text, useTheme } from '@ui-kitten/components';

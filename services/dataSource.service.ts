@@ -84,15 +84,17 @@ class DataSourceService {
     }
 
     try {
-      const response = await authApi.login(credentials);
-      const access = response.token.access;
-      const refresh = response.token.refresh;
+      const identifier = credentials.username ?? '';
+      const loginPayload = { username: identifier, password: credentials.password };
+      const response = await authApi.login(loginPayload);
+      const access = (response as any).token?.access ?? (response as any).access;
+      const refresh = (response as any).token?.refresh ?? (response as any).refresh;
       await apiClient.setTokens(access, refresh);
       return { success: true, data: { access, refresh } };
     } catch (error: any) {
       return {
         success: false,
-        error: error.response?.data?.detail || 'Login failed'
+        error: error.message || 'Login failed'
       };
     }
   }

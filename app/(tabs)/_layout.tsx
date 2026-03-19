@@ -1,18 +1,15 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Icon } from '@ui-kitten/components';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
 export default function TabLayout() {
-  const { colorScheme } = useTheme();
   const { t } = useLanguage();
 
-  const isDark = colorScheme === 'dark';
-  const tabBarBg = isDark ? '#000000' : '#FFFFFF';
-  const tabBarBorder = isDark ? '#1A1A1A' : '#E2E8F0';
-  const activeColor = isDark ? '#FFFFFF' : '#000000';
-  const inactiveColor = isDark ? '#4A5568' : '#A0AEC0';
+  const tabBarBg = '#53321D';
+  const tabBarBorder = 'rgba(232, 206, 128, 0.25)';
+  const activeColor = '#E8CE80';
+  const inactiveColor = 'rgba(250, 248, 245, 0.45)';
 
   return (
     <Tabs
@@ -53,7 +50,7 @@ export default function TabLayout() {
             elevation: 8,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: isDark ? 0.3 : 0.1,
+            shadowOpacity: 0.4,
             shadowRadius: 8,
           },
           tabBarActiveTintColor: activeColor,
