@@ -39,7 +39,7 @@ export const API_CONFIG = {
 
   // Request Timeouts (milliseconds)
   // Set via EXPO_PUBLIC_API_TIMEOUT in .env file
-  TIMEOUT: parseInt(getEnvVar('EXPO_PUBLIC_API_TIMEOUT', '15000'), 10),
+  TIMEOUT: Number.parseInt(getEnvVar('EXPO_PUBLIC_API_TIMEOUT', '15000'), 10),
   UPLOAD_TIMEOUT: 120000,
 
   // Debug Mode
@@ -142,6 +142,9 @@ export const API_CONFIG = {
       VERIFY: (chargeId: string) => `/payments/verify/${chargeId}/`,
       WEBHOOK: '/payments/webhook/',
     },
+
+    // Message delivery preferences (delivery_time, tone, topics)
+    MESSAGE_PREFERENCES: '/user/message-preferences/',
   },
 };
 

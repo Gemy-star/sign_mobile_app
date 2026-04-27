@@ -2,6 +2,7 @@
 // Redux slice for scopes/categories data from API
 
 import { API_CONFIG } from '@/config/api.config';
+import { FEATURE_FLAGS } from '@/config/features.config';
 import { scopesApi } from '@/services/api';
 import { mockDataService } from '@/services/mock.service';
 import { CheckAccessRequest, Scope, ScopeCategory } from '@/types/api';
@@ -37,11 +38,15 @@ export const fetchScopes = createAsyncThunk(
   async (category?: string, { rejectWithValue }: any = {}) => {
     try {
       logger.reduxAction('scopes/fetchScopes', { category });
+      if (!FEATURE_FLAGS.USE_API || API_CONFIG.USE_MOCK_DATA) {
+        logger.reduxAction('scopes/fetchScopes — using mock data');
+        const response = await mockDataService.getScopes();
+        return response.data ?? [];
+      }
       const scopes = await scopesApi.getAll(category ? { category } : undefined);
       return scopes;
     } catch (error) {
       logger.error('fetchScopes error', error as Error);
-      // Fall back to mock data in development when the API is unreachable
       if (__DEV__ || API_CONFIG.USE_MOCK_DATA) {
         logger.reduxAction('scopes/fetchScopes — falling back to mock data');
         const response = await mockDataService.getScopes();

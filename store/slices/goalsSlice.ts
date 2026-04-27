@@ -1,7 +1,9 @@
 ﻿// store/slices/goalsSlice.ts
 // Redux slice for goals data from API
 
+import { FEATURE_FLAGS } from '@/config/features.config';
 import { goalsApi } from '@/services/api';
+import { mockDataService } from '@/services/mock.service';
 import { CreateGoalRequest, Goal, GoalFilters, PaginationParams, UpdateGoalRequest } from '@/types/api';
 import { logger } from '@/utils/logger';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
@@ -42,6 +44,11 @@ export const fetchGoals = createAsyncThunk(
     params = params ?? {};
     try {
       logger.reduxAction('goals/fetchGoals', params);
+      if (!FEATURE_FLAGS.USE_API) {
+        logger.reduxAction('goals/fetchGoals — using mock data');
+        const response = await mockDataService.getGoals(params.filters, params.pagination);
+        return { results: response.data?.results ?? [], count: response.data?.count ?? 0 };
+      }
       const goals = await goalsApi.getAll(params.filters as any);
       return { results: goals, count: goals.length };
     } catch (error) {
@@ -56,6 +63,11 @@ export const fetchActiveGoals = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       logger.reduxAction('goals/fetchActiveGoals');
+      if (!FEATURE_FLAGS.USE_API) {
+        logger.reduxAction('goals/fetchActiveGoals — using mock data');
+        const response = await mockDataService.getActiveGoals();
+        return response.data ?? [];
+      }
       const goals = await goalsApi.getActive();
       return goals;
     } catch (error) {

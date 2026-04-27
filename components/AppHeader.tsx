@@ -1,10 +1,10 @@
 // components/AppHeader.tsx
-// New attractive header using UI Kitten
 
+import { FontFamily } from '@/constants/Typography';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAppSelector } from '@/store/hooks';
-import { Avatar, Card, Icon, Text } from '@ui-kitten/components';
+import { Icon, Text } from '@ui-kitten/components';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Modal, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface AppHeaderProps {
   title?: string;
   showUserInfo?: boolean;
+  showBack?: boolean;
 }
 
 const MOCK_NOTIFICATIONS = [
@@ -19,128 +20,153 @@ const MOCK_NOTIFICATIONS = [
     id: '1',
     title: { en: 'New Achievement!', ar: 'إنجاز جديد!' },
     message: { en: 'You completed your 7-day streak!', ar: 'لقد أكملت سلسلة 7 أيام!' },
+    icon: 'star-outline',
+    iconColor: '#D4A820',
   },
   {
     id: '2',
     title: { en: 'Daily Message', ar: 'رسالة يومية' },
     message: { en: 'Your personalized message is ready', ar: 'رسالتك الشخصية جاهزة' },
+    icon: 'message-square-outline',
+    iconColor: '#A48111',
   },
   {
     id: '3',
     title: { en: 'Goal Reminder', ar: 'تذكير الأهداف' },
     message: { en: "Don't forget to set your goals", ar: 'لا تنسَ تحديد أهدافك' },
+    icon: 'flag-outline',
+    iconColor: '#C96F4A',
   },
 ];
 
-export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps) {
-  // Use Redux for auth state (global state)
+const GOLD = '#A48111';
+const CREAM = '#FAF8F5';
+const BG = '#311E13';
+
+export default function AppHeader({ title, showUserInfo = true, showBack = false }: AppHeaderProps) {
   const { user } = useAppSelector((state) => state.auth);
-  // Use Context for theme and language (UI preferences)
   const { t, language, setLanguage } = useLanguage();
-  const { colorScheme, toggleColorScheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   const userName = user?.first_name || user?.username || 'User';
   const isRTL = language === 'ar';
-
-  const isDark = colorScheme === 'dark';
-  const headerBg = '#311E13';
-  const textColor = '#FAF8F5';
-  const iconColor = '#FAF8F5';
+  const unreadCount = MOCK_NOTIFICATIONS.length;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 10, backgroundColor: headerBg }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
       <View style={[styles.content, isRTL && styles.contentRTL]}>
-        {/* Left Section - User Info or Title */}
+
+        {/* Left — Back button (optional) + User info or screen title */}
         <View style={[styles.leftSection, isRTL && styles.leftSectionRTL]}>
-          {showUserInfo ? (
-            <>
-              <Avatar
-                size="small"
-                style={styles.avatar}
-                source={{ uri: `https://ui-avatars.com/api/?name=${userName}&background=random` }}
+          {showBack && (
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon
+                name={isRTL ? 'arrow-ios-forward-outline' : 'arrow-ios-back-outline'}
+                style={styles.backIcon}
+                fill={CREAM}
               />
-              <View style={styles.userInfo}>
-                <Text style={[styles.greeting, { color: textColor }, isRTL && styles.textRTL]}>
+            </TouchableOpacity>
+          )}
+          {showUserInfo ? (
+            <View style={styles.userBlock}>
+              <View style={[styles.avatarRing]}>
+                <Text style={styles.avatarInitial}>
+                  {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
+                </Text>
+              </View>
+              <View>
+                <Text style={[styles.greeting, isRTL && styles.textRTL]}>
                   {t('header.welcome')}
                 </Text>
-                <Text style={[styles.userName, { color: textColor }, isRTL && styles.textRTL]}>{userName}</Text>
+                <Text style={[styles.userName, isRTL && styles.textRTL]}>{userName}</Text>
               </View>
-            </>
+            </View>
           ) : (
-            <Text style={[styles.title, { color: textColor }]}>{title || t('motivation.appName')}</Text>
+            <View style={[styles.titleWrap, isRTL && styles.titleWrapRTL]}>
+              {!showBack && <View style={styles.titleAccent} />}
+              <Text style={[styles.title, isRTL && styles.textRTL]}>
+                {title || t('motivation.appName')}
+              </Text>
+            </View>
           )}
         </View>
 
-        {/* Right Section - Actions */}
+        {/* Right — Action icons */}
         <View style={[styles.rightSection, isRTL && styles.rightSectionRTL]}>
-          {/* Language Toggle */}
           <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: 'rgba(250, 248, 245, 0.12)' }]}
+            style={styles.iconBtn}
             onPress={() => setShowLanguageMenu(true)}
+            activeOpacity={0.7}
           >
-            <Icon
-              name="globe-outline"
-              style={styles.icon}
-              fill={iconColor}
-            />
+            <Icon name="globe-outline" style={styles.icon} fill={CREAM} />
           </TouchableOpacity>
 
-          {/* Theme Toggle */}
           <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: 'rgba(250, 248, 245, 0.12)' }]}
-            onPress={toggleColorScheme}
-          >
-            <Icon
-              name={colorScheme === 'dark' ? 'sun-outline' : 'moon-outline'}
-              style={styles.icon}
-              fill={iconColor}
-            />
-          </TouchableOpacity>
-
-          {/* Notifications */}
-          <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: 'rgba(250, 248, 245, 0.12)' }]}
+            style={styles.iconBtn}
             onPress={() => setShowNotifications(!showNotifications)}
+            activeOpacity={0.7}
           >
-            <Icon name="bell-outline" style={styles.icon} fill={iconColor} />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{MOCK_NOTIFICATIONS.length}</Text>
-            </View>
+            <Icon name="bell-outline" style={styles.icon} fill={CREAM} />
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Notification Dropdown */}
+      {/* Notification panel */}
       {showNotifications && (
-        <View style={[styles.dropdown, isRTL ? { left: 20 } : { right: 20 }, { backgroundColor: '#311E13', borderColor: 'rgba(250,248,245,0.18)' }]}>
-          <View style={[styles.dropdownHeader, isRTL && styles.dropdownHeaderRTL]}>
-            <Text category="h6" style={{ color: textColor }}>{t('notifications.title')}</Text>
-            <TouchableOpacity onPress={() => setShowNotifications(false)}>
-              <Icon name="close-outline" style={styles.closeIcon} fill={iconColor} />
+        <View style={[styles.notifPanel, isRTL ? { left: 16 } : { right: 16 }]}>
+          {/* Panel header */}
+          <View style={[styles.notifHeader, isRTL && styles.rowRTL]}>
+            <Text style={[styles.notifTitle, isRTL && styles.textRTL]}>
+              {t('notifications.title')}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowNotifications(false)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon name="close-outline" style={styles.closeIcon} fill="rgba(250,248,245,0.5)" />
             </TouchableOpacity>
           </View>
-          {MOCK_NOTIFICATIONS.map((notification) => (
-            <Card key={notification.id} style={styles.notificationItem}>
-              <View style={styles.notificationContent}>
-                <Icon name="bell-outline" style={styles.notificationIcon} fill="#6366f1" />
-                <View style={styles.notificationText}>
-                  <Text category="s1" style={[styles.notificationTitle, isRTL && styles.textRTL]}>
-                    {language === 'ar' ? notification.title.ar : notification.title.en}
-                  </Text>
-                  <Text category="p2" appearance="hint" style={[isRTL && styles.textRTL]}>
-                    {language === 'ar' ? notification.message.ar : notification.message.en}
-                  </Text>
-                </View>
+
+          {/* Items */}
+          {MOCK_NOTIFICATIONS.map((n, idx) => (
+            <View
+              key={n.id}
+              style={[
+                styles.notifItem,
+                isRTL && styles.rowRTL,
+                idx < MOCK_NOTIFICATIONS.length - 1 && styles.notifItemBorder,
+              ]}
+            >
+              <View style={[styles.notifIconWrap, { backgroundColor: `${n.iconColor}20` }]}>
+                <Icon name={n.icon} style={styles.notifIcon} fill={n.iconColor} />
               </View>
-            </Card>
+              <View style={styles.notifTextWrap}>
+                <Text style={[styles.notifItemTitle, isRTL && styles.textRTL]}>
+                  {language === 'ar' ? n.title.ar : n.title.en}
+                </Text>
+                <Text style={[styles.notifItemMsg, isRTL && styles.textRTL]}>
+                  {language === 'ar' ? n.message.ar : n.message.en}
+                </Text>
+              </View>
+            </View>
           ))}
         </View>
       )}
 
-      {/* Language Modal */}
+      {/* Language modal */}
       <Modal
         visible={showLanguageMenu}
         transparent
@@ -148,42 +174,43 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
         onRequestClose={() => setShowLanguageMenu(false)}
       >
         <TouchableOpacity
-          style={[styles.modalOverlay, isRTL ? styles.modalOverlayRTL : styles.modalOverlayLTR]}
+          style={[
+            styles.modalOverlay,
+            isRTL ? styles.modalOverlayRTL : styles.modalOverlayLTR,
+          ]}
           activeOpacity={1}
           onPress={() => setShowLanguageMenu(false)}
         >
-          <View style={[styles.languageMenu, { backgroundColor: '#311E13', borderColor: 'rgba(250,248,245,0.18)' }]}>
-            <Text category="h6" style={[styles.menuTitle, { color: textColor }]}>
-              {t('profile.language')}
-            </Text>
+          <View style={styles.langMenu}>
+            <Text style={styles.langMenuTitle}>{t('profile.language')}</Text>
 
-            <TouchableOpacity
-              style={[styles.languageOption, language === 'en' && styles.languageOptionActive]}
-              onPress={() => {
-                setLanguage('en');
-                setShowLanguageMenu(false);
-              }}
-            >
-              <View style={styles.languageRow}>
-                <Text style={styles.flag}>🇬🇧</Text>
-                <Text style={[styles.languageText, { color: textColor }]}>English</Text>
-              </View>
-              {language === 'en' && <Icon name="checkmark-outline" style={styles.checkIcon} fill="#48BB78" />}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.languageOption, language === 'ar' && styles.languageOptionActive]}
-              onPress={() => {
-                setLanguage('ar');
-                setShowLanguageMenu(false);
-              }}
-            >
-              <View style={styles.languageRow}>
-                <Text style={styles.flag}>🇸🇦</Text>
-                <Text style={[styles.languageText, { color: textColor }]}>العربية</Text>
-              </View>
-              {language === 'ar' && <Icon name="checkmark-outline" style={styles.checkIcon} fill="#48BB78" />}
-            </TouchableOpacity>
+            {[
+              { code: 'en', label: 'English', flag: '🇬🇧' },
+              { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+            ].map((lang) => {
+              const active = language === lang.code;
+              return (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[styles.langOption, active && styles.langOptionActive]}
+                  onPress={() => {
+                    setLanguage(lang.code as 'en' | 'ar');
+                    setShowLanguageMenu(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.langOptionLeft}>
+                    <Text style={styles.flag}>{lang.flag}</Text>
+                    <Text style={[styles.langLabel, active && { color: GOLD }]}>
+                      {lang.label}
+                    </Text>
+                  </View>
+                  {active && (
+                    <Icon name="checkmark-outline" style={styles.checkIcon} fill={GOLD} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -193,202 +220,258 @@ export default function AppHeader({ title, showUserInfo = true }: AppHeaderProps
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 15,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    backgroundColor: BG,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(164, 129, 17, 0.35)',
   },
   content: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
   },
-  contentRTL: {
-    flexDirection: 'row-reverse',
-  },
+  contentRTL: { flexDirection: 'row-reverse' },
+
+  // Left / user
   leftSection: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
   },
-  leftSectionRTL: {
-    flexDirection: 'row-reverse',
+  leftSectionRTL: { flexDirection: 'row-reverse' },
+
+  userBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  avatar: {
-    width: 40,
-    height: 40,
+  avatarRing: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(164,129,17,0.20)',
+    borderWidth: 1,
+    borderColor: 'rgba(164,129,17,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  userInfo: {
-    flex: 1,
+  avatarInitial: {
+    fontSize: 16,
+    fontFamily: FontFamily.arabicBold,
+    color: GOLD,
   },
   greeting: {
     fontSize: 11,
-    fontWeight: '600',
-    fontFamily: 'IBMPlexSansArabic-SemiBold',
-    opacity: 0.7,
+    fontFamily: FontFamily.arabicMedium,
+    color: 'rgba(250,248,245,0.5)',
   },
   userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 2,
-    fontFamily: 'IBMPlexSansArabic-Bold',
+    fontSize: 16,
+    fontFamily: FontFamily.arabicBold,
+    color: CREAM,
+    marginTop: 1,
+  },
+
+  // Title
+  titleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  titleWrapRTL: { flexDirection: 'row-reverse' },
+  titleAccent: {
+    width: 3,
+    height: 20,
+    borderRadius: 2,
+    backgroundColor: GOLD,
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
-    fontFamily: 'IBMPlexSansArabic-SemiBold',
+    fontFamily: FontFamily.arabicBold,
+    color: CREAM,
   },
+
+  // Right / icons
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
-  rightSectionRTL: {
-    flexDirection: 'row-reverse',
+  rightSectionRTL: { flexDirection: 'row-reverse' },
+
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(250,248,245,0.08)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(250,248,245,0.14)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginEnd: 8,
   },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  backIcon: { width: 22, height: 22 },
+
+  iconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: 'rgba(250,248,245,0.08)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(250,248,245,0.14)',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
+  icon: { width: 20, height: 20 },
+
   badge: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    backgroundColor: '#ef4444',
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
+    top: -4,
+    right: -4,
+    backgroundColor: GOLD,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: BG,
   },
   badgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: 9,
+    fontFamily: FontFamily.arabicBold,
+    color: '#FFFFFF',
   },
-  icon: {
-    width: 24,
-    height: 24,
-  },
-  dropdown: {
+
+  // Notification panel
+  notifPanel: {
     position: 'absolute',
-    top: 80,
-    width: 320,
-    maxHeight: 400,
-    borderRadius: 12,
-    borderWidth: 1,
-    elevation: 8,
+    top: 70,
+    width: 300,
+    backgroundColor: '#1E0D05',
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(250,248,245,0.12)',
+    overflow: 'hidden',
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
     zIndex: 1000,
   },
-  dropdownHeader: {
+  notifHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(250,248,245,0.10)',
   },
-  dropdownHeaderRTL: {
-    flexDirection: 'row-reverse',
+  notifTitle: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabicSemiBold,
+    color: CREAM,
+    letterSpacing: 0.5,
   },
-  closeIcon: {
-    width: 24,
-    height: 24,
-  },
-  notificationItem: {
-    marginHorizontal: 12,
-    marginVertical: 6,
-    borderRadius: 8,
-  },
-  notificationContent: {
+  closeIcon: { width: 20, height: 20 },
+  notifItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  notificationIcon: {
-    width: 24,
-    height: 24,
-    marginTop: 2,
+  notifItemBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(250,248,245,0.07)',
   },
-  notificationText: {
-    flex: 1,
+  notifIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
   },
-  notificationTitle: {
-    fontWeight: '600',
-    marginBottom: 4,
+  notifIcon: { width: 18, height: 18 },
+  notifTextWrap: { flex: 1 },
+  notifItemTitle: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabicSemiBold,
+    color: CREAM,
+    marginBottom: 2,
   },
-  textRTL: {
-    textAlign: 'right',
-    writingDirection: 'rtl',
+  notifItemMsg: {
+    fontSize: 11,
+    fontFamily: FontFamily.arabic,
+    color: 'rgba(250,248,245,0.55)',
+    lineHeight: 16,
   },
+
+  // Language modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'flex-start',
-    paddingTop: 80,
+    paddingTop: 78,
   },
-  languageMenu: {
-    width: 200,
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    elevation: 8,
+  modalOverlayLTR: { alignItems: 'flex-end', paddingRight: 18 },
+  modalOverlayRTL: { alignItems: 'flex-start', paddingLeft: 18 },
+
+  langMenu: {
+    width: 190,
+    backgroundColor: '#1E0D05',
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(250,248,245,0.12)',
+    padding: 8,
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
   },
-  menuTitle: {
-    marginBottom: 12,
-    fontFamily: 'IBMPlexSansArabic-Bold',
+  langMenuTitle: {
+    fontSize: 11,
+    fontFamily: FontFamily.arabicSemiBold,
+    color: 'rgba(250,248,245,0.4)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 8,
   },
-  languageOption: {
+  langOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    marginVertical: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: 2,
   },
-  languageOptionActive: {
-    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+  langOptionActive: {
+    backgroundColor: 'rgba(164,129,17,0.15)',
   },
-  languageRow: {
+  langOptionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
-  flag: {
-    fontSize: 24,
+  flag: { fontSize: 20 },
+  langLabel: {
+    fontSize: 14,
+    fontFamily: FontFamily.arabicMedium,
+    color: CREAM,
   },
-  languageText: {
-    fontSize: 16,
-    fontFamily: 'IBMPlexSansArabic-Regular',
-  },
-  checkIcon: {
-    width: 20,
-    height: 20,
-  },
-  modalOverlayLTR: {
-    alignItems: 'flex-end',
-    paddingRight: 20,
-  },
-  modalOverlayRTL: {
-    alignItems: 'flex-start',
-    paddingLeft: 20,
-  },
+  checkIcon: { width: 18, height: 18 },
+
+  // Shared
+  rowRTL: { flexDirection: 'row-reverse' },
+  textRTL: { textAlign: 'right', writingDirection: 'rtl' },
 });

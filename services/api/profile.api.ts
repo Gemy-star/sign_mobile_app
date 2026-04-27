@@ -13,6 +13,17 @@ export interface DeleteAccountRequest {
   password: string;
 }
 
+/** Matches the backend /api/user/message-preferences/ schema */
+export interface MessagePreferences {
+  delivery_time?: string;      // "HH:MM" 24-hour
+  timezone?: string;
+  message_length?: 'short' | 'medium' | 'long';
+  tone?: string;
+  topics?: string[];           // scope category names
+  ai_personalization?: boolean;
+  use_goals_for_customization?: boolean;
+}
+
 export const profileApi = {
   /**
    * Get current user profile
@@ -52,6 +63,24 @@ export const profileApi = {
    */
   exportData: (): Promise<Blob> => {
     return apiClient.get<Blob>('/auth/export-data/', { responseType: 'blob' });
+  },
+
+  /**
+   * Get message delivery preferences (delivery_time, tone, topics, etc.)
+   * GET /api/user/message-preferences/
+   */
+  getMessagePreferences: (): Promise<MessagePreferences> => {
+    return apiClient.get<MessagePreferences>('/user/message-preferences/');
+  },
+
+  /**
+   * Update message delivery preferences.
+   * Persists delivery_time (and optionally tone/topics) to the backend so the
+   * server-side cron knows when each user wants their daily messages.
+   * PUT /api/user/message-preferences/
+   */
+  updateMessagePreferences: (data: Partial<MessagePreferences>): Promise<MessagePreferences> => {
+    return apiClient.put<MessagePreferences>('/user/message-preferences/', data);
   },
 };
 

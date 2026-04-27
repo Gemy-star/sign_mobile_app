@@ -1,53 +1,69 @@
-// screens/PackagesScreen.tsx
-// Packages (Subscription Plans) Screen with Free Trial and Payment Handling
+﻿// screens/PackagesScreen.tsx
+// Packages (Subscription Plans) Screen — styled to match DashboardScreen
 
+import AppHeader from '@/components/AppHeader';
+import { FontFamily } from '@/constants/Typography';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchPackages } from '@/store/slices/packagesSlice';
 import { fetchScopes } from '@/store/slices/scopesSlice';
 import { createSubscription } from '@/store/slices/subscriptionsSlice';
-import { Package } from '@/types/api';
+import { Package, Scope } from '@/types/api';
 import { logger } from '@/utils/logger';
-import { Button, Card, Icon, Layout, Spinner, Text, useTheme } from '@ui-kitten/components';
+import { Icon, Spinner } from '@ui-kitten/components';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
-    Alert,
-    Dimensions,
-    ScrollView,
-    StyleSheet,
-    View,
+  Alert,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 48;
 
-const SmallSpinner = () => <Spinner size="small" status="control" />;
+// ─── Design tokens (same palette as DashboardScreen) ────────────────────────
+const BG_COLOR = '#53321D';
+const CARD_BG = 'rgba(49, 30, 19, 0.70)';
+const CARD_BORDER = 'rgba(250, 248, 245, 0.12)';
+const TEXT_PRIMARY = '#FAF8F5';
+const TEXT_MUTED = 'rgba(250, 248, 245, 0.60)';
+const ACCENT = '#A48111';
+const ACCENT_SOLID = '#D4A820';
+const DIVIDER = 'rgba(250, 248, 245, 0.10)';
+const SUCCESS = '#4CAF82';
+const DANGER = 'rgba(250, 248, 245, 0.25)';
 
 interface PackagesScreenProps {
   onComplete?: () => void;
 }
 
 export default function PackagesScreen({ onComplete }: PackagesScreenProps = {}) {
-  const { t } = useTranslation();
-  const { isRTL } = useLanguage();
-  const theme = useTheme();
+  const { t, isRTL } = useLanguage();
   const dispatch = useAppDispatch();
 
-  const { packages, isLoading: packagesLoading } = useAppSelector((state) => state.packages);
-  const { scopes, isLoading: scopesLoading } = useAppSelector((state) => state.scopes);
+  const { packages, isLoading: packagesLoading } = useAppSelector((s) => s.packages);
+  const { scopes, isLoading: scopesLoading } = useAppSelector((s) => s.scopes);
 
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [selectedScopes, setSelectedScopes] = useState<number[]>([]);
-  const loading = packagesLoading || scopesLoading;
   const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState<'select-package' | 'select-scopes' | 'payment'>('select-package');
+  const [step, setStep] = useState<'select-package' | 'select-scopes' | 'payment'>(
+    'select-package',
+  );
+
+  const isLoading = packagesLoading || scopesLoading;
 
   useEffect(() => {
     dispatch(fetchPackages());
     dispatch(fetchScopes());
   }, [dispatch]);
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
 
   const handleSelectPackage = (pkg: Package) => {
     setSelectedPackage(pkg);
@@ -57,16 +73,14 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
 
   const handleToggleScope = (scopeId: number) => {
     if (!selectedPackage) return;
-
-    const maxScopes = selectedPackage.max_scopes || 0;
-
+    const max = selectedPackage.max_scopes || 0;
     if (selectedScopes.includes(scopeId)) {
-      setSelectedScopes(selectedScopes.filter(id => id !== scopeId));
+      setSelectedScopes(selectedScopes.filter((id) => id !== scopeId));
     } else {
-      if (selectedScopes.length >= maxScopes) {
+      if (selectedScopes.length >= max) {
         Alert.alert(
           t('packages.scopeLimitTitle'),
-          t('packages.scopeLimitMessage', { max: maxScopes })
+          t('packages.scopeLimitMessage', { max }),
         );
         return;
       }
@@ -76,13 +90,10 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
 
   const handleContinue = () => {
     if (!selectedPackage) return;
-
     if (selectedScopes.length === 0) {
       Alert.alert(t('packages.noScopesTitle'), t('packages.noScopesMessage'));
       return;
     }
-
-    // Check if it's a free trial
     if (Number.parseFloat(selectedPackage.price) === 0) {
       handleStartFreeTrial();
     } else {
@@ -92,41 +103,26 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
 
   const handleStartFreeTrial = async () => {
     if (!selectedPackage) return;
-
     try {
       setProcessing(true);
       logger.info('Starting free trial', {
         packageId: selectedPackage.id,
-        scopes: selectedScopes
+        scopes: selectedScopes,
       });
-
-      const result = await dispatch(createSubscription({
-        package_id: selectedPackage.id,
-        selected_scope_ids: selectedScopes,
-      }));
-
+      const result = await dispatch(
+        createSubscription({ package_id: selectedPackage.id, selected_scope_ids: selectedScopes }),
+      );
       if (createSubscription.fulfilled.match(result)) {
         logger.info('Free trial started successfully');
-        Alert.alert(
-          t('packages.freeTrialSuccess'),
-          t('packages.freeTrialSuccessMessage'),
-          [
-            {
-              text: t('common.done'),
-              onPress: () => {
-                if (onComplete) {
-                  onComplete();
-                } else {
-                  router.replace('/(tabs)');
-                }
-              }
-            }
-          ]
-        );
+        Alert.alert(t('packages.freeTrialSuccess'), t('packages.freeTrialSuccessMessage'), [
+          {
+            text: t('common.done'),
+            onPress: () => (onComplete ? onComplete() : router.replace('/(tabs)')),
+          },
+        ]);
       } else {
-        const errMsg = result.payload as string || t('packages.subscriptionError');
-        logger.warn('Failed to start free trial', { error: errMsg });
-        Alert.alert(t('common.error'), errMsg);
+        const msg = (result.payload as string) || t('packages.subscriptionError');
+        Alert.alert(t('common.error'), msg);
       }
     } catch (error) {
       logger.error('Start free trial error', error as Error);
@@ -138,41 +134,21 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
 
   const handlePayment = async () => {
     if (!selectedPackage) return;
-
     try {
       setProcessing(true);
-      logger.info('Processing payment', {
-        packageId: selectedPackage.id,
-        scopes: selectedScopes
-      });
-
-      const result = await dispatch(createSubscription({
-        package_id: selectedPackage.id,
-        selected_scope_ids: selectedScopes,
-      }));
-
+      const result = await dispatch(
+        createSubscription({ package_id: selectedPackage.id, selected_scope_ids: selectedScopes }),
+      );
       if (createSubscription.fulfilled.match(result)) {
-        logger.info('Subscription created successfully');
-        Alert.alert(
-          t('packages.paymentSuccess'),
-          t('packages.paymentSuccessMessage'),
-          [
-            {
-              text: t('common.done'),
-              onPress: () => {
-                if (onComplete) {
-                  onComplete();
-                } else {
-                  router.replace('/(tabs)');
-                }
-              }
-            }
-          ]
-        );
+        Alert.alert(t('packages.paymentSuccess'), t('packages.paymentSuccessMessage'), [
+          {
+            text: t('common.done'),
+            onPress: () => (onComplete ? onComplete() : router.replace('/(tabs)')),
+          },
+        ]);
       } else {
-        const errMsg = result.payload as string || t('packages.paymentError');
-        logger.warn('Failed to create subscription', { error: errMsg });
-        Alert.alert(t('common.error'), errMsg);
+        const msg = (result.payload as string) || t('packages.paymentError');
+        Alert.alert(t('common.error'), msg);
       }
     } catch (error) {
       logger.error('Payment error', error as Error);
@@ -182,374 +158,554 @@ export default function PackagesScreen({ onComplete }: PackagesScreenProps = {})
     }
   };
 
-  const renderPackageCard = (pkg: Package) => {
-    const isFree = Number.parseFloat(pkg.price) === 0;
-    const isSelected = selectedPackage?.id === pkg.id;
+  // ─── Shared layout ────────────────────────────────────────────────────────
 
-    return (
-      <Card
-        key={pkg.id}
-        style={[
-          styles.packageCard,
-          isSelected && { borderColor: theme['color-primary-500'], borderWidth: 2 },
-          pkg.is_featured && styles.featuredCard,
-        ]}
-        onPress={() => handleSelectPackage(pkg)}
-        disabled={processing}
-      >
-        {pkg.is_featured && (
-          <View style={[styles.badge, { backgroundColor: theme['color-primary-500'] }, isRTL ? { left: 20 } : { right: 20 }]}>
-            <Text category="c1" style={styles.badgeText}>{t('packages.popular')}</Text>
-          </View>
-        )}
-
-        <Text category="h5" style={styles.packageName}>
-          {pkg.name}
-        </Text>
-
-        <View style={styles.priceContainer}>
-          <Text category="h3" style={[styles.price, { color: theme['color-primary-500'] }]}>
-            {isFree ? t('packages.free') : `${pkg.price} ${t('packages.currency')}`}
-          </Text>
-          <Text appearance="hint" category="s1">
-            {pkg.duration_display || t(`packages.duration.${pkg.duration}`)}
-          </Text>
-        </View>
-
-        <Text appearance="hint" style={styles.packageDescription}>
-          {pkg.description}
-        </Text>
-
-        <View style={styles.featuresContainer}>
-          <PackageFeature
-            icon="checkmark-circle-2"
-            text={t('packages.features.scopes', { count: pkg.max_scopes })}
-            enabled={true}
-          />
-          <PackageFeature
-            icon="checkmark-circle-2"
-            text={t('packages.features.messages', { count: pkg.messages_per_day })}
-            enabled={true}
-          />
-          <PackageFeature
-            icon={pkg.custom_goals_enabled ? 'checkmark-circle-2' : 'close-circle'}
-            text={t('packages.features.customGoals')}
-            enabled={pkg.custom_goals_enabled}
-          />
-          <PackageFeature
-            icon={pkg.priority_support ? 'checkmark-circle-2' : 'close-circle'}
-            text={t('packages.features.prioritySupport')}
-            enabled={pkg.priority_support}
-          />
-        </View>
-
-        {isSelected && (
-          <View style={[styles.selectedIndicator, { backgroundColor: theme['color-primary-500'] }]}>
-            <Icon name="checkmark" style={styles.selectedIcon} fill="white" />
-            <Text style={styles.selectedText}>{t('packages.selected')}</Text>
-          </View>
-        )}
-      </Card>
-    );
-  };
-
-  const renderScopeSelection = () => (
-    <View style={styles.scopeSelectionContainer}>
-      <Text category="h5" style={styles.sectionTitle}>
-        {t('packages.selectScopes')}
-      </Text>
-      <Text appearance="hint" style={styles.sectionSubtitle}>
-        {t('packages.selectScopesHint', {
-          selected: selectedScopes.length,
-          max: selectedPackage?.max_scopes || 0
-        })}
-      </Text>
-
-      <View style={styles.scopesGrid}>
-        {scopes.filter((s) => s.is_active).map((scope) => {
-          const isSelected = selectedScopes.includes(scope.id);
-          const isDisabled = !isSelected && selectedScopes.length >= (selectedPackage?.max_scopes || 0);
-
-          return (
-            <Card
-              key={scope.id}
-              style={[
-                styles.scopeCard,
-                isSelected && { backgroundColor: theme['color-primary-500'] },
-                isDisabled && { opacity: 0.5 },
-              ]}
-              onPress={() => handleToggleScope(scope.id)}
-              disabled={isDisabled}
-            >
-              <Icon
-                name={scope.icon || 'star'}
-                style={styles.scopeIcon}
-                fill={isSelected ? 'white' : theme['text-basic-color']}
-              />
-              <Text
-                category="s1"
-                style={[
-                  styles.scopeName,
-                  { color: isSelected ? 'white' : theme['text-basic-color'] }
-                ]}
-              >
-                {scope.name}
-              </Text>
-            </Card>
-          );
-        })}
-      </View>
-
-      <View style={[styles.actionButtons, isRTL && { flexDirection: 'row-reverse' }]}>
-        <Button
-          style={styles.button}
-          appearance="outline"
-          onPress={() => {
-            setStep('select-package');
-            setSelectedScopes([]);
-          }}
-          disabled={processing}
-        >
-          {t('common.back')}
-        </Button>
-
-        <Button
-          style={styles.button}
-          onPress={handleContinue}
-          disabled={processing || selectedScopes.length === 0}
-          accessoryLeft={processing ? SmallSpinner : undefined}
-        >
-          {!processing && (Number.parseFloat(selectedPackage?.price || '0') === 0
-            ? t('packages.startFreeTrial')
-            : t('packages.continueToPayment'))}
-        </Button>
-      </View>
+  const renderShell = (children: React.ReactNode) => (
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['rgba(49,30,19,0.90)', 'rgba(83,50,29,0.95)', 'rgba(49,30,19,0.90)']}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <AppHeader showBack={true} />
+      {children}
     </View>
   );
 
-  const renderPayment = () => (
-    <View style={styles.paymentContainer}>
-      <Text category="h5" style={styles.sectionTitle}>
-        {t('packages.paymentTitle')}
-      </Text>
+  // ─── Loading ──────────────────────────────────────────────────────────────
 
-      <Card style={styles.summaryCard}>
-        <Text category="h6">{t('packages.orderSummary')}</Text>
-
-        <View style={[styles.summaryRow, isRTL && { flexDirection: 'row-reverse' }]}>
-          <Text appearance="hint">{t('packages.package')}</Text>
-          <Text>{selectedPackage?.name}</Text>
-        </View>
-
-        <View style={[styles.summaryRow, isRTL && { flexDirection: 'row-reverse' }]}>
-          <Text appearance="hint">{t('packages.selectedScopes')}</Text>
-          <Text>{selectedScopes.length} {t('packages.scopes')}</Text>
-        </View>
-
-        <View style={styles.summaryDivider} />
-
-        <View style={[styles.summaryRow, isRTL && { flexDirection: 'row-reverse' }]}>
-          <Text category="h6">{t('packages.total')}</Text>
-          <Text category="h6" style={{ color: theme['color-primary-500'] }}>
-            {selectedPackage?.price} {t('packages.currency')}
-          </Text>
-        </View>
-      </Card>
-
-      <Text appearance="hint" style={styles.paymentNote}>
-        {t('packages.paymentNote')}
-      </Text>
-
-      <View style={[styles.actionButtons, isRTL && { flexDirection: 'row-reverse' }]}>
-        <Button
-          style={styles.button}
-          appearance="outline"
-          onPress={() => setStep('select-scopes')}
-          disabled={processing}
-        >
-          {t('common.back')}
-        </Button>
-
-        <Button
-          style={styles.button}
-          onPress={handlePayment}
-          disabled={processing}
-          accessoryLeft={processing ? SmallSpinner : undefined}
-        >
-          {!processing && t('packages.pay')}
-        </Button>
-      </View>
-    </View>
-  );
-
-  if (loading) {
-    return (
-      <Layout style={styles.loadingContainer} level="1">
-        <Spinner size="giant" />
-        <Text style={styles.loadingText}>{t('packages.loading')}</Text>
-      </Layout>
+  if (isLoading && packages.length === 0) {
+    return renderShell(
+      <View style={styles.center}>
+        <Spinner size="giant" status="warning" />
+        <Text style={[styles.muted, { marginTop: 14 }]}>{t('packages.loading')}</Text>
+      </View>,
     );
   }
 
-  return (
-    <Layout style={styles.container} level="1">
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {step === 'select-package' && (
-          <>
-            <Text category="h4" style={styles.title}>
-              {t('packages.title')}
-            </Text>
-            <Text appearance="hint" style={styles.subtitle}>
-              {t('packages.subtitle')}
-            </Text>
+  // ─── Step: select package ─────────────────────────────────────────────────
 
-            {packages.map(renderPackageCard)}
-          </>
-        )}
+  if (step === 'select-package') {
+    return renderShell(
+      <>
+        <View style={[styles.banner, isRTL && styles.bannerRTL]}>
+          <Text style={[styles.bannerTitle, isRTL && styles.textRTL]}>{t('packages.title')}</Text>
+          <Text style={[styles.bannerSubtitle, isRTL && styles.textRTL]}>
+            {t('packages.subtitle')}
+          </Text>
+        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {packages.map((pkg) => (
+            <PackageCard
+              key={pkg.id}
+              pkg={pkg}
+              isSelected={selectedPackage?.id === pkg.id}
+              isRTL={isRTL}
+              t={t}
+              onPress={handleSelectPackage}
+            />
+          ))}
+        </ScrollView>
+      </>,
+    );
+  }
 
-        {step === 'select-scopes' && renderScopeSelection()}
-        {step === 'payment' && renderPayment()}
+  // ─── Step: select scopes ──────────────────────────────────────────────────
+
+  if (step === 'select-scopes') {
+    const activeScopes = scopes.filter((s) => s.is_active);
+    const max = selectedPackage?.max_scopes || 0;
+
+    return renderShell(
+      <>
+        <View style={[styles.banner, isRTL && styles.bannerRTL]}>
+          <Text style={[styles.bannerTitle, isRTL && styles.textRTL]}>
+            {t('packages.selectScopes')}
+          </Text>
+          <Text style={[styles.bannerSubtitle, isRTL && styles.textRTL]}>
+            {t('packages.selectScopesHint', { selected: selectedScopes.length, max })}
+          </Text>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Progress bar */}
+          <View style={styles.progressTrack}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${max > 0 ? (selectedScopes.length / max) * 100 : 0}%` },
+              ]}
+            />
+          </View>
+
+          <View style={styles.scopesGrid}>
+            {activeScopes.map((scope) => (
+              <ScopeCard
+                key={scope.id}
+                scope={scope}
+                isSelected={selectedScopes.includes(scope.id)}
+                isDisabled={
+                  !selectedScopes.includes(scope.id) && selectedScopes.length >= max
+                }
+                onPress={handleToggleScope}
+              />
+            ))}
+          </View>
+
+          <View style={[styles.actionRow, isRTL && styles.actionRowRTL]}>
+            <TouchableOpacity
+              style={styles.btnOutline}
+              onPress={() => {
+                setStep('select-package');
+                setSelectedScopes([]);
+              }}
+              disabled={processing}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnOutlineText}>{t('common.back')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.btnPrimary, (processing || selectedScopes.length === 0) && styles.btnDisabled]}
+              onPress={handleContinue}
+              disabled={processing || selectedScopes.length === 0}
+              activeOpacity={0.8}
+            >
+              {processing ? (
+                <Spinner size="small" status="control" />
+              ) : (
+                <Text style={styles.btnPrimaryText}>
+                  {Number.parseFloat(selectedPackage?.price || '0') === 0
+                    ? t('packages.startFreeTrial')
+                    : t('packages.continueToPayment')}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </>,
+    );
+  }
+
+  // ─── Step: payment ────────────────────────────────────────────────────────
+
+  return renderShell(
+    <>
+      <View style={[styles.banner, isRTL && styles.bannerRTL]}>
+        <Text style={[styles.bannerTitle, isRTL && styles.textRTL]}>
+          {t('packages.paymentTitle')}
+        </Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.summaryCard}>
+          <Text style={[styles.summaryHeading, isRTL && styles.textRTL]}>
+            {t('packages.orderSummary')}
+          </Text>
+
+          <View style={[styles.summaryRow, isRTL && styles.summaryRowRTL]}>
+            <Text style={[styles.muted, isRTL && styles.textRTL]}>{t('packages.package')}</Text>
+            <Text style={[styles.summaryValue, isRTL && styles.textRTL]}>
+              {selectedPackage?.name}
+            </Text>
+          </View>
+
+          <View style={[styles.summaryRow, isRTL && styles.summaryRowRTL]}>
+            <Text style={[styles.muted, isRTL && styles.textRTL]}>
+              {t('packages.selectedScopes')}
+            </Text>
+            <Text style={[styles.summaryValue, isRTL && styles.textRTL]}>
+              {selectedScopes.length} {t('packages.scopes')}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={[styles.summaryRow, isRTL && styles.summaryRowRTL]}>
+            <Text style={[styles.summaryTotal, isRTL && styles.textRTL]}>
+              {t('packages.total')}
+            </Text>
+            <Text style={[styles.summaryTotalValue, isRTL && styles.textRTL]}>
+              {selectedPackage?.price} {t('packages.currency')}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={[styles.paymentNote, isRTL && styles.textRTL]}>{t('packages.paymentNote')}</Text>
+
+        <View style={[styles.actionRow, isRTL && styles.actionRowRTL]}>
+          <TouchableOpacity
+            style={styles.btnOutline}
+            onPress={() => setStep('select-scopes')}
+            disabled={processing}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.btnOutlineText}>{t('common.back')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.btnPrimary, processing && styles.btnDisabled]}
+            onPress={handlePayment}
+            disabled={processing}
+            activeOpacity={0.8}
+          >
+            {processing ? (
+              <Spinner size="small" status="control" />
+            ) : (
+              <Text style={styles.btnPrimaryText}>{t('packages.pay')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
-    </Layout>
+    </>,
   );
 }
 
-// Helper component for package features
-const PackageFeature: React.FC<{
-  icon: string;
-  text: string;
-  enabled?: boolean;
-}> = ({ icon, text, enabled = true }) => {
-  const theme = useTheme();
-  const { isRTL } = useLanguage();
+// ─── Package Card ─────────────────────────────────────────────────────────────
+
+interface PackageCardProps {
+  pkg: Package;
+  isSelected: boolean;
+  isRTL: boolean;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  onPress: (pkg: Package) => void;
+}
+
+const PackageCard: React.FC<PackageCardProps> = ({ pkg, isSelected, isRTL, t, onPress }) => {
+  const isFree = Number.parseFloat(pkg.price) === 0;
 
   return (
-    <View style={[styles.featureRow, isRTL && { flexDirection: 'row-reverse' }]}>
-      <Icon
-        name={icon}
-        style={styles.featureIcon}
-        fill={enabled ? theme['color-success-500'] : theme['text-hint-color']}
-      />
-      <Text
-        appearance={enabled ? 'default' : 'hint'}
-        category="s1"
-        style={styles.featureText}
+    <TouchableOpacity
+      style={[
+        styles.packageCard,
+        isSelected && styles.packageCardSelected,
+        pkg.is_featured && styles.packageCardFeatured,
+      ]}
+      onPress={() => onPress(pkg)}
+      activeOpacity={0.85}
+    >
+      {/* Popular badge */}
+      {pkg.is_featured && (
+        <View style={[styles.popularBadge, isRTL ? styles.popularBadgeLeft : styles.popularBadgeRight]}>
+          <Icon name="star" style={styles.popularBadgeIcon} fill="#FAF8F5" />
+          <Text style={styles.popularBadgeText}>{t('packages.popular')}</Text>
+        </View>
+      )}
+
+      {/* Name */}
+      <Text style={[styles.pkgName, isRTL && styles.textRTL]}>{pkg.name}</Text>
+
+      {/* Price */}
+      <View style={[styles.priceRow, isRTL && styles.priceRowRTL]}>
+        <Text style={styles.priceAmount}>
+          {isFree ? t('packages.free') : pkg.price}
+        </Text>
+        {!isFree && (
+          <View style={[styles.priceMeta, isRTL && { alignItems: 'flex-end' }]}>
+            <Text style={styles.priceCurrency}>{t('packages.currency')}</Text>
+            <Text style={styles.priceDuration}>
+              / {pkg.duration_display || t(`packages.duration.${pkg.duration}`)}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Description */}
+      {!!pkg.description && (
+        <Text style={[styles.pkgDescription, isRTL && styles.textRTL]}>{pkg.description}</Text>
+      )}
+
+      {/* Feature list */}
+      <View style={styles.featureList}>
+        <FeatureRow
+          enabled
+          text={t('packages.features.scopes', { count: pkg.max_scopes })}
+          isRTL={isRTL}
+        />
+        <FeatureRow
+          enabled
+          text={t('packages.features.messages', { count: pkg.messages_per_day })}
+          isRTL={isRTL}
+        />
+        <FeatureRow
+          enabled={pkg.custom_goals_enabled}
+          text={t('packages.features.customGoals')}
+          isRTL={isRTL}
+        />
+        <FeatureRow
+          enabled={pkg.priority_support}
+          text={t('packages.features.prioritySupport')}
+          isRTL={isRTL}
+        />
+      </View>
+
+      {/* Select button */}
+      <View
+        style={[
+          styles.selectBtn,
+          isSelected ? styles.selectBtnActive : styles.selectBtnInactive,
+        ]}
       >
-        {text}
-      </Text>
-    </View>
+        {isSelected && (
+          <Icon name="checkmark" style={styles.selectBtnIcon} fill={TEXT_PRIMARY} />
+        )}
+        <Text style={styles.selectBtnText}>
+          {isSelected ? t('packages.selected') : (isFree ? t('packages.startFreeTrial') : t('common.next'))}
+        </Text>
+      </View>
+    </TouchableOpacity>
   );
 };
+
+// ─── Feature Row ──────────────────────────────────────────────────────────────
+
+const FeatureRow: React.FC<{ enabled: boolean; text: string; isRTL: boolean }> = ({
+  enabled,
+  text,
+  isRTL,
+}) => (
+  <View style={[styles.featureRow, isRTL && styles.featureRowRTL]}>
+    <Icon
+      name={enabled ? 'checkmark-circle-2' : 'close-circle'}
+      style={styles.featureIcon}
+      fill={enabled ? SUCCESS : DANGER}
+    />
+    <Text style={[styles.featureText, !enabled && styles.featureTextDisabled, isRTL && styles.textRTL]}>
+      {text}
+    </Text>
+  </View>
+);
+
+// ─── Scope Card ────────────────────────────────────────────────────────────────
+
+interface ScopeCardProps {
+  scope: Scope;
+  isSelected: boolean;
+  isDisabled: boolean;
+  onPress: (id: number) => void;
+}
+
+const ScopeCard: React.FC<ScopeCardProps> = ({ scope, isSelected, isDisabled, onPress }) => (
+  <TouchableOpacity
+    style={[
+      styles.scopeCard,
+      isSelected && styles.scopeCardSelected,
+      isDisabled && styles.scopeCardDisabled,
+    ]}
+    onPress={() => onPress(scope.id)}
+    disabled={isDisabled}
+    activeOpacity={0.8}
+  >
+    <Text style={styles.scopeEmoji}>{scope.icon || '⭐'}</Text>
+    <Text
+      style={[styles.scopeName, isSelected && styles.scopeNameSelected]}
+      numberOfLines={2}
+    >
+      {scope.name}
+    </Text>
+    {isSelected && (
+      <View style={styles.scopeCheck}>
+        <Icon name="checkmark" style={styles.scopeCheckIcon} fill={TEXT_PRIMARY} />
+      </View>
+    )}
+  </TouchableOpacity>
+);
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: BG_COLOR,
   },
-  scrollContent: {
-    padding: 24,
-  },
-  loadingContainer: {
+  center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 12,
+  // Banner
+  banner: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: DIVIDER,
+    backgroundColor: CARD_BG,
   },
-  title: {
-    marginBottom: 8,
-    textAlign: 'center',
+  bannerRTL: {
+    alignItems: 'flex-end',
   },
-  subtitle: {
-    marginBottom: 24,
-    textAlign: 'center',
+  bannerTitle: {
+    fontSize: 22,
+    fontFamily: FontFamily.arabicBold,
+    color: TEXT_PRIMARY,
+    marginBottom: 4,
   },
+  bannerSubtitle: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabic,
+    color: TEXT_MUTED,
+  },
+  textRTL: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  // Scroll
+  scrollContent: {
+    padding: 18,
+    paddingBottom: 100,
+  },
+  // Package card
   packageCard: {
+    backgroundColor: CARD_BG,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 2,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
     position: 'relative',
+    overflow: 'hidden',
   },
-  featuredCard: {
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+  packageCardSelected: {
+    borderColor: ACCENT_SOLID,
+    borderWidth: 2,
   },
-  badge: {
+  packageCardFeatured: {
+    borderColor: ACCENT,
+    shadowColor: ACCENT,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  popularBadge: {
     position: 'absolute',
-    top: -8,
-    paddingHorizontal: 12,
+    top: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: ACCENT,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  badgeText: {
-    color: 'white',
+  popularBadgeLeft: { left: 12 },
+  popularBadgeRight: { right: 12 },
+  popularBadgeIcon: { width: 11, height: 11 },
+  popularBadgeText: {
+    color: TEXT_PRIMARY,
+    fontSize: 11,
+    fontFamily: FontFamily.arabicBold,
+  },
+  pkgName: {
+    fontSize: 20,
+    fontFamily: FontFamily.arabicBold,
+    color: TEXT_PRIMARY,
+    marginBottom: 10,
+    marginTop: 6,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+    marginBottom: 10,
+  },
+  priceRowRTL: {
+    flexDirection: 'row-reverse',
+  },
+  priceAmount: {
+    fontSize: 34,
+    fontFamily: FontFamily.arabicBold,
+    color: ACCENT_SOLID,
+    lineHeight: 38,
+  },
+  priceMeta: {
+    paddingBottom: 4,
+  },
+  priceCurrency: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabicMedium,
+    color: TEXT_MUTED,
+  },
+  priceDuration: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: FontFamily.arabic,
+    color: TEXT_MUTED,
   },
-  packageName: {
-    marginBottom: 8,
+  pkgDescription: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabic,
+    color: TEXT_MUTED,
+    lineHeight: 20,
+    marginBottom: 14,
   },
-  priceContainer: {
-    marginBottom: 12,
-  },
-  price: {
-    marginBottom: 4,
-  },
-  packageDescription: {
-    marginBottom: 16,
-  },
-  featuresContainer: {
+  featureList: {
     gap: 8,
+    marginBottom: 16,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  featureRowRTL: {
+    flexDirection: 'row-reverse',
+  },
   featureIcon: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
+    flexShrink: 0,
   },
   featureText: {
     flex: 1,
+    fontSize: 14,
+    fontFamily: FontFamily.arabicMedium,
+    color: TEXT_PRIMARY,
   },
-  scopeIcon: {
-    width: 24,
-    height: 24,
+  featureTextDisabled: {
+    color: TEXT_MUTED,
   },
-  selectedIcon: {
-    width: 20,
-    height: 20,
-  },
-  selectedIndicator: {
+  selectBtn: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
-    padding: 12,
-    borderRadius: 8,
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
   },
-  selectedText: {
-    color: 'white',
-    fontWeight: 'bold',
+  selectBtnActive: {
+    backgroundColor: ACCENT,
   },
-  scopeSelectionContainer: {
-    flex: 1,
+  selectBtnInactive: {
+    backgroundColor: 'rgba(250, 248, 245, 0.10)',
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
   },
-  sectionTitle: {
-    marginBottom: 8,
+  selectBtnIcon: { width: 16, height: 16 },
+  selectBtnText: {
+    fontSize: 15,
+    fontFamily: FontFamily.arabicBold,
+    color: TEXT_PRIMARY,
   },
-  sectionSubtitle: {
-    marginBottom: 24,
+  // Progress bar
+  progressTrack: {
+    height: 5,
+    backgroundColor: 'rgba(250,248,245,0.12)',
+    borderRadius: 3,
+    marginBottom: 20,
+    overflow: 'hidden',
   },
+  progressFill: {
+    height: '100%',
+    backgroundColor: ACCENT_SOLID,
+    borderRadius: 3,
+  },
+  // Scope grid
   scopesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -557,45 +713,145 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   scopeCard: {
-    width: (width - 60) / 2,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
+    width: (width - 48) / 2,
+    backgroundColor: CARD_BG,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    padding: 14,
     alignItems: 'center',
     gap: 8,
+    position: 'relative',
+  },
+  scopeCardSelected: {
+    backgroundColor: 'rgba(164,129,17,0.30)',
+    borderColor: ACCENT_SOLID,
+    borderWidth: 2,
+  },
+  scopeCardDisabled: {
+    opacity: 0.4,
+  },
+  scopeEmoji: {
+    fontSize: 28,
   },
   scopeName: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabicMedium,
+    color: TEXT_MUTED,
     textAlign: 'center',
   },
-  actionButtons: {
+  scopeNameSelected: {
+    color: TEXT_PRIMARY,
+  },
+  scopeCheck: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: ACCENT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scopeCheckIcon: { width: 12, height: 12 },
+  // Action buttons
+  actionRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 24,
   },
-  button: {
+  actionRowRTL: {
+    flexDirection: 'row-reverse',
+  },
+  btnPrimary: {
     flex: 1,
-  },
-  paymentContainer: {
-    flex: 1,
-  },
-  summaryCard: {
-    padding: 20,
+    backgroundColor: ACCENT,
     borderRadius: 12,
-    marginVertical: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+  },
+  btnPrimaryText: {
+    fontSize: 15,
+    fontFamily: FontFamily.arabicBold,
+    color: TEXT_PRIMARY,
+  },
+  btnDisabled: {
+    opacity: 0.5,
+  },
+  btnOutline: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    backgroundColor: 'rgba(250,248,245,0.06)',
+    minHeight: 50,
+  },
+  btnOutlineText: {
+    fontSize: 15,
+    fontFamily: FontFamily.arabicMedium,
+    color: TEXT_MUTED,
+  },
+  // Payment summary
+  summaryCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: CARD_BORDER,
+    padding: 20,
     gap: 12,
+    marginBottom: 16,
+  },
+  summaryHeading: {
+    fontSize: 17,
+    fontFamily: FontFamily.arabicBold,
+    color: TEXT_PRIMARY,
+    marginBottom: 4,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginVertical: 8,
+  summaryRowRTL: {
+    flexDirection: 'row-reverse',
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontFamily: FontFamily.arabicMedium,
+    color: TEXT_PRIMARY,
+  },
+  summaryTotal: {
+    fontSize: 16,
+    fontFamily: FontFamily.arabicBold,
+    color: TEXT_PRIMARY,
+  },
+  summaryTotalValue: {
+    fontSize: 18,
+    fontFamily: FontFamily.arabicBold,
+    color: ACCENT_SOLID,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: DIVIDER,
+    marginVertical: 4,
   },
   paymentNote: {
-    textAlign: 'center',
     fontSize: 12,
+    fontFamily: FontFamily.arabic,
+    color: TEXT_MUTED,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 19,
+  },
+  // Shared
+  muted: {
+    fontSize: 13,
+    fontFamily: FontFamily.arabic,
+    color: TEXT_MUTED,
   },
 });

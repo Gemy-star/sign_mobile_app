@@ -83,7 +83,7 @@ export default function MessageDetailScreen() {
   if (loading) {
     return (
       <Layout style={styles.container} level="1">
-        <AppHeader title={t('messages.title')} showUserInfo={false} />
+        <AppHeader title={t('messages.title')} showUserInfo={false} showBack={true} />
         <View style={styles.center}>
           <Spinner size="giant" />
         </View>
@@ -94,7 +94,7 @@ export default function MessageDetailScreen() {
   if (!message) {
     return (
       <Layout style={styles.container} level="1">
-        <AppHeader title={t('messages.title')} showUserInfo={false} />
+        <AppHeader title={t('messages.title')} showUserInfo={false} showBack={true} />
         <View style={styles.center}>
           <Icon name="inbox-outline" style={styles.emptyIcon} fill="#A0AEC0" />
           <Text category="h6" appearance="hint">{t('messages.noContent')}</Text>
@@ -105,7 +105,7 @@ export default function MessageDetailScreen() {
 
   return (
     <Layout style={styles.container} level="1">
-      <AppHeader title={t('messages.title')} showUserInfo={false} />
+      <AppHeader title={t('messages.title')} showUserInfo={false} showBack={true} />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Message Card with Background */}
